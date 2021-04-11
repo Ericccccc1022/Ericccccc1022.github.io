@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Git学习笔记（二） | Eric Tan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="除了基本的操作外，Git最强大之处在于本地库与远程库的连接管理。我们熟悉的Github其实就是一个开源的远端服务器，本文就介绍Git的进阶知识。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Git学习笔记（二）">
+<meta property="og:url" content="http://example.com/2021/04/11/Git%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%88%E4%BA%8C%EF%BC%89/index.html">
+<meta property="og:site_name" content="Eric Tan">
+<meta property="og:description" content="除了基本的操作外，Git最强大之处在于本地库与远程库的连接管理。我们熟悉的Github其实就是一个开源的远端服务器，本文就介绍Git的进阶知识。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/images/image-20210410150920367.png">
+<meta property="og:image" content="http://example.com/images/4">
+<meta property="og:image" content="http://example.com/images/5">
+<meta property="og:image" content="http://example.com/images/6">
+<meta property="og:image" content="http://example.com/images/7">
+<meta property="og:image" content="http://example.com/images/8">
+<meta property="article:published_time" content="2021-04-11T01:58:27.000Z">
+<meta property="article:modified_time" content="2021-04-11T02:04:24.108Z">
+<meta property="article:author" content="Eric Tan">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/images/image-20210410150920367.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Eric Tan" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Eric Tan</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">Welcome to my blog</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-Git学习笔记（二）" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2021/04/11/Git%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%88%E4%BA%8C%EF%BC%89/" class="article-date">
+  <time class="dt-published" datetime="2021-04-11T01:58:27.000Z" itemprop="datePublished">2021-04-11</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/Git/">Git</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      Git学习笔记（二）
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>除了基本的操作外，Git最强大之处在于本地库与远程库的连接管理。我们熟悉的Github其实就是一个开源的远端服务器，本文就介绍Git的进阶知识。</p>
+<span id="more"></span>
+
+<h4 id="五、远程仓库（Git牛逼之处一）"><a href="#五、远程仓库（Git牛逼之处一）" class="headerlink" title="五、远程仓库（Git牛逼之处一）"></a>五、远程仓库（Git牛逼之处一）</h4><ol>
+<li><strong>由本地库推送至远程库</strong></li>
+</ol>
+<p>远程库搭建方式：</p>
+<p>（a）借助GitHub账户搭建( 可以把Github看成一个“远端服务器”， 这样Github上创建的所有仓库都可以看作<strong>“远程库”</strong>)； </p>
+<p>（b）用自己的电脑搭建一个Git服务器</p>
+<p>借助Github搭建远程Git仓库步骤：</p>
+<p>（1）创建SSH Key</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh-keygen -t rsa -C &quot;youremail@example.com&quot;   #一路回车默认</span><br></pre></td></tr></table></figure>
+
+<p>用户主目录里找到<code>.ssh</code>目录，里面有<code>id_rsa</code>和<code>id_rsa.pub</code>两个文件，这两个就是SSH Key的秘钥对，<code>id_rsa</code>是私钥，不能泄露出去，<code>id_rsa.pub</code>是公钥，可以放心地告诉任何人。</p>
+<p>首次使用，需要在Github账户管理处添加ssh公钥，添加完成后如下：</p>
+<img src="/images/image-20210410150920367.png" alt="image-20210410150920367" style="zoom: 67%;">
+
+<p>（2）本地仓库关联Github的远程库</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">git remote add origin git@github.com:Ericccccc1022&#x2F;learngit.git  #在本地Git仓库目录下运行</span><br><span class="line">                                                                 #远程库默认名字是origin</span><br><span class="line">                                                               #learngit是刚在github中创建的仓库名</span><br><span class="line">                                                               </span><br><span class="line">git push -u origin master   #第一次推送master分支的所有内容</span><br><span class="line">git push origin master     #此后每次本地提交后，就可以直接推送至远程库，不需要-u参数</span><br></pre></td></tr></table></figure>
+
+<p>Git在没有网络时，也能完成<strong>本地提交</strong>工作，有网络后只需简单推送至远程库即可，非常方便！</p>
+<p>2.<strong>从远程库克隆</strong></p>
+<p>Github中的仓库都可以看作“远程库”，要克隆到本地，必须先知道仓库的地址，然后使用<code>git clone</code> 命令克隆</p>
+<p>Git支持多种协议，包括<strong>https</strong>和<strong>ssh</strong>，但ssh协议的速度最快。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git clone git@github.com:Ericccccc1022&#x2F;test.git  #使用ssh协议的克隆</span><br><span class="line"></span><br><span class="line">git clone https:&#x2F;&#x2F;github.com&#x2F;Ericccccc1022&#x2F;test.git  #使用https协议的克隆</span><br><span class="line"></span><br><span class="line">#test是我早前在github账户中创建的一个仓库</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="六、分支管理（Git牛逼之处二）"><a href="#六、分支管理（Git牛逼之处二）" class="headerlink" title="六、分支管理（Git牛逼之处二）"></a>六、分支管理（Git牛逼之处二）</h4><p>1.</p>
+<p><strong>一开始</strong>，master指向当前分支，HEAD指向master：</p>
+<p><img src="/images/4" alt="git-br-initial"></p>
+<p>每次提交，<code>master</code>分支都会向前移动一步，这样，随着你不断提交，<code>master</code>分支的线也越来越长。</p>
+<p><strong>创建新的分支</strong>，例如<code>dev</code>时，Git新建了一个指针叫<code>dev</code>，指向<code>master</code>相同的提交，再把<code>HEAD</code>指向<code>dev</code>，就表示当前分支在<code>dev</code>上：</p>
+<p><img src="/images/5" alt="git-br-create"></p>
+<p>从现在开始，对工作区的修改和提交就是针对<code>dev</code>分支了，比如新提交一次后，<code>dev</code>指针往前移动一步，而<code>master</code>指针不变：</p>
+<p><img src="/images/6" alt="git-br-dev-fd"></p>
+<p>假如我们在<code>dev</code>上的工作完成了，就可以把<code>dev</code>合并到<code>master</code>上。Git怎么合并呢？最简单的方法，就是直接把<code>master</code>指向<code>dev</code>的当前提交，就完成了合并：</p>
+<p><img src="/images/7" alt="git-br-ff-merge"></p>
+<p>综上，Git创建分支、合并分支，仅仅只是指针的变动，因此速度非常快！</p>
+<p>（1）创建分支</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">git branch dev   #创建dev分支</span><br><span class="line">git checkout dev  #切换到dev分支上</span><br><span class="line"></span><br><span class="line">git checkout -b dev  #-b参数将上述两步合并，效果相同</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git branch  #查看当前分支</span><br><span class="line"></span><br><span class="line">git checkout master  #回到master分支</span><br></pre></td></tr></table></figure>
+
+<p>（2）合并分支</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git merge dev  # 合并指定分支到当前分支</span><br></pre></td></tr></table></figure>
+
+<p>（3）删除分支</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git branch -d dev  #删除dev分支</span><br></pre></td></tr></table></figure>
+
+<p>由于操作非常方便，所以Git鼓励你使用分支完成某个任务，合并后再删掉分支，这和直接在<code>master</code>分支上工作效果是一样的，但过程更安全！</p>
+<p>（4）切换分支的新命令</p>
+<p>由于撤销修改是<code>git checkout -- &lt;filename&gt;</code> , 因此checkout容易歧义。对此，可用switch命令完成分支切换：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git switch -c dev  #创建并切换到新的分支</span><br><span class="line"></span><br><span class="line">git switch master  #直接切换分支</span><br></pre></td></tr></table></figure>
+
+
+
+<p>2.分支冲突</p>
+<p>如果在不同分支下分别进行了修改，在merge时则会发生冲突；</p>
+<p>解决办法：把Git合并失败的文件手动编辑为我们希望的内容，再提交。</p>
+<p>3.合并分支的方式</p>
+<p>默认采用<code>Fast forward</code>模式，但这种模式下，删除分支后，会丢掉分支信息。</p>
+<p>如果要强制禁用<code>Fast forward</code>模式，Git就会在merge时生成一个新的commit，这样，从分支历史上就可以看出分支信息。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git merge --no-ff -m &quot;merge with no-ff&quot; dev  # --no-ff参数表明禁用Fast forward</span><br><span class="line">                                    #本次合并要创建一个新的commit，所以加上-m参数，把commit描述写进去</span><br></pre></td></tr></table></figure>
+
+<p>在<strong>实际开发</strong>中，我们应该按照几个基本原则进行分支管理：</p>
+<p>（1）首先，<code>master</code>分支应该是非常稳定的，也就是仅用来发布新版本，平时不能在上面干活；</p>
+<p>（2）那在哪干活呢？干活都在<code>dev</code>分支上，也就是说，<code>dev</code>分支是不稳定的，到某个时候，比如1.0版本发布时，再把<code>dev</code>分支合并到<code>master</code>上，在<code>master</code>分支发布1.0版本；</p>
+<p>（3）你和你的小伙伴们每个人都从<code>dev</code>分支引出自己的分支，时不时地往<code>dev</code>分支上合并就可以了。</p>
+<p>所以，团队合作的分支看起来就像这样：</p>
+<p>（4）合并分支时，加上<code>--no-ff</code>参数就可以用普通模式合并，合并后的历史有分支，能看出来曾经做过合并</p>
+<p><img src="/images/8" alt="git-br-policy"></p>
+<p>4.<strong>Bug分支</strong></p>
+<p>修复bug时，我们会通过创建新的bug分支进行修复，然后合并，最后删除；</p>
+<p>（1）当手头工作没有完成时，<strong>不能直接提交</strong>，但是又要进入新的分支修复bug，此时需要将<strong>工作现场</strong>保存一下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git stash</span><br></pre></td></tr></table></figure>
+
+<p>（2）然后去新的分支修复bug；假设在master分支上修复了bug，想在dev分支上也修复，Git提供了便捷的命令：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#切换到dev分支上</span><br><span class="line"></span><br><span class="line">git cherry-pick 4c805e2   # 4c805e2是在master分支上提交时的id</span><br></pre></td></tr></table></figure>
+
+<p>（3）修复完成，现在需要继续工作，取出缓存的工作空间：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">git stash list  #查看stash内容</span><br><span class="line"></span><br><span class="line">git stash apply stash@&#123;0&#125;  #取出stash@&#123;0&#125;状态并在stash中删除它</span><br><span class="line">git stash drop stash@&#123;0&#125;</span><br><span class="line"></span><br><span class="line">git stash pop  #取出同时删除</span><br></pre></td></tr></table></figure>
+
+
+
+<ol start="5">
+<li><strong>Feature分支</strong></li>
+</ol>
+<p>在软件开发中，通常需要开发新功能；每开发一个新功能，最好创建一个feature分支</p>
+<p>例如现在要开发代号为scan_radar的新功能：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">git switch -c feature-scan</span><br><span class="line"></span><br><span class="line">#开发完成后</span><br><span class="line">git add scan.py</span><br><span class="line">git commit -m &quot;add feature scan&quot;</span><br><span class="line"></span><br><span class="line">#切回dev，合并分支</span><br><span class="line">git switch dev</span><br><span class="line">git merge feature-scan</span><br></pre></td></tr></table></figure>
+
+<p>若要删除还未合并的分支：用大写参数-D，强制删除</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git branch -D feature-scan</span><br></pre></td></tr></table></figure>
+
+
+
+<p>6.<strong>多人协作</strong></p>
+<p>多人协作的工作模式通常是这样：</p>
+<ol>
+<li>首先，可以试图用<code>git push origin &lt;branch-name&gt;</code>推送自己的修改；</li>
+<li>如果推送失败，则因为远程分支比你的本地更新，需要先用<code>git pull</code>试图合并；</li>
+<li>如果合并有冲突，则解决冲突，并在本地提交；</li>
+<li>没有冲突或者解决掉冲突后，再用<code>git push origin &lt;branch-name&gt;</code>推送就能成功！</li>
+</ol>
+<p>如果<code>git pull</code>提示<code>no tracking information</code>，则说明本地分支和远程分支的链接关系没有创建，用命令<code>git branch --set-upstream-to &lt;branch-name&gt; origin/&lt;branch-name&gt;</code>。</p>
+<p>这就是多人协作的工作模式，一旦熟悉了，就非常简单。</p>
+<p>本地分支与远程库：</p>
+<p>（1）查看远程库信息：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git remote -v</span><br></pre></td></tr></table></figure>
+
+<p>（2）本地新建的分支如果不推送到远程，对其他人就是不可见的</p>
+<p>（3）从本地推送分支：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">git push origin &lt;branch-name&gt;</span><br><span class="line"></span><br><span class="line">#若推送失败，则先抓取远程的新提交：</span><br><span class="line">git pull</span><br><span class="line">#若提示no tracking information,则建立关联：</span><br><span class="line">git branch --set-upstream branch-name origin&#x2F;branch-name</span><br><span class="line">#若推送有冲突，则要先解决冲突</span><br></pre></td></tr></table></figure>
+
+<p>（4）若远程有多个分支，在本地创建和远程分支对应的分支：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git checkout -b branch-name origin&#x2F;branch-name</span><br></pre></td></tr></table></figure>
+
+
+
+<p>7.Rebase操作</p>
+<p>rebase操作可以把本地未push的分叉提交历史整理成直线</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git rebase</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="七、标签管理（tag）"><a href="#七、标签管理（tag）" class="headerlink" title="七、标签管理（tag）"></a>七、标签管理（tag）</h4><p>发布一个版本时，我们通常先在版本库中打一个标签（tag），这样，就唯一确定了打标签时刻的版本。将来无论什么时候，取某个标签的版本，就是把那个打标签的时刻的历史版本取出来。所以，标签也是版本库的一个快照。</p>
+<p>实际上tag是指向某个commit的指针，但该指针不能移动！</p>
+<p>1.创建标签</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#切换到目标分支上</span><br><span class="line"></span><br><span class="line">git tag v1.0   #默认打在最新提交的commit上</span><br><span class="line"></span><br><span class="line">git tag v0.9 f52c63  #如果要给历史版本打标签，则后面添加commit id</span><br></pre></td></tr></table></figure>
+
+<p>创建带有说明的tag：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git tag -a v0.1 -m &quot;version 0.1 released&quot; 1094adb  # -a标签名，-m说明文字</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git tag  #查看所有标签</span><br><span class="line">git show v1.0  #查看标签信息</span><br></pre></td></tr></table></figure>
+
+<p>2.操作标签</p>
+<p>（1）删除</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git tag -d v1.0</span><br><span class="line"></span><br><span class="line">#若已经推送到远程：</span><br><span class="line">git tag -d v1.0</span><br><span class="line">git push origin :refs&#x2F;tags&#x2F;v1.0</span><br></pre></td></tr></table></figure>
+
+<p>（2）推送tag到远程</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git push origin v1.0</span><br><span class="line"></span><br><span class="line">git push origin --tags  #一次性推送全部尚未推送标签</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="八、开源社区Github"><a href="#八、开源社区Github" class="headerlink" title="八、开源社区Github"></a>八、开源社区Github</h4><p>参与代码贡献的流程：</p>
+<p>（1）点“Fork”就在自己的账号下克隆了一个bootstrap仓库</p>
+<p>（2）从自己的账号下clone到本地电脑（一定要从自己的账号下clone才能推送修改）</p>
+<p>（3）往自己仓库推送更新，在github上发起一个pull request</p>
+<p>在GitHub上，可以任意Fork开源仓库；自己拥有Fork后的仓库的读写权限；可以推送pull request给官方仓库来贡献代码。</p>
+<p>拓：如果没有梯子，可以使用github“国内版”——Gitee ( gitee.com)</p>
+<h4 id="九、自定义Git配置（简略了解）"><a href="#九、自定义Git配置（简略了解）" class="headerlink" title="九、自定义Git配置（简略了解）"></a>九、自定义Git配置（简略了解）</h4><p>1.忽略某些文件时，需要编写<code>.gitignore</code>文件，放到版本库里</p>
+<p>2.配置别名（为了输入命令时偷懒）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git config --global alias.st status  #status设置别名st</span><br></pre></td></tr></table></figure>
+
+<p>以下介绍一些常见的别名配置：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">git config --global alias.co checkout</span><br><span class="line">git config --global alias.ci commit</span><br><span class="line">git config --global alias.br branch</span><br><span class="line">git config --global alias.last &#39;log -1&#39;  # 用git last 就可以直接查看最新一次commit信息</span><br><span class="line"></span><br><span class="line">git config --global alias.lg &quot;log --color --graph --pretty&#x3D;format:&#39;%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)&lt;%an&gt;%Creset&#39; --abbrev-commit&quot; </span><br><span class="line"># 用git lg可以查看git log信息，且有颜色配置！！</span><br></pre></td></tr></table></figure>
+
+<p>3.搭建Git服务器</p>
+<p>如果不想被github的开源性影响，则可以搭建自己的Git服务器；</p>
+<p>用ubuntu系统搭建更简单，具体操作请Google。</p>
+<h4 id="十、Git的图形界面工具——Source-Tree"><a href="#十、Git的图形界面工具——Source-Tree" class="headerlink" title="十、Git的图形界面工具——Source Tree"></a>十、Git的图形界面工具——Source Tree</h4><p>使用SourceTree可以以图形界面操作Git，省去了敲命令的过程，对于常用的提交、分支、推送等操作来说非常方便；</p>
+<p>SourceTree使用Git命令执行操作，出错时，仍然需要阅读Git命令返回的错误信息。</p>
+<h4 id="十一、最后"><a href="#十一、最后" class="headerlink" title="十一、最后"></a>十一、最后</h4><p>以上课程只是Git入门级别的知识，只涉及十余个常用命令，但是掌握这些命令已足够让我们得心应手地使用Git了！</p>
+<p>附资料：</p>
+<p>（1）常用的Git命令表：<a target="_blank" rel="noopener" href="https://liaoxuefeng.gitee.io/resource.liaoxuefeng.com/git/git-cheat-sheet.pdf">https://liaoxuefeng.gitee.io/resource.liaoxuefeng.com/git/git-cheat-sheet.pdf</a></p>
+<p>（2）Git官网：<a target="_blank" rel="noopener" href="http://git-scm.com/">http://git-scm.com/</a></p>
+<p><strong>全文参考</strong>：廖雪峰Git教程 <a target="_blank" rel="noopener" href="https://www.liaoxuefeng.com/wiki/896043488029600">https://www.liaoxuefeng.com/wiki/896043488029600</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2021/04/11/Git%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%88%E4%BA%8C%EF%BC%89/" data-id="ckncisteh00006st95bgb124c" data-title="Git学习笔记（二）" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2021/04/11/Git%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%88%E4%B8%80%EF%BC%89/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Git学习笔记（一）</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Git/">Git</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Others/">Others</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/04/">April 2021</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2021/04/11/Git%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%88%E4%BA%8C%EF%BC%89/">Git学习笔记（二）</a>
+          </li>
+        
+          <li>
+            <a href="/2021/04/11/Git%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%88%E4%B8%80%EF%BC%89/">Git学习笔记（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2021/04/10/Hexo%E5%8D%9A%E5%AE%A2-Typora%E6%96%87%E4%BB%B6%E9%83%A8%E7%BD%B2/">Hexo博客+Typora文件部署</a>
+          </li>
+        
+          <li>
+            <a href="/2021/04/10/Test-message/">Test message</a>
+          </li>
+        
+          <li>
+            <a href="/2021/04/10/hello-world/">Hello World</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2021 Eric Tan<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
