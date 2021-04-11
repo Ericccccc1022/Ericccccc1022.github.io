@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>神经网络：Faster R-CNN详解（二） | Eric Tan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="本节介绍Conv Layers和RPN网络 在原论文中，作者多次强调了RPN的重要性。R-CNN和Fast R-CNN都是selective search花费大量时间，而RPN实现了由CNN自己做区域建议，效率奇高。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="神经网络：Faster R-CNN详解（二）">
+<meta property="og:url" content="http://example.com/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/index.html">
+<meta property="og:site_name" content="Eric Tan">
+<meta property="og:description" content="本节介绍Conv Layers和RPN网络 在原论文中，作者多次强调了RPN的重要性。R-CNN和Fast R-CNN都是selective search花费大量时间，而RPN实现了由CNN自己做区域建议，效率奇高。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/images/image-20210411154919630.png">
+<meta property="og:image" content="http://example.com/images/v2-1908feeaba591d28bee3c4a754cca282_r.jpg">
+<meta property="og:image" content="http://example.com/images/image-20210411163229689.png">
+<meta property="og:image" content="http://example.com/images/image-20210411172715373.png">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Bd_%7Bx%7D(A),d_%7By%7D(A),d_%7Bw%7D(A),d_%7Bh%7D(A)%5D+%5Ctag%7B11%7D">
+<meta property="og:image" content="http://example.com/images/image-20210411173320250.png">
+<meta property="og:image" content="http://example.com/images/v2-ea7e6e48662bfa68ec73bdf32f36bb85_720w.jpg">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=G_x%27=A_w%5Ccdot+d_x(A)++A_x%5Ctag%7B2%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=G_y%27=A_h%5Ccdot+d_y(A)++A_y%5Ctag%7B3%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=G_w%27=A_w%5Ccdot+%5Cexp(d_w(A))+%5Ctag%7B4%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=G_h%27=A_h%5Ccdot+%5Cexp(d_h(A))%5Ctag%7B5%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=d_%7Bx%7D(A),d_%7By%7D(A),d_%7Bw%7D(A),d_%7Bh%7D(A)">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=d_%7Bx%7D(A),d_%7By%7D(A),d_%7Bw%7D(A),d_%7Bh%7D(A)">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=Y=WX">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=(t_%7Bx%7D,+t_%7By%7D,+t_%7Bw%7D,+t_%7Bh%7D)">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=d_%7Bx%7D(A),d_%7By%7D(A),d_%7Bw%7D(A),d_%7Bh%7D(A)">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=d_*(A)=W_*%5ET%5Ccdot+%5Cphi(A)%5Ctag%7B6%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Cphi(A)">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=W_*">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=d_*(A)">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=d_*(A)">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=t_*">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Ctext%7BLoss%7D=%5Csum_%7Bi%7D%5E%7BN%7D%7B%7Ct_*%5Ei-W_*%5ET%5Ccdot+%5Cphi(A%5Ei)%7C%7D+%5Ctag%7B7%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Chat%7BW%7D_*=%5Ctext%7Bargmin%7D_%7BW_*%7D%5Csum_%7Bi%7D%5E%7Bn%7D%7Ct_*%5Ei-+W_*%5ET%5Ccdot+%5Cphi(A%5Ei)%7C+%5Clambda%7C%7CW_*%7C%7C++%5Ctag%7B8%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=(t_x,+t_y)">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=(t_w,+t_h)">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=t_x=(x-x_a)/w_a%5C+%5C+%5C+%5C++t_y=(y-y_a)/h_a+%5Ctag%7B9%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=t_w=%5Clog(w/w_a)%5C+%5C+%5C+%5C+t_h=%5Clog(h/h_a)+%5Ctag%7B10%7D">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=(t_x,+t_y,+t_w,+t_h)">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=(t_x,+t_y,+t_w,+t_h)">
+<meta property="og:image" content="https://www.zhihu.com/equation?tex=%5Bd_%7Bx%7D(A),d_%7By%7D(A),d_%7Bw%7D(A),d_%7Bh%7D(A)%5D">
+<meta property="article:published_time" content="2021-04-11T09:54:44.000Z">
+<meta property="article:modified_time" content="2021-04-11T10:09:23.008Z">
+<meta property="article:author" content="Eric Tan">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/images/image-20210411154919630.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Eric Tan" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Eric Tan</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">Welcome to my blog</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-神经网络：Faster-R-CNN详解（二）" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/" class="article-date">
+  <time class="dt-published" datetime="2021-04-11T09:54:44.000Z" itemprop="datePublished">2021-04-11</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/Deep-Learning-Objects-Detection/">Deep Learning-Objects Detection</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      神经网络：Faster R-CNN详解（二）
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>本节介绍Conv Layers和RPN网络</p>
+<p>在原论文中，作者多次强调了RPN的重要性。R-CNN和Fast R-CNN都是selective search花费大量时间，而RPN实现了由CNN自己做区域建议，效率奇高。</p>
+<span id="more"></span>
+
+<h3 id="三、Faster-R-CNN"><a href="#三、Faster-R-CNN" class="headerlink" title="三、Faster R-CNN"></a>三、Faster R-CNN</h3><p>相比于Fast R-CNN，它的进步在于区域建议网络：RPN</p>
+<p>1.Faster R-CNN将特征提取、区域建议、bbox回归、分类都整合在一个网络中，也即输入一张图像后所有操作都在CNN中完成，因此它是真正意义上实现了<strong>“end-to-end”</strong>！</p>
+<p>2.整体框架：</p>
+<img src="/images/image-20210411154919630.png" alt="image-20210411154919630" style="zoom:50%;">
+
+<p>（1）Conv layers，完成特征提取，后续的操作都在feature map上进行，所以具有“特征共享”的特点；通常使用VGG16、Resnet等；</p>
+<p>（2）Region Proposal Networks (RPN)：生成候选区域，通过FC层 (Softmax)判断anchors属于positive或者negative，再利用bbox regression修正anchors获得精确的proposals；</p>
+<p>（3）Roi Pooling：收集输入的feature maps和proposals，综合这些信息后提取<strong>proposal feature maps</strong>，送入后续全连接层判定目标类别；</p>
+<p>（4）Classification：利用proposal feature maps计算proposal的类别，同时再次bounding box regression获得检测框最终的精确位置。</p>
+<p>3.Conv layers:</p>
+<p>实际代码操作中，采用了一个小<strong>trick</strong>：通过padding使得所有卷积层的结果不改变长度和宽度，而所有pooling层都将长宽减半，因此最终输出的长宽为原始图像的1/16倍。这样，Conv layers生成的feature map中都可以和原图对应起来！</p>
+<p><strong>4.RPN:</strong></p>
+<img src="/images/v2-1908feeaba591d28bee3c4a754cca282_r.jpg" alt="preview" style="zoom:67%;">
+
+<ul>
+<li>feature map中每个点上有k个anchor，每个anhcor要分positive和negative；</li>
+<li>如果k=9，则总共有20000+anchors，所以全部anchors拿去训练太多了，训练程序会在合适的anchors中<strong>随机</strong>选取128个postive anchors+128个negative anchors进行训练；</li>
+<li>流程：生成anchors -&gt; softmax分类器提取positvie anchors -&gt; bbox reg回归positive anchors -&gt; Proposal Layer生成proposals</li>
+</ul>
+<p><strong>（1）softmax判定positive与negative：（W×H×2k）</strong></p>
+<p>现讨论如何对每个anchors分positive和negative：</p>
+<p>其实RPN最终就是在原图尺度上，设置了密密麻麻的候选Anchor。然后用cnn去判断哪些Anchor是里面有目标的positive anchor，哪些是没目标的negative anchor。所以，仅仅是个二分类而已！</p>
+<img src="/images/image-20210411163229689.png" alt="image-20210411163229689" style="zoom:67%;">
+
+<p>（流程：3×3卷积 → 1×1卷积 →Softmax）</p>
+<p><strong>疑问</strong>：3×3卷积是在feature map上进行的，每个点就一次，得到1×1×256向量，这是<strong>怎么牵扯到9个anchors的？</strong>很多人都会在初次学习时产生这个疑问！ 我在阅读了数十条博文大神的评论之后终于看到一种合理的解释：</p>
+<p>这里的3x3卷积输出256dfeature map, 卷积后(c,w,h)均未改变，这里的3x3卷积只是在进一步提取特征，与后面两路1x1卷积相配合，共同输出对foreground/background和anchor_pred的预测值，真正体现Anchor数量 和其在map中的维度的地方是两路1×1卷积后的输出。</p>
+<p>特征图的每个像素位置都能看成一个向量 [1，channels]（卷积基本原理：这个像素可不简单，它代表的是高级语义，其信息量远不只一个像素那么简单，而是包含有周边好几大圈的信息）。<strong>所以这个向量 [1，channels]是能代表一个位置上的9个anchors的</strong>，理解这一点后就好办了，利用1x1卷积分别将通道数压缩到2x9（代表分类）以及4x9（代表坐标回归值）建立一种抽象的映射（这其实和全连接是一个道理的都是建立映射的过程嘛）。所以就可以通过损失函数来指导RPN的训练啦。</p>
+<p>经过softmax分类后，就可以提取出<strong>positive anchors</strong>了。</p>
+<ul>
+<li>解释一下这里的18维：</li>
+</ul>
+<p>​      前9维对应9个anchor属于foreground的概率，后9维对应9个anchor属于background的概率；这里面最大概率的那个就决定是foreground还是background，也决定了是属于9个anchors里面的哪一个</p>
+<p><strong>（2）对Proposals进行bbox regression：（W×H×4k）</strong></p>
+<img src="/images/image-20210411172715373.png" alt="image-20210411172715373" style="zoom:67%;">
+
+<p>（流程：3×3卷积 → 1×1卷积 ）</p>
+<p>feature maps每个点都有9个anchors，每个anchors又都有4个用于回归的</p>
+<p><img src="https://www.zhihu.com/equation?tex=%5Bd_%7Bx%7D(A),d_%7By%7D(A),d_%7Bw%7D(A),d_%7Bh%7D(A)%5D+%5Ctag%7B11%7D" alt="[公式]"></p>
+<p>变换量。</p>
+<ul>
+<li><p>综上，2k和4k可以理解为用来<strong>“占位的”</strong>，因为无论是3×3卷积、1×1卷积都没涉及anchors，要通过1×1卷积为k个anchors预留2k、4k的位置，用于后面的“针对anchors”的操作！</p>
+<img src="/images/image-20210411173320250.png" alt="image-20210411173320250" style="zoom:50%;"></li>
+</ul>
+<p><strong>（3）bbox regerssion回归positive anchors ：（bbox reg原理）</strong></p>
+<p>（注：由于数学原理较复杂，且思路比较绕，所以此处直接参考博文：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/31426458%EF%BC%89">https://zhuanlan.zhihu.com/p/31426458）</a></p>
+<img src="/images/v2-ea7e6e48662bfa68ec73bdf32f36bb85_720w.jpg" alt="img" style="zoom:67%;">
+
+<p>红色的框A代表原始的positive Anchors，绿色的框G代表目标的GT，我们的目标是寻找一种关系，使得输入原始的anchor A经过映射得到一个跟真实窗口G更接近的回归窗口G’</p>
+<p>那么经过何种变换<strong>F</strong>才能从图10中的anchor A变为G’呢？ 比较简单的思路就是:</p>
+<ul>
+<li>先做平移</li>
+</ul>
+<p><img src="https://www.zhihu.com/equation?tex=G_x%27=A_w%5Ccdot+d_x(A)++A_x%5Ctag%7B2%7D" alt="[公式]"></p>
+<p><img src="https://www.zhihu.com/equation?tex=G_y%27=A_h%5Ccdot+d_y(A)++A_y%5Ctag%7B3%7D" alt="[公式]"></p>
+<ul>
+<li>再做缩放</li>
+</ul>
+<p><img src="https://www.zhihu.com/equation?tex=G_w%27=A_w%5Ccdot+%5Cexp(d_w(A))+%5Ctag%7B4%7D" alt="[公式]"></p>
+<p><img src="https://www.zhihu.com/equation?tex=G_h%27=A_h%5Ccdot+%5Cexp(d_h(A))%5Ctag%7B5%7D" alt="[公式]"></p>
+<p>观察上面4个公式发现，需要学习的是 <img src="https://www.zhihu.com/equation?tex=d_%7Bx%7D(A),d_%7By%7D(A),d_%7Bw%7D(A),d_%7Bh%7D(A)" alt="[公式]"> 这四个变换。当输入的anchor A与GT相差较小时，可以认为这种变换是一种线性变换， 那么就可以用线性回归来建模对窗口进行微调（注意，只有当anchors A和GT比较接近时，才能使用线性回归模型，否则就是复杂的非线性问题了）。</p>
+<p>接下来的问题就是如何通过线性回归获得 <img src="https://www.zhihu.com/equation?tex=d_%7Bx%7D(A),d_%7By%7D(A),d_%7Bw%7D(A),d_%7Bh%7D(A)" alt="[公式]"> 了。线性回归就是给定输入的特征向量X, 学习一组参数W, 使得经过线性回归后的值跟真实值Y非常接近，即<img src="https://www.zhihu.com/equation?tex=Y=WX" alt="[公式]">。对于该问题，输入X是cnn feature map，定义为Φ；同时还有训练传入A与GT之间的变换量，即<img src="https://www.zhihu.com/equation?tex=(t_%7Bx%7D,+t_%7By%7D,+t_%7Bw%7D,+t_%7Bh%7D)" alt="[公式]">。输出是<img src="https://www.zhihu.com/equation?tex=d_%7Bx%7D(A),d_%7By%7D(A),d_%7Bw%7D(A),d_%7Bh%7D(A)" alt="[公式]">四个变换。那么目标函数可以表示为：</p>
+<p><img src="https://www.zhihu.com/equation?tex=d_*(A)=W_*%5ET%5Ccdot+%5Cphi(A)%5Ctag%7B6%7D" alt="[公式]"></p>
+<p>其中 <img src="https://www.zhihu.com/equation?tex=%5Cphi(A)" alt="[公式]"> 是对应anchor的feature map组成的特征向量， <img src="https://www.zhihu.com/equation?tex=W_*" alt="[公式]"> 是需要学习的参数， <img src="https://www.zhihu.com/equation?tex=d_*(A)" alt="[公式]"> 是得到的预测值（*表示 x，y，w，h，也就是每一个变换对应一个上述目标函数）。为了让预测值 <img src="https://www.zhihu.com/equation?tex=d_*(A)" alt="[公式]"> 与真实值 <img src="https://www.zhihu.com/equation?tex=t_*" alt="[公式]"> 差距最小，设计L1损失函数：</p>
+<p><img src="https://www.zhihu.com/equation?tex=%5Ctext%7BLoss%7D=%5Csum_%7Bi%7D%5E%7BN%7D%7B%7Ct_*%5Ei-W_*%5ET%5Ccdot+%5Cphi(A%5Ei)%7C%7D+%5Ctag%7B7%7D" alt="[公式]"></p>
+<p>函数优化目标为：</p>
+<p><img src="https://www.zhihu.com/equation?tex=%5Chat%7BW%7D_*=%5Ctext%7Bargmin%7D_%7BW_*%7D%5Csum_%7Bi%7D%5E%7Bn%7D%7Ct_*%5Ei-+W_*%5ET%5Ccdot+%5Cphi(A%5Ei)%7C+%5Clambda%7C%7CW_*%7C%7C++%5Ctag%7B8%7D" alt="[公式]"></p>
+<p>为了方便描述，这里以L1损失为例介绍，而真实情况中一般使用soomth-L1损失。</p>
+<p>需要说明，只有在GT与需要回归框位置比较接近时，才可近似认为上述线性变换成立。<br>说完原理，对应于Faster RCNN原文，positive anchor与ground truth之间的平移量 <img src="https://www.zhihu.com/equation?tex=(t_x,+t_y)" alt="[公式]"> 与尺度因子 <img src="https://www.zhihu.com/equation?tex=(t_w,+t_h)" alt="[公式]"> 如下：（<strong>原文给出的映射关系真实值</strong>，目标是训练参数W，使得WX的结果Y更接近与下面给出的值，这个Y就是预测的映射变换值）</p>
+<p><img src="https://www.zhihu.com/equation?tex=t_x=(x-x_a)/w_a%5C+%5C+%5C+%5C++t_y=(y-y_a)/h_a+%5Ctag%7B9%7D" alt="[公式]"></p>
+<p><img src="https://www.zhihu.com/equation?tex=t_w=%5Clog(w/w_a)%5C+%5C+%5C+%5C+t_h=%5Clog(h/h_a)+%5Ctag%7B10%7D" alt="[公式]"></p>
+<p>对于训练bouding box regression网络回归分支，输入是cnn feature Φ，监督信号是Anchor与GT的差距 <img src="https://www.zhihu.com/equation?tex=(t_x,+t_y,+t_w,+t_h)" alt="[公式]">，即训练目标是：输入 Φ的情况下使网络输出与监督信号尽可能接近。那么当bouding box regression工作时，再输入Φ时，回归网络分支的输出就是每个Anchor的平移量和变换尺度 <img src="https://www.zhihu.com/equation?tex=(t_x,+t_y,+t_w,+t_h)" alt="[公式]">，显然即可用来修正Anchor位置了。</p>
+<p>（4）<strong>Proposal Layer整合信息</strong>，生成RPN网络最终的feature proposals：</p>
+<p>流程如下：</p>
+<ol>
+<li>生成anchors，利用<img src="https://www.zhihu.com/equation?tex=%5Bd_%7Bx%7D(A),d_%7By%7D(A),d_%7Bw%7D(A),d_%7Bh%7D(A)%5D" alt="[公式]">对所有的anchors做bbox regression回归（这里的anchors生成和训练时完全一致）</li>
+<li>按照输入的positive softmax scores由大到小排序anchors，提取前pre_nms_topN(e.g. 6000)个anchors，即提取修正位置后的positive anchors</li>
+<li>限定超出图像边界的positive anchors为图像边界，防止后续roi pooling时proposal超出图像边界（见文章底部QA部分图21）</li>
+<li>剔除尺寸非常小的positive anchors</li>
+<li>对剩余的positive anchors进行NMS（nonmaximum suppression）</li>
+<li>Proposal Layer有3个输入：positive和negative anchors分类器结果rpn_cls_prob_reshape，对应的bbox reg的(e.g. 300)结果作为proposal输出</li>
+</ol>
+<p>参考博文：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/31426458">https://zhuanlan.zhihu.com/p/31426458</a></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/" data-id="cknczt1td0000c4t9h6zhhdjn" data-title="神经网络：Faster R-CNN详解（二）" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%B8%80%EF%BC%89/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">神经网络：Faster R-CNN详解（一）</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Deep-Learning-Objects-Detection/">Deep Learning-Objects Detection</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Git/">Git</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Others/">Others</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/04/">April 2021</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/">神经网络：Faster R-CNN详解（二）</a>
+          </li>
+        
+          <li>
+            <a href="/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%B8%80%EF%BC%89/">神经网络：Faster R-CNN详解（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2021/04/11/Git%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%88%E4%BA%8C%EF%BC%89/">Git学习笔记（二）</a>
+          </li>
+        
+          <li>
+            <a href="/2021/04/11/Git%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%88%E4%B8%80%EF%BC%89/">Git学习笔记（一）</a>
+          </li>
+        
+          <li>
+            <a href="/2021/04/10/Hexo%E5%8D%9A%E5%AE%A2-Typora%E6%96%87%E4%BB%B6%E9%83%A8%E7%BD%B2/">Hexo博客+Typora文件部署</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2021 Eric Tan<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
