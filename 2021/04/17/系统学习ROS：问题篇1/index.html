@@ -4,19 +4,21 @@
   <meta charset="utf-8">
   
   
-  <title>Test message | Eric Tan</title>
+  <title>系统学习ROS：问题篇1 | Eric Tan</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="一级标题二级标题This is a test file. 123import numpy as npimport pytorchimport cv2  测试加粗功能">
+  <meta name="description" content="跑项目时经常会由于环境、路径等引发一系列问题，问题篇记录我在跑实例过程中遇到的问题以及解决方法。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Test message">
-<meta property="og:url" content="http://example.com/2021/04/10/Test-message/index.html">
+<meta property="og:title" content="系统学习ROS：问题篇1">
+<meta property="og:url" content="http://example.com/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%9A%E9%97%AE%E9%A2%98%E7%AF%871/index.html">
 <meta property="og:site_name" content="Eric Tan">
-<meta property="og:description" content="一级标题二级标题This is a test file. 123import numpy as npimport pytorchimport cv2  测试加粗功能">
+<meta property="og:description" content="跑项目时经常会由于环境、路径等引发一系列问题，问题篇记录我在跑实例过程中遇到的问题以及解决方法。">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2021-04-10T13:48:11.000Z">
-<meta property="article:modified_time" content="2021-04-10T13:49:51.730Z">
+<meta property="og:image" content="http://example.com/F:/home/hao/.config/Typora/typora-user-images/image-20210417131223296.png">
+<meta property="article:published_time" content="2021-04-17T05:28:18.000Z">
+<meta property="article:modified_time" content="2021-04-17T05:30:34.164Z">
 <meta property="article:author" content="Eric Tan">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/F:/home/hao/.config/Typora/typora-user-images/image-20210417131223296.png">
   
     <link rel="alternate" href="/atom.xml" title="Eric Tan" type="application/atom+xml">
   
@@ -77,12 +79,16 @@
 </header>
 
       <div class="outer">
-        <section id="main"><article id="post-Test-message" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+        <section id="main"><article id="post-系统学习ROS：问题篇1" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
-    <a href="/2021/04/10/Test-message/" class="article-date">
-  <time class="dt-published" datetime="2021-04-10T13:48:11.000Z" itemprop="datePublished">2021-04-10</time>
+    <a href="/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%9A%E9%97%AE%E9%A2%98%E7%AF%871/" class="article-date">
+  <time class="dt-published" datetime="2021-04-17T05:28:18.000Z" itemprop="datePublished">2021-04-17</time>
 </a>
     
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/ROS/">ROS</a>
+  </div>
+
   </div>
   <div class="article-inner">
     
@@ -91,7 +97,7 @@
         
   
     <h1 class="p-name article-title" itemprop="headline name">
-      Test message
+      系统学习ROS：问题篇1
     </h1>
   
 
@@ -99,15 +105,46 @@
     
     <div class="e-content article-entry" itemprop="articleBody">
       
-        <h1 id="一级标题"><a href="#一级标题" class="headerlink" title="一级标题"></a>一级标题</h1><h2 id="二级标题"><a href="#二级标题" class="headerlink" title="二级标题"></a>二级标题</h2><p>This is a test file.</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> numpy <span class="keyword">as</span> np</span><br><span class="line"><span class="keyword">import</span> pytorch</span><br><span class="line"><span class="keyword">import</span> cv2</span><br></pre></td></tr></table></figure>
+        <p>跑项目时经常会由于环境、路径等引发一系列问题，问题篇记录我在跑实例过程中遇到的<strong>问题以及解决方法</strong>。</p>
+<span id="more"></span>
 
-<p>测试<strong>加粗</strong>功能</p>
+<h4 id="我在第一次跑程序时遇到的问题："><a href="#我在第一次跑程序时遇到的问题：" class="headerlink" title="我在第一次跑程序时遇到的问题："></a>我在第一次跑程序时遇到的问题：</h4><p>（1）我的环境：</p>
+<ul>
+<li><p>ROS melodic桌面完整版</p>
+</li>
+<li><p>根据教程配置好的VS Code</p>
+</li>
+<li><p>Ubuntu内装有anaconda</p>
+</li>
+<li><p>Ubuntu自带python2、python3</p>
+</li>
+</ul>
+<p>（2）问题：</p>
+<p>写好Client节点后，运行launch文件报错，并且只出现一只乌龟。</p>
+<p>（3）解决过程</p>
+<p>首先确定是<strong>python解释器问题</strong>，ROS Melodic的默认环境是python2, 最新发布的ROS noetic才完全支持python3。但是我们编写程序时用的是python3，所以需要使用python3解释器。</p>
+<p>如果使用网上推荐的方法：创建python2到python3的软链接，虽然会将解释器自动链接为python3，但由于某些神秘力量，创建软链接后居然连roscore都打不开了！终端也打不开！（现在也未知原因）</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo ln -s /usr/<span class="built_in">bin</span>/python3 /usr/<span class="built_in">bin</span>/python</span><br></pre></td></tr></table></figure>
+
+<p>所以我们删除软链接：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo rm /usr/<span class="built_in">bin</span>/python</span><br></pre></td></tr></table></figure>
+
+<p>然后采用另一种方法：</p>
+<p>这种方法直接使用 python3，但存在问题: 不兼容之前的 ROS 相关 python 实现。</p>
+<p>在所有python文件头部，添加：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python3</span></span><br></pre></td></tr></table></figure>
+
+<p>之后即可正常运行！</p>
+<img src="/F:/home/hao/.config/Typora/typora-user-images/image-20210417131223296.png" alt="image-20210417131223296" style="zoom:67%;">
+
+
+
+<p>总结：如果遇到python文件无法运行的情况，在所有在所有python文件头部，添加<code>#!/usr/bin/env python3</code></p>
 
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2021/04/10/Test-message/" data-id="cknbt1sms0000w0t95x07g6e6" data-title="Test message" class="article-share-link">Share</a>
+      <a data-url="http://example.com/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%9A%E9%97%AE%E9%A2%98%E7%AF%871/" data-id="cknlaxvcq0000ykt947s14uag" data-title="系统学习ROS：问题篇1" class="article-share-link">Share</a>
       
       
       
@@ -117,19 +154,10 @@
     
 <nav id="article-nav">
   
-    <a href="/2021/04/10/Hexo%E5%8D%9A%E5%AE%A2-Typora%E6%96%87%E4%BB%B6%E9%83%A8%E7%BD%B2/" id="article-nav-newer" class="article-nav-link-wrap">
-      <strong class="article-nav-caption">Newer</strong>
-      <div class="article-nav-title">
-        
-          Hexo博客+Typora文件部署
-        
-      </div>
-    </a>
   
-  
-    <a href="/2021/04/10/hello-world/" id="article-nav-older" class="article-nav-link-wrap">
+    <a href="/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%89%EF%BC%89/" id="article-nav-older" class="article-nav-link-wrap">
       <strong class="article-nav-caption">Older</strong>
-      <div class="article-nav-title">Hello World</div>
+      <div class="article-nav-title">系统学习ROS（三）</div>
     </a>
   
 </nav>
