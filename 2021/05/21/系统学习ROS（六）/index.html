@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>系统学习ROS（六） | Eric Tan</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="服务于上层应用，导航功能是十分重要且基础的功能之一，ROS中的Gmapping包可以方便地实现导航功能。导航不是单一的功能，它由多个分解的子功能组成，本文进行简单概述并介绍地图服务。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="系统学习ROS（六）">
+<meta property="og:url" content="http://example.com/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%85%AD%EF%BC%89/index.html">
+<meta property="og:site_name" content="Eric Tan">
+<meta property="og:description" content="服务于上层应用，导航功能是十分重要且基础的功能之一，ROS中的Gmapping包可以方便地实现导航功能。导航不是单一的功能，它由多个分解的子功能组成，本文进行简单概述并介绍地图服务。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/images/image-20210521191104511.png">
+<meta property="article:published_time" content="2021-05-21T11:08:43.000Z">
+<meta property="article:modified_time" content="2021-05-21T11:15:54.026Z">
+<meta property="article:author" content="Eric Tan">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/images/image-20210521191104511.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Eric Tan" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Eric Tan</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">Welcome, and thanks.</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="Search"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="Search"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-系统学习ROS（六）" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%85%AD%EF%BC%89/" class="article-date">
+  <time class="dt-published" datetime="2021-05-21T11:08:43.000Z" itemprop="datePublished">2021-05-21</time>
+</a>
+    
+  <div class="article-category">
+    <a class="article-category-link" href="/categories/ROS/">ROS</a>
+  </div>
+
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      系统学习ROS（六）
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>服务于上层应用，导航功能是十分重要且基础的功能之一，ROS中的Gmapping包可以方便地实现导航功能。导航不是单一的功能，它由多个分解的子功能组成，本文进行简单概述并介绍地图服务。</p>
+<span id="more"></span>
+
+<h2 id="十一、机器人导航"><a href="#十一、机器人导航" class="headerlink" title="十一、机器人导航"></a>十一、机器人导航</h2><p>一、ROS导航功能包简介</p>
+<p>1.总结下来，涉及的关键技术有如下五点:</p>
+<ol>
+<li>全局地图</li>
+<li>自身定位</li>
+<li>路径规划</li>
+<li>运动控制</li>
+<li>环境感知</li>
+</ol>
+<p>2.ROS官方提供的导航功能包图示：</p>
+<p><img src="/images/image-20210521191104511.png" alt="image-20210521191104511"></p>
+<p>（方框中都是ROS功能包，白色必须、灰色可选、蓝色是机器人硬件提供的）</p>
+<p>（1）全局地图：右上角的<strong>map_server</strong>用于提供全局地图，但是需要先画一张地图–&gt;<strong>SLAM</strong>；</p>
+<p>（2）自身定位：左侧<strong>amcl+sensor transforms</strong>: 用传感器感知到的的周边信息，与全局地图匹配;</p>
+<p>​                                            <strong>odometry source</strong>: 用里程计估算机器人位置</p>
+<p>​                                如果在室外，那么可用GPS直接实现定位；但在室内就要依赖上面的amcl或odometry；</p>
+<p>（3）路径规划：中间的move_base；</p>
+<pre><code>     路径规划分为两种：1.**全局**路径规划：**global_planner**，基于全局地图的；
+</code></pre>
+<p>​                     2.<strong>本地</strong>路径规划：<strong>local_planner</strong>，基于传感器实时感知到的小范围的地图；–&gt;帮助机器人<strong>躲避动态障碍物</strong></p>
+<p>（4）运动控制：下面的base controller</p>
+<p>（5）环境感知：右边的sensor sources； 在本地路径规划(避障)、SLAM中用到。</p>
+<h3 id="3-上述功能中，绘制地图的工具——SLAM"><a href="#3-上述功能中，绘制地图的工具——SLAM" class="headerlink" title="3.上述功能中，绘制地图的工具——SLAM"></a>3.上述功能中，绘制地图的工具——SLAM</h3><p>（1）在 ROS 中，较为常用的 SLAM 实现也比较多，比如: gmapping、hector_slam、cartographer、rgbdslam、ORB_SLAM ….</p>
+<p>（2）当然如果要完成 SLAM ，<strong>机器人必须要具备感知外界环境的能力</strong>，尤其是要具备获取周围环境<strong>深度信息</strong>的能力。感知的实现需要依赖于传感器，比如: 激光雷达、摄像头、RGB-D摄像头…</p>
+<p>（3）SLAM 可以用于地图生成，而生成的地图还需要被保存以待后续使用，在 <strong>ROS 中保存地图的功能包是 map_server</strong></p>
+<p>（4）辨析：SLAM不等于导航，SLAM只是实现地图构建和即使定位，是导航功能中的重要一环。</p>
+<p>二、导航中的坐标系</p>
+<p>1.简介</p>
+<p>通常，以机器人的出发点为原点创建坐标系，但是这个这个坐标系不是客观存在的，定位实现需要依赖于机器人自身，机器人需要<strong>逆向推导参考系原点</strong>并<strong>计算坐标系相对关系</strong></p>
+<p>两种方式：</p>
+<p>（1）通过<strong>里程计</strong>定位:时时收集机器人的速度信息计算并发布机器人坐标系与父级参考系的相对关系；</p>
+<p>​                通俗解释：里程计的速度*走过的时间=现在离原点的距离</p>
+<p>​                缺点:里程计存在<strong>累计误差</strong>，不利于长距离或长期定位</p>
+<p>（2）通过<strong>传感器</strong>定位:通过传感器收集外界环境信息通过匹配计算并发布机器人坐标系与父级参考系的相对关系。</p>
+<p>​                缺点:传感器定位会出现跳变的情况，且传感器定位在<strong>标志物较少的环境下，其定位精度会大打折扣</strong></p>
+<p>2.导航中的坐标系变换</p>
+<p>不管使用哪种定位实现，最终都要发布<strong>机器人坐标系</strong>与其<strong>父级坐标系</strong>的相对关系；</p>
+<p>（1）机器人坐标系：使用机器人模型中的根坐标系(base_link或base_footprint)</p>
+<p>（2）父级坐标系：里程计定位时odom；传感器定位时map；</p>
+<p>​            一般的继承关系：<strong>map/odom</strong> —&gt; <strong>base_link/base_footprint</strong> —&gt; laser、camera、wheel等一堆</p>
+<p>​            当里程计和传感器<strong>结合使用</strong>时，将map设置为odom的父级：</p>
+<p>​                                                <strong>map</strong> —&gt; <strong>odom</strong> —&gt; <strong>base_link/base_footprint</strong> —&gt; laser、camera、wheel等一堆</p>
+<p>3.导航条件说明</p>
+<p>（1）它是为<strong>差速驱动的轮式机器人</strong>设计的：它假设底盘受到理想的运动命令的控制并可实现预期的结果，命令的格式为：x速度分量，y速度分量，角速度(theta)分量</p>
+<p>（2）它需要在底盘上安装一个<strong>单线激光雷达</strong>。这个激光雷达用于构建地图和定位</p>
+<h3 id="三、导航实现"><a href="#三、导航实现" class="headerlink" title="三、导航实现"></a>三、导航实现</h3><p>1.SLAM建图：需要键盘控制机器人运动，逐步建图</p>
+<p>  <strong>探索式的</strong>SLAM建图：给机器人一个大致目标，机器人自己规划路径过去</p>
+<p>2.准备工作</p>
+<p>（1）安装功能包</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">sudo  apt  install  ros-melodic-gmapping  <span class="comment">#SLAM建图</span></span><br><span class="line">sudo  apt  install  ros-melodic-<span class="built_in">map</span>-server  <span class="comment">#保存、读取地图</span></span><br><span class="line">sudo  apt  install  ros-melodic-navigation  <span class="comment">#定位、路径规划</span></span><br></pre></td></tr></table></figure>
+
+<p>（2）创建功能包，导入依赖：<code>gmapping</code>  <code>map_server</code>  <code>amcl</code>  <code>move_base</code></p>
+<p><strong>3.gmapping</strong></p>
+<p>（1）gmapping可以根据移动机器人里程计数据和激光雷达数据来绘制二维的栅格地图，gmapping对硬件也有一定的要求：</p>
+<ul>
+<li>该移动机器人可以发布<strong>里程计消息</strong></li>
+<li>机器人需要发布<strong>雷达消息</strong>(该消息可以通过水平固定安装的雷达发布，或者也可以将<strong>深度相机消息</strong>转换成雷达消息)</li>
+</ul>
+<p>（2）gmapping节点说明</p>
+<p>核心节点：<strong>slam_gmapping</strong> (简略说明)</p>
+<ul>
+<li><p>订阅的Topic</p>
+</li>
+<li><p>发布的Topic</p>
+</li>
+</ul>
+<p>​        map_metadata: 地图元数据，包括地图的宽度、高度、分辨率等</p>
+<p>​        map: 地图栅格数据; 在Rviz中订阅它！</p>
+<p>​        ~entropy：机器人姿态分布熵估计(值越大，不确定性越大)</p>
+<ul>
+<li>参数</li>
+<li>所需要的坐标变换</li>
+<li>发布的坐标变换</li>
+</ul>
+<p>参考官网：<a target="_blank" rel="noopener" href="http://wiki.ros.org/gmapping">http://wiki.ros.org/gmapping</a>  里面有众多参数，需要了解底层原理才能设置；否则使用默认值即可。</p>
+<p>（3）gmapping节点相关的launch文件编写</p>
+<p>可以参考 github 的演示 launch文件：<a target="_blank" rel="noopener" href="https://github.com/ros-perception/slam_gmapping/blob/melodic-devel/gmapping/launch/slam_gmapping_pr2.launch">https://github.com/ros-perception/slam_gmapping/blob/melodic-devel/gmapping/launch/slam_gmapping_pr2.launch</a></p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">launch</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;use_sim_time&quot;</span> <span class="attr">value</span>=<span class="string">&quot;true&quot;</span>/&gt;</span> <span class="comment">&lt;!-- 是否为仿真环境；是则设置为true --&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">node</span> <span class="attr">pkg</span>=<span class="string">&quot;gmapping&quot;</span> <span class="attr">type</span>=<span class="string">&quot;slam_gmapping&quot;</span> <span class="attr">name</span>=<span class="string">&quot;slam_gmapping&quot;</span> <span class="attr">output</span>=<span class="string">&quot;screen&quot;</span>&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">remap</span> <span class="attr">from</span>=<span class="string">&quot;scan&quot;</span> <span class="attr">to</span>=<span class="string">&quot;scan&quot;</span>/&gt;</span>   <span class="comment">&lt;!-- 雷达话题 --&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;map_update_interval&quot;</span> <span class="attr">value</span>=<span class="string">&quot;5.0&quot;</span>/&gt;</span>  <span class="comment">&lt;!-- 每5s更新一次地图 --&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;maxUrange&quot;</span> <span class="attr">value</span>=<span class="string">&quot;16.0&quot;</span>/&gt;</span>  <span class="comment">&lt;!-- 雷达最长探测距离 --&gt;</span></span><br><span class="line">        </span><br><span class="line">       <span class="comment">&lt;!-- 关键参数：坐标系 --&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;base_frame&quot;</span> <span class="attr">value</span>=<span class="string">&quot;base_footprint&quot;</span>/&gt;</span><span class="comment">&lt;!--底盘坐标系；如果用的是base_link，则要修改--&gt;</span> </span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;odom_frame&quot;</span> <span class="attr">value</span>=<span class="string">&quot;odom&quot;</span>/&gt;</span> <span class="comment">&lt;!--里程计坐标系--&gt;</span></span><br><span class="line">        </span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;sigma&quot;</span> <span class="attr">value</span>=<span class="string">&quot;0.05&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;kernelSize&quot;</span> <span class="attr">value</span>=<span class="string">&quot;1&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;lstep&quot;</span> <span class="attr">value</span>=<span class="string">&quot;0.05&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;astep&quot;</span> <span class="attr">value</span>=<span class="string">&quot;0.05&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;iterations&quot;</span> <span class="attr">value</span>=<span class="string">&quot;5&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;lsigma&quot;</span> <span class="attr">value</span>=<span class="string">&quot;0.075&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;ogain&quot;</span> <span class="attr">value</span>=<span class="string">&quot;3.0&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;lskip&quot;</span> <span class="attr">value</span>=<span class="string">&quot;0&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;srr&quot;</span> <span class="attr">value</span>=<span class="string">&quot;0.1&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;srt&quot;</span> <span class="attr">value</span>=<span class="string">&quot;0.2&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;str&quot;</span> <span class="attr">value</span>=<span class="string">&quot;0.1&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;stt&quot;</span> <span class="attr">value</span>=<span class="string">&quot;0.2&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;linearUpdate&quot;</span> <span class="attr">value</span>=<span class="string">&quot;1.0&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;angularUpdate&quot;</span> <span class="attr">value</span>=<span class="string">&quot;0.5&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;temporalUpdate&quot;</span> <span class="attr">value</span>=<span class="string">&quot;3.0&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;resampleThreshold&quot;</span> <span class="attr">value</span>=<span class="string">&quot;0.5&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;particles&quot;</span> <span class="attr">value</span>=<span class="string">&quot;30&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;xmin&quot;</span> <span class="attr">value</span>=<span class="string">&quot;-50.0&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;ymin&quot;</span> <span class="attr">value</span>=<span class="string">&quot;-50.0&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;xmax&quot;</span> <span class="attr">value</span>=<span class="string">&quot;50.0&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;ymax&quot;</span> <span class="attr">value</span>=<span class="string">&quot;50.0&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;delta&quot;</span> <span class="attr">value</span>=<span class="string">&quot;0.05&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;llsamplerange&quot;</span> <span class="attr">value</span>=<span class="string">&quot;0.01&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;llsamplestep&quot;</span> <span class="attr">value</span>=<span class="string">&quot;0.01&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;lasamplerange&quot;</span> <span class="attr">value</span>=<span class="string">&quot;0.005&quot;</span>/&gt;</span></span><br><span class="line">      <span class="tag">&lt;<span class="name">param</span> <span class="attr">name</span>=<span class="string">&quot;lasamplestep&quot;</span> <span class="attr">value</span>=<span class="string">&quot;0.005&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">node</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">&lt;!-- 坐标变换关系发布节点--&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">node</span> <span class="attr">pkg</span>=<span class="string">&quot;joint_state_publisher&quot;</span> <span class="attr">name</span>=<span class="string">&quot;joint_state_publisher&quot;</span> <span class="attr">type</span>=<span class="string">&quot;joint_state_publisher&quot;</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">node</span> <span class="attr">pkg</span>=<span class="string">&quot;robot_state_publisher&quot;</span> <span class="attr">name</span>=<span class="string">&quot;robot_state_publisher&quot;</span> <span class="attr">type</span>=<span class="string">&quot;robot_state_publisher&quot;</span> /&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">node</span> <span class="attr">pkg</span>=<span class="string">&quot;rviz&quot;</span> <span class="attr">type</span>=<span class="string">&quot;rviz&quot;</span> <span class="attr">name</span>=<span class="string">&quot;rviz&quot;</span> /&gt;</span></span><br><span class="line">    <span class="comment">&lt;!-- 可以保存 rviz 配置并后期直接使用--&gt;</span>s</span><br><span class="line">    <span class="comment">&lt;!--</span></span><br><span class="line"><span class="comment">    &lt;node pkg=&quot;rviz&quot; type=&quot;rviz&quot; name=&quot;rviz&quot; args=&quot;-d $(find my_nav_sum)/rviz/gmapping.rviz&quot;/&gt;</span></span><br><span class="line"><span class="comment">    --&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">launch</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>（4）启动建图仿真</p>
+<p>1.首先启动之前编写好的机器人节点（配有雷达）</p>
+<p>2.启动Rviz（已集成在上述gmapping的launch文件中），添加<code>RobotModel</code>、<code>LaserScan</code>插件，添加<code>Map</code>插件并将话题设置为<code>map</code>（gmapping节点自己发布的话题） —&gt;配置好之后可以保存配置，方便后续复用</p>
+<p>3.配置启动完成后，启动键盘控制节点，控制机器人运动，进行建图</p>
+<p>4.map_server</p>
+<p>当节点关闭时，数据也会被一并释放，我们需要将栅格地图<strong>序列化</strong>到的磁盘以持久化存储，后期还要通过<strong>反序列化</strong>读取磁盘的地图数据再执行后续操作；</p>
+<p>map_server功能包中提供了两个节点: </p>
+<p>（1） map_saver ，用于将栅格地图保存到磁盘</p>
+<p>订阅的topic：map(nav_msgs/OccupancyGrid)</p>
+<p>地图保存的launch文件：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">launch</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">arg</span> <span class="attr">name</span>=<span class="string">&quot;filename&quot;</span> <span class="attr">value</span>=<span class="string">&quot;$(find mycar_nav)/map/nav&quot;</span> /&gt;</span>  <span class="comment">&lt;!-- value 指定保存的路径 --&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">node</span> <span class="attr">name</span>=<span class="string">&quot;map_save&quot;</span> <span class="attr">pkg</span>=<span class="string">&quot;map_server&quot;</span> <span class="attr">type</span>=<span class="string">&quot;map_saver&quot;</span> <span class="attr">args</span>=<span class="string">&quot;-f $(arg filename)&quot;</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">launch</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>修改value指定的路径即可，其他不用改</p>
+<p>保存结果解释：</p>
+<p>xxx.pgm 本质是一张图片，直接使用图片查看程序即可打开。</p>
+<p>xxx.yaml 保存的是地图的元数据信息，用于描述图片，其格式如下：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#1.图片路径</span></span><br><span class="line">image: /home/rosmelodic/ws02_nav/src/mycar_nav/<span class="built_in">map</span>/nav.pgm</span><br><span class="line"><span class="comment">#2.地图刻度尺，单位：米/像素</span></span><br><span class="line">resolution: <span class="number">0.050000</span></span><br><span class="line"><span class="comment">#3.地图的位姿：想对于rviz中原点的位姿</span></span><br><span class="line">origin: [-<span class="number">50.000000</span>, -<span class="number">50.000000</span>, <span class="number">0.000000</span>]</span><br><span class="line"><span class="comment">#4.取反（黑变白，白变黑）</span></span><br><span class="line">negate: <span class="number">0</span></span><br><span class="line"><span class="comment">#5.占用阈值</span></span><br><span class="line">occupied_thresh: <span class="number">0.65</span></span><br><span class="line"><span class="comment">#6.空闲阈值</span></span><br><span class="line">free_thresh: <span class="number">0.196</span>            <span class="comment">#5、6一起决定障碍物</span></span><br></pre></td></tr></table></figure>
+
+
+
+<p>（2） map_server，读取磁盘的栅格地图并以服务的方式提供出去。</p>
+<p>launch文件：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">launch</span>&gt;</span></span><br><span class="line">    <span class="comment">&lt;!-- 设置地图的配置文件 --&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">arg</span> <span class="attr">name</span>=<span class="string">&quot;map&quot;</span> <span class="attr">default</span>=<span class="string">&quot;nav.yaml&quot;</span> /&gt;</span></span><br><span class="line">    <span class="comment">&lt;!-- 运行地图服务器，并且加载设置的地图--&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">node</span> <span class="attr">name</span>=<span class="string">&quot;map_server&quot;</span> <span class="attr">pkg</span>=<span class="string">&quot;map_server&quot;</span> <span class="attr">type</span>=<span class="string">&quot;map_server&quot;</span> <span class="attr">args</span>=<span class="string">&quot;$(find mycar_nav)/map/$(arg map)&quot;</span>/&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">launch</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>然后在rviz中使用map组建订阅map话题即可看见地图</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%85%AD%EF%BC%89/" data-id="ckoy892ta0000qkt9d95ib3n5" data-title="系统学习ROS（六）" class="article-share-link">Share</a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%BA%94%EF%BC%89/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">系统学习ROS（五）</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Categories</h3>
+    <div class="widget">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/Deep-Learning-Objects-Detection/">Deep Learning-Objects Detection</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Git/">Git</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/Others/">Others</a></li><li class="category-list-item"><a class="category-list-link" href="/categories/ROS/">ROS</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Archives</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/05/">May 2021</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/04/">April 2021</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">Recent Posts</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%85%AD%EF%BC%89/">系统学习ROS（六）</a>
+          </li>
+        
+          <li>
+            <a href="/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%BA%94%EF%BC%89/">系统学习ROS（五）</a>
+          </li>
+        
+          <li>
+            <a href="/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%9B%9B%EF%BC%89/">系统学习ROS（四）</a>
+          </li>
+        
+          <li>
+            <a href="/2021/05/11/github%EF%BC%9A%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%E5%AF%BB%E6%89%BE%E9%80%94%E5%BE%84/">github：开源项目寻找途径</a>
+          </li>
+        
+          <li>
+            <a href="/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%9A%E9%97%AE%E9%A2%98%E7%AF%871/">系统学习ROS：问题篇1</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2021 Eric Tan<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
