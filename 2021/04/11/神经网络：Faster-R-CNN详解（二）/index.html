@@ -1,19 +1,27 @@
-
 <!DOCTYPE html>
 <html lang="en">
-    
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="generator" content="Eric Tan">
-    <title>神经网络：Faster R-CNN详解（二） - Eric Tan</title>
-    <meta name="author" content="Eric Tan">
-    
-    
-    
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Eric Tan","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"]},"articleBody":"本节介绍Conv Layers和RPN网络\n在原论文中，作者多次强调了RPN的重要性。R-CNN和Fast R-CNN都是selective search花费大量时间，而RPN实现了由CNN自己做区域建议，效率奇高。\n\n\n三、Faster R-CNN相比于Fast R-CNN，它的进步在于区域建议网络：RPN\n1.Faster R-CNN将特征提取、区域建议、bbox回归、分类都整合在一个网络中，也即输入一张图像后所有操作都在CNN中完成，因此它是真正意义上实现了“end-to-end”！\n2.整体框架：\n\n\n（1）Conv layers，完成特征提取，后续的操作都在feature map上进行，所以具有“特征共享”的特点；通常使用VGG16、Resnet等；\n（2）Region Proposal Networks (RPN)：生成候选区域，通过FC层 (Softmax)判断anchors属于positive或者negative，再利用bbox regression修正anchors获得精确的proposals；\n（3）Roi Pooling：收集输入的feature maps和proposals，综合这些信息后提取proposal feature maps，送入后续全连接层判定目标类别；\n（4）Classification：利用proposal feature maps计算proposal的类别，同时再次bounding box regression获得检测框最终的精确位置。\n3.Conv layers:\n实际代码操作中，采用了一个小trick：通过padding使得所有卷积层的结果不改变长度和宽度，而所有pooling层都将长宽减半，因此最终输出的长宽为原始图像的1/16倍。这样，Conv layers生成的feature map中都可以和原图对应起来！\n4.RPN:\n\n\n\nfeature map中每个点上有k个anchor，每个anhcor要分positive和negative；\n如果k=9，则总共有20000+anchors，所以全部anchors拿去训练太多了，训练程序会在合适的anchors中随机选取128个postive anchors+128个negative anchors进行训练；\n流程：生成anchors -&gt; softmax分类器提取positvie anchors -&gt; bbox reg回归positive anchors -&gt; Proposal Layer生成proposals\n\n（1）softmax判定positive与negative：（W×H×2k）\n现讨论如何对每个anchors分positive和negative：\n其实RPN最终就是在原图尺度上，设置了密密麻麻的候选Anchor。然后用cnn去判断哪些Anchor是里面有目标的positive anchor，哪些是没目标的negative anchor。所以，仅仅是个二分类而已！\n\n\n（流程：3×3卷积 → 1×1卷积 →Softmax）\n疑问：3×3卷积是在feature map上进行的，每个点就一次，得到1×1×256向量，这是怎么牵扯到9个anchors的？很多人都会在初次学习时产生这个疑问！ 我在阅读了数十条博文大神的评论之后终于看到一种合理的解释：\n这里的3x3卷积输出256dfeature map, 卷积后(c,w,h)均未改变，这里的3x3卷积只是在进一步提取特征，与后面两路1x1卷积相配合，共同输出对foreground/background和anchor_pred的预测值，真正体现Anchor数量 和其在map中的维度的地方是两路1×1卷积后的输出。\n特征图的每个像素位置都能看成一个向量 [1，channels]（卷积基本原理：这个像素可不简单，它代表的是高级语义，其信息量远不只一个像素那么简单，而是包含有周边好几大圈的信息）。所以这个向量 [1，channels]是能代表一个位置上的9个anchors的，理解这一点后就好办了，利用1x1卷积分别将通道数压缩到2x9（代表分类）以及4x9（代表坐标回归值）建立一种抽象的映射（这其实和全连接是一个道理的都是建立映射的过程嘛）。所以就可以通过损失函数来指导RPN的训练啦。\n经过softmax分类后，就可以提取出positive anchors了。\n\n解释一下这里的18维：\n\n​      前9维对应9个anchor属于foreground的概率，后9维对应9个anchor属于background的概率；这里面最大概率的那个就决定是foreground还是background，也决定了是属于9个anchors里面的哪一个\n（2）对Proposals进行bbox regression：（W×H×4k）\n\n\n（流程：3×3卷积 → 1×1卷积 ）\nfeature maps每个点都有9个anchors，每个anchors又都有4个用于回归的\n\n变换量。\n\n综上，2k和4k可以理解为用来“占位的”，因为无论是3×3卷积、1×1卷积都没涉及anchors，要通过1×1卷积为k个anchors预留2k、4k的位置，用于后面的“针对anchors”的操作！\n\n\n（3）bbox regerssion回归positive anchors ：（bbox reg原理）\n（注：由于数学原理较复杂，且思路比较绕，所以此处直接参考博文：https://zhuanlan.zhihu.com/p/31426458）\n\n\n红色的框A代表原始的positive Anchors，绿色的框G代表目标的GT，我们的目标是寻找一种关系，使得输入原始的anchor A经过映射得到一个跟真实窗口G更接近的回归窗口G’\n那么经过何种变换F才能从图10中的anchor A变为G’呢？ 比较简单的思路就是:\n\n先做平移\n\n\n\n\n再做缩放\n\n\n\n观察上面4个公式发现，需要学习的是  这四个变换。当输入的anchor A与GT相差较小时，可以认为这种变换是一种线性变换， 那么就可以用线性回归来建模对窗口进行微调（注意，只有当anchors A和GT比较接近时，才能使用线性回归模型，否则就是复杂的非线性问题了）。\n接下来的问题就是如何通过线性回归获得  了。线性回归就是给定输入的特征向量X, 学习一组参数W, 使得经过线性回归后的值跟真实值Y非常接近，即。对于该问题，输入X是cnn feature map，定义为Φ；同时还有训练传入A与GT之间的变换量，即。输出是四个变换。那么目标函数可以表示为：\n\n其中  是对应anchor的feature map组成的特征向量，  是需要学习的参数，  是得到的预测值（*表示 x，y，w，h，也就是每一个变换对应一个上述目标函数）。为了让预测值  与真实值  差距最小，设计L1损失函数：\n\n函数优化目标为：\n\n为了方便描述，这里以L1损失为例介绍，而真实情况中一般使用soomth-L1损失。\n需要说明，只有在GT与需要回归框位置比较接近时，才可近似认为上述线性变换成立。说完原理，对应于Faster RCNN原文，positive anchor与ground truth之间的平移量  与尺度因子  如下：（原文给出的映射关系真实值，目标是训练参数W，使得WX的结果Y更接近与下面给出的值，这个Y就是预测的映射变换值）\n\n\n对于训练bouding box regression网络回归分支，输入是cnn feature Φ，监督信号是Anchor与GT的差距 ，即训练目标是：输入 Φ的情况下使网络输出与监督信号尽可能接近。那么当bouding box regression工作时，再输入Φ时，回归网络分支的输出就是每个Anchor的平移量和变换尺度 ，显然即可用来修正Anchor位置了。\n（4）Proposal Layer整合信息，生成RPN网络最终的feature proposals：\n流程如下：\n\n生成anchors，利用对所有的anchors做bbox regression回归（这里的anchors生成和训练时完全一致）\n按照输入的positive softmax scores由大到小排序anchors，提取前pre_nms_topN(e.g. 6000)个anchors，即提取修正位置后的positive anchors\n限定超出图像边界的positive anchors为图像边界，防止后续roi pooling时proposal超出图像边界（见文章底部QA部分图21）\n剔除尺寸非常小的positive anchors\n对剩余的positive anchors进行NMS（nonmaximum suppression）\nProposal Layer有3个输入：positive和negative anchors分类器结果rpn_cls_prob_reshape，对应的bbox reg的(e.g. 300)结果作为proposal输出\n\n参考博文：https://zhuanlan.zhihu.com/p/31426458\n","dateCreated":"2021-04-11T17:54:44+08:00","dateModified":"2021-04-11T18:09:23+08:00","datePublished":"2021-04-11T17:54:44+08:00","description":"本节介绍Conv Layers和RPN网络\n在原论文中，作者多次强调了RPN的重要性。R-CNN和Fast R-CNN都是selective search花费大量时间，而RPN实现了由CNN自己做区域建议，效率奇高。","headline":"神经网络：Faster R-CNN详解（二）","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"http://example.com/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/"},"publisher":{"@type":"Organization","name":"Eric Tan","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"]},"url":"http://example.com/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/"}</script>
-    <meta name="description" content="本节介绍Conv Layers和RPN网络 在原论文中，作者多次强调了RPN的重要性。R-CNN和Fast R-CNN都是selective search花费大量时间，而RPN实现了由CNN自己做区域建议，效率奇高。">
-<meta property="og:type" content="blog">
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Muse","version":"8.7.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="本节介绍Conv Layers和RPN网络 在原论文中，作者多次强调了RPN的重要性。R-CNN和Fast R-CNN都是selective search花费大量时间，而RPN实现了由CNN自己做区域建议，效率奇高。">
+<meta property="og:type" content="article">
 <meta property="og:title" content="神经网络：Faster R-CNN详解（二）">
 <meta property="og:url" content="http://example.com/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/index.html">
 <meta property="og:site_name" content="Eric Tan">
@@ -55,327 +63,190 @@
 <meta property="article:author" content="Eric Tan">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/images/image-20210411154919630.png">
-    
-    
-        
-    
-    
-    
-    
-    
-    <!--STYLES-->
-    
-<link rel="stylesheet" href="/assets/css/style-avgrqz8jhyoidabpqs5wzkidsky3osgmw4xscwbmmpkuhuen3z0qho9qrrme.min.css">
 
-    <!--STYLES END-->
-    
 
-    
+<link rel="canonical" href="http://example.com/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/">
 
-    
-        
-    
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://example.com/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/","path":"2021/04/11/神经网络：Faster-R-CNN详解（二）/","title":"神经网络：Faster R-CNN详解（二）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>神经网络：Faster R-CNN详解（二） | Eric Tan</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
 </head>
 
-    <body>
-        <div id="blog">
-            <!-- Define author's picture -->
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
 
-
-    
-
-<header id="header" data-behavior="4">
-    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
-    <div class="header-title">
-        <a
-            class="header-title-link"
-            href="/"
-            aria-label=""
-        >
-            Eric Tan
-        </a>
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
     </div>
-    
-        
-            <a
-                class="header-right-picture "
-                href="#about"
-                aria-label="Open the link: /#about"
-            >
-        
-        
-        </a>
-    
-</header>
+  </div>
 
-            <!-- Define author's picture -->
+  <div class="site-meta">
 
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Eric Tan</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Welcome, and thanks.</p>
+  </div>
 
-<nav id="sidebar" data-behavior="4">
-    <div class="sidebar-container">
-        
-        
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/"
-                            
-                            rel="noopener"
-                            title="Home"
-                        >
-                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Home</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/all-categories"
-                            
-                            rel="noopener"
-                            title="Categories"
-                        >
-                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Categories</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/all-tags"
-                            
-                            rel="noopener"
-                            title="Tags"
-                        >
-                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Tags</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/all-archives"
-                            
-                            rel="noopener"
-                            title="Archives"
-                        >
-                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Archives</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link open-algolia-search"
-                            href="#search"
-                            
-                            rel="noopener"
-                            title="Search"
-                        >
-                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Search</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="#about"
-                            
-                            rel="noopener"
-                            title="About"
-                        >
-                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">About</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://github.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="GitHub"
-                        >
-                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">GitHub</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="http://stackoverflow.com/users"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Stack Overflow"
-                        >
-                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Stack Overflow</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://twitter.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Twitter"
-                        >
-                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Twitter</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://facebook.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Facebook"
-                        >
-                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Facebook</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://plus.google.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Google +"
-                        >
-                        <i class="sidebar-button-icon fab fa-google-plus" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Google +</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://www.linkedin.com/profile/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="LinkedIn"
-                        >
-                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">LinkedIn</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/mailto"
-                            
-                            rel="noopener"
-                            title="Mail"
-                        >
-                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Mail</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/atom.xml"
-                            
-                            rel="noopener"
-                            title="RSS"
-                        >
-                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">RSS</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
     </div>
-</nav>
+  </div>
+</div>
 
-            
-            <div id="main" data-behavior="4"
-                 class="
-                        hasCoverMetaIn
-                        ">
-                
-<article class="post">
+
+
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%89%E3%80%81Faster-R-CNN"><span class="nav-number">1.</span> <span class="nav-text">三、Faster R-CNN</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-overview">
+            <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Eric Tan</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+  </nav>
+</div>
+
+
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
     
-    
-        <div class="post-header main-content-wrap text-left">
-    
-        <h1 class="post-title">
-            神经网络：Faster R-CNN详解（二）
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Eric Tan">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Eric Tan">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          神经网络：Faster R-CNN详解（二）
         </h1>
-    
-    
-        <div class="post-meta">
-    <time datetime="2021-04-11T17:54:44+08:00">
-	
-		    Apr 11, 2021
-    	
-    </time>
-    
-        <span>in </span>
-        
-    <a class="category-link" href="/categories/Deep-Learning-Objects-Detection/">Deep Learning-Objects Detection</a>
 
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
 
-    
+      <time title="Created: 2021-04-11 17:54:44 / Modified: 18:09:23" itemprop="dateCreated datePublished" datetime="2021-04-11T17:54:44+08:00">2021-04-11</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Deep-Learning-Objects-Detection/" itemprop="url" rel="index"><span itemprop="name">Deep Learning-Objects Detection</span></a>
+        </span>
+    </span>
+
+  
 </div>
 
-    
-</div>
+        </div>
+      </header>
 
     
-    <div class="post-content markdown">
-        <div class="main-content-wrap">
-            <p>本节介绍Conv Layers和RPN网络</p>
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>本节介绍Conv Layers和RPN网络</p>
 <p>在原论文中，作者多次强调了RPN的重要性。R-CNN和Fast R-CNN都是selective search花费大量时间，而RPN实现了由CNN自己做区域建议，效率奇高。</p>
 <span id="more"></span>
 
@@ -463,317 +334,72 @@
 </ol>
 <p>参考博文：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/31426458">https://zhuanlan.zhihu.com/p/31426458</a></p>
 
-            
-
-
-        </div>
     </div>
-    <div id="post-footer" class="post-footer main-content-wrap">
-        
-        
-            <div class="post-actions-wrap">
-    <nav>
-        <ul class="post-actions post-action-nav">
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/"
-                    data-tooltip="ROS学习笔记：古月居入门21讲"
-                    aria-label="PREVIOUS: ROS学习笔记：古月居入门21讲"
-                >
-                    
-                        <i class="fa fa-angle-left" aria-hidden="true"></i>
-                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
-                    </a>
-            </li>
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%B8%80%EF%BC%89/"
-                    data-tooltip="神经网络：Faster R-CNN详解（一）"
-                    aria-label="NEXT: 神经网络：Faster R-CNN详解（一）"
-                >
-                    
-                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
-                        <i class="fa fa-angle-right" aria-hidden="true"></i>
-                    </a>
-            </li>
-        </ul>
-    </nav>
-    <ul class="post-actions post-action-share">
-        <li class="post-action hide-lg hide-md hide-sm">
-            <a
-                class="post-action-btn btn btn--default btn-open-shareoptions"
-                href="#btn-open-shareoptions"
-                aria-label="Share this post"
-            >
-                <i class="fa fa-share-alt" aria-hidden="true"></i>
-            </a>
-        </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://example.com/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/"
-                    title="Share on Facebook"
-                    aria-label="Share on Facebook"
-                >
-                    <i class="fab fa-facebook" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://example.com/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/"
-                    title="Share on Twitter"
-                    aria-label="Share on Twitter"
-                >
-                    <i class="fab fa-twitter" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://example.com/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/"
-                    title="Share on Google+"
-                    aria-label="Share on Google+"
-                >
-                    <i class="fab fa-google-plus" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-        
-            
-        
-        <li class="post-action">
-            
-                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
-            
-                <i class="fa fa-list" aria-hidden="true"></i>
-            </a>
-        </li>
-    </ul>
-</div>
-
-
-        
-        
-            
-        
-    </div>
-</article>
-
-
-
-                <footer id="footer" class="main-content-wrap">
-    <span class="copyrights">
-        Copyrights &copy; 2021 Eric Tan. All Rights Reserved.
-    </span>
-</footer>
-
-            </div>
-            
-                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
-                    <div class="post-actions-wrap">
-    <nav>
-        <ul class="post-actions post-action-nav">
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/"
-                    data-tooltip="ROS学习笔记：古月居入门21讲"
-                    aria-label="PREVIOUS: ROS学习笔记：古月居入门21讲"
-                >
-                    
-                        <i class="fa fa-angle-left" aria-hidden="true"></i>
-                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
-                    </a>
-            </li>
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%B8%80%EF%BC%89/"
-                    data-tooltip="神经网络：Faster R-CNN详解（一）"
-                    aria-label="NEXT: 神经网络：Faster R-CNN详解（一）"
-                >
-                    
-                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
-                        <i class="fa fa-angle-right" aria-hidden="true"></i>
-                    </a>
-            </li>
-        </ul>
-    </nav>
-    <ul class="post-actions post-action-share">
-        <li class="post-action hide-lg hide-md hide-sm">
-            <a
-                class="post-action-btn btn btn--default btn-open-shareoptions"
-                href="#btn-open-shareoptions"
-                aria-label="Share this post"
-            >
-                <i class="fa fa-share-alt" aria-hidden="true"></i>
-            </a>
-        </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://example.com/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/"
-                    title="Share on Facebook"
-                    aria-label="Share on Facebook"
-                >
-                    <i class="fab fa-facebook" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://example.com/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/"
-                    title="Share on Twitter"
-                    aria-label="Share on Twitter"
-                >
-                    <i class="fab fa-twitter" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://example.com/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/"
-                    title="Share on Google+"
-                    aria-label="Share on Google+"
-                >
-                    <i class="fab fa-google-plus" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-        
-            
-        
-        <li class="post-action">
-            
-                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
-            
-                <i class="fa fa-list" aria-hidden="true"></i>
-            </a>
-        </li>
-    </ul>
-</div>
-
-
-                </div>
-                
-    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
-        <i id="btn-close-shareoptions" class="fa fa-times"></i>
-        <ul class="share-options">
-            
-                
-                
-                <li class="share-option">
-                    <a
-                        class="share-option-btn"
-                        target="new"
-                        href="https://www.facebook.com/sharer/sharer.php?u=http://example.com/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/"
-                        aria-label="Share on Facebook"
-                    >
-                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
-                    </a>
-                </li>
-            
-                
-                
-                <li class="share-option">
-                    <a
-                        class="share-option-btn"
-                        target="new"
-                        href="https://twitter.com/intent/tweet?text=http://example.com/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/"
-                        aria-label="Share on Twitter"
-                    >
-                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
-                    </a>
-                </li>
-            
-                
-                
-                <li class="share-option">
-                    <a
-                        class="share-option-btn"
-                        target="new"
-                        href="https://plus.google.com/share?url=http://example.com/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/"
-                        aria-label="Share on Google+"
-                    >
-                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
-                    </a>
-                </li>
-            
-        </ul>
-    </div>
-
-
-            
-        </div>
-        
-
-
-<div id="about">
-    <div id="about-card">
-        <div id="about-btn-close">
-            <i class="fa fa-times"></i>
-        </div>
-        
-            <h4 id="about-card-name">Eric Tan</h4>
-        
-            <div id="about-card-bio"><p>author.bio</p>
-</div>
-        
-        
-            <div id="about-card-job">
-                <i class="fa fa-briefcase"></i>
-                <br/>
-                <p>author.job</p>
-
-            </div>
-        
-        
-    </div>
-</div>
-
-        
-        
-<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
-        <!--SCRIPTS-->
-
-<script src="/assets/js/script-aruckjrapimnobkxs27htsu2kxkoy2szmjcde1n3gfjqfmv8qbkdebriarib.min.js"></script>
-
-<!--SCRIPTS END-->
-
 
     
+    
+    
+
+    <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%B8%80%EF%BC%89/" rel="prev" title="神经网络：Faster R-CNN详解（一）">
+                  <i class="fa fa-chevron-left"></i> 神经网络：Faster R-CNN详解（一）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/" rel="next" title="ROS学习笔记：古月居入门21讲">
+                  ROS学习笔记：古月居入门21讲 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
 
 
 
 
-    </body>
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Eric Tan</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+
+
+
+
+
+</body>
 </html>

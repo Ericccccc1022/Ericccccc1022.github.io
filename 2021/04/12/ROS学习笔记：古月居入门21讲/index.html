@@ -1,19 +1,27 @@
-
 <!DOCTYPE html>
 <html lang="en">
-    
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="generator" content="Eric Tan">
-    <title>ROS学习笔记：古月居入门21讲 - Eric Tan</title>
-    <meta name="author" content="Eric Tan">
-    
-    
-    
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Eric Tan","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"]},"articleBody":"本文记录热度最高的ROS入门教程——古月居入门21讲学习笔记，该教程确实非常基础，学完只能了解ROS的基本概念，要想完成项目开发，还需要很多更深入的学习与实战。\n\n\n一、基本概念1.节点Node：如上层的图像处理（python）、底层的设备驱动（C）\n2.节点管理器ROS Master：节点需要找ros master进行注册（registration）\n\n\nCamera将data传给图像处理节点，处理完后又将data传给远端的图像显示节点（上位机），这些传输都由ROS Master协助完成\n3.节点之间的通信方式：\n（1）话题Topic：node分为publisher、subscriber\n​                            消息Message：data的数据结构\n（2）服务Service：node分为server、client\n4.参数：全局共享字典\n5.文件系统:\n\n\n\n\n二、ROS命令行基础1.常用命令\n\n\n\nroscore 启动\nrosrun *** 启动节点\nrqt_gragh 基于qt平台的节点关系可视化\nrosnode 显示所有可使用的rosnode命令   如rosnode list显示所有节点信息\nrostopic 显示所有可使用的rostopic命令    如rostopic pub *** ***发布话题内容\nrosmsg show *** 查看消息内容（即话题的数据结构）\nrosservice list 查看所有服务（海龟窗口是服务器，我们的计算机是客户，对其发送请求）\nrosbag record -a *** 保存ros系统的所有数据\n\n创建工作空间（workspace）与功能包（）\n（1）workspace相当于编程中的一个project，包括四个子空间：\n\n\n（2）workspace创建方法:\n\n\n其中install空间需要自己添加：catkin_make install\n（3）功能包创建方法:\n​        在workspace中的src文件夹下进行创建\n\n\ncatkin_create_pkg    依赖包 依赖包 \n\n\n三、基本Topic模型的编程实现（以海龟运动为例）\n\n发布者Publisher编程实现：（C++）\n（1）在功能包下的src文件夹下创建cpp文件\n12touch xxx.cppsudo gedit xxx.cpp\n\n（2）文件中内容：\n\n\n（3）流程：\n\n\n创建Publisher，即向ROS Master注册节点信息，需要指定Topic名称和message信息\nwhile循环内部：创建message数据、按照一定频率循环发布消息\n（4）配置Cmake文件中的代码编译：\n在功能包中CMakeLlist.txt中添加两行内容\n\nPublisher的 Python实现：\n\n\n\n\n​        python是脚本语言，不需要在CMakeList中进行编译，直接rosrun运行.py文件即可\nTips1：\n通常编译后需要添加环境变量：\n1source devel&#x2F;setup.bash\n\n为了避免每一次编译后都更新环境变量，可以将上述语句直接添加到系统环境变量中，一劳永逸：\n1234在&#x2F;home目录下 Ctrl+h 显示隐藏文件打开.barshc文件在文件末尾添加上述语句 ”source xxx(绝对路径)“ 保存退出即可\n\n\n\n3.Subscriber的python实现：\n\n4.自定义话题消息：\n上述publisher中的Twist消息、subscriber中的Pose消息，都是ROS中已经定义好的message，直接用即可\n如果ROS中现成的消息不满足需求，则需要自己定义话题消息\n\n\n（1）首先写.msg文件，其中语法不是C++或者python，而是在编译时自适应；消息的定义就是在.msg文件中实现\n（2）package.xml中固定添加上述两行\n（3）重点难点是.msg文件的编译\n（4）消息定义好后，看看在此消息基础上的话题模型：\n\n\n​        publisher：之前的.msg文件编译后生成了Person头文件，所以可以import Person；可以看到，消息类型使用了自定义的Person\n\n\n​        subscriber：订阅的topic与上面一致，消息类型也是使用自定义的Person\n四、基本Service模型的编程实现1.Client\n\n2.Server\n\n3.服务数据的定义\n\n\n创建.srv文件，上面是request，下面是response\nTip2：\nros master中有参数共享器，所以每次运行新的程序之前最好重启roscore：Ctrl+c退出roscore，再重新roscore\nTip3：\n话题模型中，publisher和subscriber建立连接后，不再需要roscore；roscore的作用相当于“婚介所”\n五、参数使用与编程1.参数模型\n\n\n2.命令行\n\n\n3.参数设置python实现:\n\nget获取、set设置，创建client端请求service修改\n六、ROS中的坐标管理系统1.初识\n机器人中的坐标变换\n一个机器人身上有多种坐标系，如机器人上摄像头有坐标系，机器人底盘亦有坐标系；如果用原始办法计算二者之间的坐标关系，可能需要几十次的矩阵运算\n\n\n变换矩阵：平移变换、旋转变换\n2.ROS中的 tf功能包（transform）\n重要用途：管理所有坐标系；通过查询的方式就可以轻松找到两个坐标系之间的关系\n实现方式：广播与监听机制；只要启动ros master和 tf， 就会在后台维护一个tf tree，所有坐标系都保存在树的节点上\n3.举例\n激光雷达与机器人\n\n\n移动机器人搭载激光雷达获取物体的“深度”信息，但是我们关心的是小车底盘到物体的举例，所以由激光雷达检测到的距离需要经过一个坐标变换\n4.tf坐标系广播与监听的编程实现\n（1）实现 tf广播器（Broadcaster）：\n（2）实现tf监听器（Listener）：\n\n广播器实时subscribe订阅海龟的位置信息，并TF坐标变换信息广播出去\n七、Launch启动文件1.初识\n\n\n实现多节点的配置和启动，不需要再使用多个终端进行不同节点的启动；一个复杂机器人系统中的节点非常繁多，所以不可能都用终端来启动\n2.Launch文件常用语法\n\n\n在一个话题中节点名字不能重复，因此采用“重映射”使相同功能包使用不同的节点名字，在Launch中用name参数实现\n\nparam指定存在ros master内部的参数；arg指定仅存在Launch文件中的参数，可以作为函数的参数使用\n\n3.后续学习时，尤其是和真实机器人做结合时，Launch文件的使用非常频繁\n在做ROS中已有资源的整合时，尤其是将导航、SLAM的一些功能（ROS中都已有这些功能）与机器人做结合，基本上不用写太多代码，基本上都是在改各种Launch文件；Launch文件相当于是我们搭积木的平台，通过Launch文件中节点的运行、接口的变化和配置，最终可以将功能很快的实现\n八、ROS常用可视化工具1.QT工具箱\n综合性工具， 可作为开发机器人的上位机\n2.Rviz\n数据显示平台——必须有实际的数据\n\n\n在rviz中添加image，可以选择话题，实时显示摄像头拍摄内容\n3.Gazebo\n三维物理仿真平台——不需要真实数据\n九、ROS进阶1.ros_control + gazebo 进行机器人控制与仿真，继承了PID等控制算法，可以让小车搭载GPS、雷达、IMU等进行障碍物仿真；没有实物也可进行仿真；也可模拟小车搭载摄像头，将摄像头拍摄的内容在rviz中进行显示（如下图）\n\n\n在仿真环境中学习机器人相关理论、验证相关的算法\nwiki.ros.org/ros_control\n2.移动机器人\nSLAM建图与导航 主流算法：gmapping、hector\n\n（1）深度信息：雷达、相机（单目/双目）、RGBD相机\n（2）IMU信息（三轴姿态角及加速度）：陀螺仪、加速计\n（3）里程计信息：编码器上的累计信息\n算法功能集成得很好，只要将ROS提供的功能包与机器人结合，可能不需要自己写一行代码就能让机器人跑起来，但是会遇到很多问题，因为这些算法不一定能完全适配你的硬件平台：如建图精度不够、导航上避障效果不好。\n所以除了会使用ROS外，还要深入了解其功能包内部的实现原理。即用ROS可以很快地实现原型，但是要深入地了解自己研究方向的算法原理，例如研究SLAM，要知道gmapping、hector内部的实现机理，甚至对代码做优化\n3.机械臂\n机械臂运动规划、避障、抓取等\nROS中moveit框架可以完成\n总结：若未来研究机器人，研究ROS中很多功能包，这些功能包内的具体算法用到了“机器人学”的基本理论\n","dateCreated":"2021-04-12T19:43:23+08:00","dateModified":"2021-04-12T19:49:52+08:00","datePublished":"2021-04-12T19:43:23+08:00","description":"本文记录热度最高的ROS入门教程——古月居入门21讲学习笔记，该教程确实非常基础，学完只能了解ROS的基本概念，要想完成项目开发，还需要很多更深入的学习与实战。","headline":"ROS学习笔记：古月居入门21讲","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"http://example.com/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/"},"publisher":{"@type":"Organization","name":"Eric Tan","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"]},"url":"http://example.com/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/"}</script>
-    <meta name="description" content="本文记录热度最高的ROS入门教程——古月居入门21讲学习笔记，该教程确实非常基础，学完只能了解ROS的基本概念，要想完成项目开发，还需要很多更深入的学习与实战。">
-<meta property="og:type" content="blog">
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Muse","version":"8.7.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="本文记录热度最高的ROS入门教程——古月居入门21讲学习笔记，该教程确实非常基础，学完只能了解ROS的基本概念，要想完成项目开发，还需要很多更深入的学习与实战。">
+<meta property="og:type" content="article">
 <meta property="og:title" content="ROS学习笔记：古月居入门21讲">
 <meta property="og:url" content="http://example.com/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/index.html">
 <meta property="og:site_name" content="Eric Tan">
@@ -55,327 +63,190 @@
 <meta property="article:author" content="Eric Tan">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/images/image-20210402080956710.png">
-    
-    
-        
-    
-    
-    
-    
-    
-    <!--STYLES-->
-    
-<link rel="stylesheet" href="/assets/css/style-avgrqz8jhyoidabpqs5wzkidsky3osgmw4xscwbmmpkuhuen3z0qho9qrrme.min.css">
 
-    <!--STYLES END-->
-    
 
-    
+<link rel="canonical" href="http://example.com/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/">
 
-    
-        
-    
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://example.com/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/","path":"2021/04/12/ROS学习笔记：古月居入门21讲/","title":"ROS学习笔记：古月居入门21讲"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>ROS学习笔记：古月居入门21讲 | Eric Tan</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
 </head>
 
-    <body>
-        <div id="blog">
-            <!-- Define author's picture -->
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
 
-
-    
-
-<header id="header" data-behavior="4">
-    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
-    <div class="header-title">
-        <a
-            class="header-title-link"
-            href="/"
-            aria-label=""
-        >
-            Eric Tan
-        </a>
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
     </div>
-    
-        
-            <a
-                class="header-right-picture "
-                href="#about"
-                aria-label="Open the link: /#about"
-            >
-        
-        
-        </a>
-    
-</header>
+  </div>
 
-            <!-- Define author's picture -->
+  <div class="site-meta">
 
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Eric Tan</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Welcome, and thanks.</p>
+  </div>
 
-<nav id="sidebar" data-behavior="4">
-    <div class="sidebar-container">
-        
-        
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/"
-                            
-                            rel="noopener"
-                            title="Home"
-                        >
-                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Home</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/all-categories"
-                            
-                            rel="noopener"
-                            title="Categories"
-                        >
-                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Categories</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/all-tags"
-                            
-                            rel="noopener"
-                            title="Tags"
-                        >
-                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Tags</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/all-archives"
-                            
-                            rel="noopener"
-                            title="Archives"
-                        >
-                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Archives</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link open-algolia-search"
-                            href="#search"
-                            
-                            rel="noopener"
-                            title="Search"
-                        >
-                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Search</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="#about"
-                            
-                            rel="noopener"
-                            title="About"
-                        >
-                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">About</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://github.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="GitHub"
-                        >
-                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">GitHub</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="http://stackoverflow.com/users"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Stack Overflow"
-                        >
-                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Stack Overflow</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://twitter.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Twitter"
-                        >
-                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Twitter</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://facebook.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Facebook"
-                        >
-                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Facebook</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://plus.google.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Google +"
-                        >
-                        <i class="sidebar-button-icon fab fa-google-plus" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Google +</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://www.linkedin.com/profile/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="LinkedIn"
-                        >
-                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">LinkedIn</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/mailto"
-                            
-                            rel="noopener"
-                            title="Mail"
-                        >
-                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Mail</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/atom.xml"
-                            
-                            rel="noopener"
-                            title="RSS"
-                        >
-                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">RSS</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
     </div>
-</nav>
+  </div>
+</div>
 
-            
-            <div id="main" data-behavior="4"
-                 class="
-                        hasCoverMetaIn
-                        ">
-                
-<article class="post">
+
+
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="nav-number">1.</span> <span class="nav-text">一、基本概念</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%8C%E3%80%81ROS%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%9F%BA%E7%A1%80"><span class="nav-number">2.</span> <span class="nav-text">二、ROS命令行基础</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E5%9F%BA%E6%9C%ACTopic%E6%A8%A1%E5%9E%8B%E7%9A%84%E7%BC%96%E7%A8%8B%E5%AE%9E%E7%8E%B0"><span class="nav-number">3.</span> <span class="nav-text">三、基本Topic模型的编程实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%9F%BA%E6%9C%ACService%E6%A8%A1%E5%9E%8B%E7%9A%84%E7%BC%96%E7%A8%8B%E5%AE%9E%E7%8E%B0"><span class="nav-number">4.</span> <span class="nav-text">四、基本Service模型的编程实现</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E5%8F%82%E6%95%B0%E4%BD%BF%E7%94%A8%E4%B8%8E%E7%BC%96%E7%A8%8B"><span class="nav-number">5.</span> <span class="nav-text">五、参数使用与编程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%AD%E3%80%81ROS%E4%B8%AD%E7%9A%84%E5%9D%90%E6%A0%87%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F"><span class="nav-number">6.</span> <span class="nav-text">六、ROS中的坐标管理系统</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%83%E3%80%81Launch%E5%90%AF%E5%8A%A8%E6%96%87%E4%BB%B6"><span class="nav-number">7.</span> <span class="nav-text">七、Launch启动文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%AB%E3%80%81ROS%E5%B8%B8%E7%94%A8%E5%8F%AF%E8%A7%86%E5%8C%96%E5%B7%A5%E5%85%B7"><span class="nav-number">8.</span> <span class="nav-text">八、ROS常用可视化工具</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B9%9D%E3%80%81ROS%E8%BF%9B%E9%98%B6"><span class="nav-number">9.</span> <span class="nav-text">九、ROS进阶</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-overview">
+            <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Eric Tan</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+  </nav>
+</div>
+
+
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
     
-    
-        <div class="post-header main-content-wrap text-left">
-    
-        <h1 class="post-title">
-            ROS学习笔记：古月居入门21讲
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Eric Tan">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Eric Tan">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ROS学习笔记：古月居入门21讲
         </h1>
-    
-    
-        <div class="post-meta">
-    <time datetime="2021-04-12T19:43:23+08:00">
-	
-		    Apr 12, 2021
-    	
-    </time>
-    
-        <span>in </span>
-        
-    <a class="category-link" href="/categories/ROS/">ROS</a>
 
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
 
-    
+      <time title="Created: 2021-04-12 19:43:23 / Modified: 19:49:52" itemprop="dateCreated datePublished" datetime="2021-04-12T19:43:23+08:00">2021-04-12</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/ROS/" itemprop="url" rel="index"><span itemprop="name">ROS</span></a>
+        </span>
+    </span>
+
+  
 </div>
 
-    
-</div>
+        </div>
+      </header>
 
     
-    <div class="post-content markdown">
-        <div class="main-content-wrap">
-            <p>本文记录<strong>热度最高</strong>的ROS入门教程——古月居入门21讲学习笔记，该教程确实非常基础，学完只能了解ROS的基本概念，要想完成项目开发，还需要很多更深入的学习与实战。</p>
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>本文记录<strong>热度最高</strong>的ROS入门教程——古月居入门21讲学习笔记，该教程确实非常基础，学完只能了解ROS的基本概念，要想完成项目开发，还需要很多更深入的学习与实战。</p>
 <span id="more"></span>
 
 <h3 id="一、基本概念"><a href="#一、基本概念" class="headerlink" title="一、基本概念"></a>一、基本概念</h3><p>1.节点Node：如上层的图像处理（python）、底层的设备驱动（C）</p>
@@ -550,317 +421,72 @@
 <p>ROS中moveit框架可以完成</p>
 <p>总结：若未来研究机器人，研究ROS中很多功能包，这些功能包内的具体算法用到了“机器人学”的基本理论</p>
 
-            
-
-
-        </div>
     </div>
-    <div id="post-footer" class="post-footer main-content-wrap">
-        
-        
-            <div class="post-actions-wrap">
-    <nav>
-        <ul class="post-actions post-action-nav">
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/04/14/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%80%EF%BC%89/"
-                    data-tooltip="系统学习ROS（一）"
-                    aria-label="PREVIOUS: 系统学习ROS（一）"
-                >
-                    
-                        <i class="fa fa-angle-left" aria-hidden="true"></i>
-                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
-                    </a>
-            </li>
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/"
-                    data-tooltip="神经网络：Faster R-CNN详解（二）"
-                    aria-label="NEXT: 神经网络：Faster R-CNN详解（二）"
-                >
-                    
-                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
-                        <i class="fa fa-angle-right" aria-hidden="true"></i>
-                    </a>
-            </li>
-        </ul>
-    </nav>
-    <ul class="post-actions post-action-share">
-        <li class="post-action hide-lg hide-md hide-sm">
-            <a
-                class="post-action-btn btn btn--default btn-open-shareoptions"
-                href="#btn-open-shareoptions"
-                aria-label="Share this post"
-            >
-                <i class="fa fa-share-alt" aria-hidden="true"></i>
-            </a>
-        </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://example.com/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/"
-                    title="Share on Facebook"
-                    aria-label="Share on Facebook"
-                >
-                    <i class="fab fa-facebook" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://example.com/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/"
-                    title="Share on Twitter"
-                    aria-label="Share on Twitter"
-                >
-                    <i class="fab fa-twitter" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://example.com/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/"
-                    title="Share on Google+"
-                    aria-label="Share on Google+"
-                >
-                    <i class="fab fa-google-plus" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-        
-            
-        
-        <li class="post-action">
-            
-                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
-            
-                <i class="fa fa-list" aria-hidden="true"></i>
-            </a>
-        </li>
-    </ul>
-</div>
-
-
-        
-        
-            
-        
-    </div>
-</article>
-
-
-
-                <footer id="footer" class="main-content-wrap">
-    <span class="copyrights">
-        Copyrights &copy; 2021 Eric Tan. All Rights Reserved.
-    </span>
-</footer>
-
-            </div>
-            
-                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
-                    <div class="post-actions-wrap">
-    <nav>
-        <ul class="post-actions post-action-nav">
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/04/14/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%80%EF%BC%89/"
-                    data-tooltip="系统学习ROS（一）"
-                    aria-label="PREVIOUS: 系统学习ROS（一）"
-                >
-                    
-                        <i class="fa fa-angle-left" aria-hidden="true"></i>
-                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
-                    </a>
-            </li>
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/"
-                    data-tooltip="神经网络：Faster R-CNN详解（二）"
-                    aria-label="NEXT: 神经网络：Faster R-CNN详解（二）"
-                >
-                    
-                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
-                        <i class="fa fa-angle-right" aria-hidden="true"></i>
-                    </a>
-            </li>
-        </ul>
-    </nav>
-    <ul class="post-actions post-action-share">
-        <li class="post-action hide-lg hide-md hide-sm">
-            <a
-                class="post-action-btn btn btn--default btn-open-shareoptions"
-                href="#btn-open-shareoptions"
-                aria-label="Share this post"
-            >
-                <i class="fa fa-share-alt" aria-hidden="true"></i>
-            </a>
-        </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://example.com/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/"
-                    title="Share on Facebook"
-                    aria-label="Share on Facebook"
-                >
-                    <i class="fab fa-facebook" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://example.com/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/"
-                    title="Share on Twitter"
-                    aria-label="Share on Twitter"
-                >
-                    <i class="fab fa-twitter" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://example.com/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/"
-                    title="Share on Google+"
-                    aria-label="Share on Google+"
-                >
-                    <i class="fab fa-google-plus" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-        
-            
-        
-        <li class="post-action">
-            
-                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
-            
-                <i class="fa fa-list" aria-hidden="true"></i>
-            </a>
-        </li>
-    </ul>
-</div>
-
-
-                </div>
-                
-    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
-        <i id="btn-close-shareoptions" class="fa fa-times"></i>
-        <ul class="share-options">
-            
-                
-                
-                <li class="share-option">
-                    <a
-                        class="share-option-btn"
-                        target="new"
-                        href="https://www.facebook.com/sharer/sharer.php?u=http://example.com/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/"
-                        aria-label="Share on Facebook"
-                    >
-                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
-                    </a>
-                </li>
-            
-                
-                
-                <li class="share-option">
-                    <a
-                        class="share-option-btn"
-                        target="new"
-                        href="https://twitter.com/intent/tweet?text=http://example.com/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/"
-                        aria-label="Share on Twitter"
-                    >
-                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
-                    </a>
-                </li>
-            
-                
-                
-                <li class="share-option">
-                    <a
-                        class="share-option-btn"
-                        target="new"
-                        href="https://plus.google.com/share?url=http://example.com/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/"
-                        aria-label="Share on Google+"
-                    >
-                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
-                    </a>
-                </li>
-            
-        </ul>
-    </div>
-
-
-            
-        </div>
-        
-
-
-<div id="about">
-    <div id="about-card">
-        <div id="about-btn-close">
-            <i class="fa fa-times"></i>
-        </div>
-        
-            <h4 id="about-card-name">Eric Tan</h4>
-        
-            <div id="about-card-bio"><p>author.bio</p>
-</div>
-        
-        
-            <div id="about-card-job">
-                <i class="fa fa-briefcase"></i>
-                <br/>
-                <p>author.job</p>
-
-            </div>
-        
-        
-    </div>
-</div>
-
-        
-        
-<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
-        <!--SCRIPTS-->
-
-<script src="/assets/js/script-aruckjrapimnobkxs27htsu2kxkoy2szmjcde1n3gfjqfmv8qbkdebriarib.min.js"></script>
-
-<!--SCRIPTS END-->
-
 
     
+    
+    
+
+    <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/04/11/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%EF%BC%9AFaster-R-CNN%E8%AF%A6%E8%A7%A3%EF%BC%88%E4%BA%8C%EF%BC%89/" rel="prev" title="神经网络：Faster R-CNN详解（二）">
+                  <i class="fa fa-chevron-left"></i> 神经网络：Faster R-CNN详解（二）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/04/14/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%80%EF%BC%89/" rel="next" title="系统学习ROS（一）">
+                  系统学习ROS（一） <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
 
 
 
 
-    </body>
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Eric Tan</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+
+
+
+
+
+</body>
 </html>

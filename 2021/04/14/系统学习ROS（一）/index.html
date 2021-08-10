@@ -1,19 +1,27 @@
-
 <!DOCTYPE html>
 <html lang="en">
-    
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="generator" content="Eric Tan">
-    <title>系统学习ROS（一） - Eric Tan</title>
-    <meta name="author" content="Eric Tan">
-    
-    
-    
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Eric Tan","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"]},"articleBody":"入门的概念已经了解，本系列是我在系统学习ROS中的笔记。ROS知识点繁多，有些内容用到的时候google或者wiki查询，不做记录。\n\n\n同时，只记录python实现版本。\n学习地址（全文参考）：http://www.autolabor.com.cn/book/ROSTutorials/\n一、基础知识1.基本开发流程\n创建工作空间；\n创建功能包；\n编辑源文件；（.cpp、.py）\n编辑配置文件；\n编译并执行。\n\n2.workspace以及功能包的编译与使用（1）创建workspace：\n123mkdir -p test_ws&#x2F;srccd test_wscatkin_make  #编译工作空间\n\n（2）创建功能包：\n12cd srccatkin_create_pkg &lt;depend&gt; roscpp rospy std_msgs  # 通常都需要roscpp、rospy\n\n\n\n学习过程中：\nubuntu工作空间创建好后，可以一直用；例如创建了test_ws工作空间，该空间已经编译完成，有自动生成的devel、build文件夹，则后续可以在该workspace下添加功能包。\n在src文件夹下：有多个功能包，在学习过程中直接将源码功能包放进来;\n编译功能包：\n123#在根目录下catkin_makesource devel&#x2F;setup.bash   #此命令只对当前终端有效，要想一劳永逸，见下面方法\n\n然后就可以roslaunch执行launch文件啦！\n12345678#方法一直接使用 gedit 或 vi 编辑 .bashrc 文件，最后添加该内容#方法二echo &quot;source ~&#x2F;工作空间&#x2F;devel&#x2F;setup.bash&quot; &gt;&gt; ~&#x2F;.bashrc最后在终端中执行：source .bashrc  #之后在所有终端中都可以一劳永逸了！\n\n\n\n3.集成开发环境：选择VS Code，有了集成开发环境，可以不用再在记事本当中写代码了！\n（1）集成开发环境提供了图形化界面，可以可视化地创建功能包、程序文件等；\n（2）为VScode安装如下插件：C++、Python、Cmake、ROS\n（3）进行一些配置，将作者的配置文件直接复制，此后可以通过Ctrl+Shift+B直接完成编译（相当与catkin_make）\n（4）无论是C++还是python程序，都需要在CMakeList文件中做配置，再编译；\n4.launch文件12345678910111213&lt;launch&gt;    &lt;node pkg&#x3D;&quot;helloworld&quot; type&#x3D;&quot;demo_hello&quot; name&#x3D;&quot;hello&quot; output&#x3D;&quot;screen&quot; &#x2F;&gt;    &lt;node pkg&#x3D;&quot;turtlesim&quot; type&#x3D;&quot;turtlesim_node&quot; name&#x3D;&quot;t1&quot;&#x2F;&gt;    &lt;node pkg&#x3D;&quot;turtlesim&quot; type&#x3D;&quot;turtle_teleop_key&quot; name&#x3D;&quot;key1&quot; &#x2F;&gt;&lt;&#x2F;launch&gt;roslaunch 包名 launch文件名# node ---&gt; 包含的某个节点# pkg -----&gt; 功能包# type ----&gt; 被运行的节点文件# name --&gt; 为节点命名# output-&gt; 设置日志的输出目标\n\n\n\n5.文件系统架构：\n\n经常编辑这些功能包就会熟悉起来\n6.ROS文件系统常用命令ROS专门提供了一些类似于Linux的命令：\n123456sudo apt install xxx   #安装 ROS功能包sudo apt purge xxx    #删除某个功能包rospack list   #列出所有功能包rospack find 包名   #查找某个功能包是否存在，如果存在返回安装路径apt search xxx    # 在网上搜索某个功能包\n\n\n\n7.ROS计算图rqt_graph能够创建一个显示当前系统运行情况的动态图形\n1rqt_graph\n\n\n\n\n\n二、话题通信话题通信是基于发布订阅模式的，也即:一个节点发布消息，另一个节点订阅该消息。\n例如：机器人在执行导航功能，使用的传感器是激光雷达，机器人会采集激光雷达感知到的信息并计算，然后生成运动控制信息驱动机器人底盘运动。\n上述过程涉及多次话题通信：\n（1）以激光雷达信息的采集处理为例，在 ROS 中有一个节点需要时时的发布当前雷达采集到的数据，导航模块中也有节点会订阅并解析雷达数据；\n（2）再以运动消息的发布为例，导航模块会根据传感器采集的数据时时的计算出运动控制信息并发布给底盘，底盘也可以有一个节点订阅运动信息并最终转换成控制电机的脉冲信号；\n以此类推，像雷达、摄像头、GPS…. 等等一些传感器数据的采集，也都是使用了话题通信，换言之，话题通信适用于不断更新的、少逻辑处理的数据传输相关的应用场景。\n1.C++\n12345#在订阅者实现中：ros : : spin( )     # 回调函数：处理订阅的数据#发布者需要等待回调函数：ros : : spinOnce( ) \n\n2.python实现：（发布最简单的hello信息）\n123456789101112131415161718192021222324#Publisher#1.导包 import rospyfrom std_msgs.msg import String    #发布消息的类型if __name__ == &quot;__main__&quot;:    #2.初始化 ROS 节点:命名(唯一)    rospy.init_node(&quot;talker_p&quot;)      #直接传入节点名称        #3.实例化 发布者 对象    pub = rospy.Publisher(&quot;chatter&quot;,String,queue_size=10)  #话题名称、消息类型、缓存队列长度        #4.组织被发布的数据，并编写逻辑发布数据    msg = String()  #创建 msg 对象        # 设置循环频率    rate = rospy.Rate(1)   # 1Hz        while not rospy.is_shutdown():   #使用rospy中的函数，判断节点没有关闭        msg.data = &quot;hello&quot;   #定义发布的消息        pub.publish(msg)        rate.sleep()  #每隔rate秒醒过来        rospy.loginfo(&quot;发布的数据是:%s&quot;,msg.data）\n\n123456789#编译python文件流程：(以配置好的VS Code为例)          以后所有运行的python程序都要经过这一步1.终端添加可执行权限：chmod  +x  *.py2.修改CmakeList文件：    catkin_install_python(PROGRAMS        scripts/demo_pubpy.py        DESTINATION $&#123;CATKIN_PACKAGE_BIN_DESTINATION&#125;         )3. Ctrl+Shift+B编译4. roscore+rosrun运行即可\n\n12345678910111213141516171819#Subscriber#1.导包 import rospyfrom std_msgs.msg import Stringdef doMsg(msg):  #定义回调函数    rospy.loginfo(&quot;我订阅的数据：%s&quot;,msg.data)if __name__ == &quot;__main__&quot;:    #2.初始化 ROS 节点:命名(唯一)    rospy.init_node(&quot;listener_p&quot;)        #3.实例化 订阅者 对象    sub = rospy.Subscriber(&quot;chatter&quot;,String, doMsg, queue_size=10)  #话题名称、消息类型、回调函数、队列长度        #4.处理订阅的消息(回调函数)    #5.设置循环调用回调函数    rospy.spin()\n\n\n\n3.自定义消息\nROS 中通过 std_msgs 封装了一些原生的数据类型,比如:String、Int32、Int64、Char、Bool、Empty…. 但是，这些数据一般只包含一个 data 字段—&gt;用于接受消息\n应用场景：传递一些复杂数据时\n\n流程：\n\n（1）定义msg文件：功能包下新建 msg 目录，添加文件 Person.msg\n123string nameuint16 agefloat64 height\n\n（2）编辑配置文件package.xml\n12&lt;build_depend&gt;message_generation&lt;/build_depend&gt;   #message_generation&lt;exec_depend&gt;message_runtime&lt;/exec_depend&gt;   #message_runtime\n\n（3）CMakeLists.txt编辑 msg 相关配置\n12345678910111213141516171819202122232425find_package(catkin REQUIRED COMPONENTS  roscpp  rospy  std_msgs  message_generation)# 需要加入 message_generation,必须有 std_msgsadd_message_files(  FILES  Person.msg)generate_messages(  DEPENDENCIES  std_msgs)#执行时依赖catkin_package(#  INCLUDE_DIRS include#  LIBRARIES demo02_talker_listener  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime#  DEPENDS system_lib)\n\n\npython实现发布、订阅自定义消息\n\n1234567891011121314151617181920212223#Publisher发布自定义的Person类型消息import rospyfrom demo02_talker_listener.msg import Person  #自定义的消息类型文件if __name__ == &quot;__main__&quot;:    #1.初始化 ROS 节点    rospy.init_node(&quot;talker_person_p&quot;)    #2.创建发布者对象    pub = rospy.Publisher(&quot;chatter_person&quot;,Person,queue_size=10)    #3.组织消息  （自定义的Person类型）    p = Person()    p.name = &quot;葫芦瓦&quot;    p.age = 18    p.height = 0.75    #4.编写消息发布逻辑    rate = rospy.Rate(1)    while not rospy.is_shutdown():        pub.publish(p)  #发布消息        rate.sleep()  #休眠        rospy.loginfo(&quot;姓名:%s, 年龄:%d, 身高:%.2f&quot;,p.name, p.age, p.height)\n\n123456789101112131415#Subscriber订阅自定义的Person类型消息import rospyfrom demo02_talker_listener.msg import Persondef doPerson(p):  #定义回调函数    rospy.loginfo(&quot;接收到的人的信息:%s, %d, %.2f&quot;,p.name, p.age, p.height)if __name__ == &quot;__main__&quot;:    #1.初始化节点    rospy.init_node(&quot;listener_person_p&quot;)    #2.创建订阅者对象    sub = rospy.Subscriber(&quot;chatter_person&quot;,Person, doPerson, queue_size=10)    rospy.spin() #4.循环\n\n\n\n三、服务通信无论是话题还是服务通信，都是以来于话题的！\n基于请求响应模式，适用于对时时性有要求、具有一定逻辑处理的应用场景。\nROS Master 负责保管 Server 和 Client 注册的信息，并匹配话题相同的 Server 与 Client ，帮助 Server 与 Client 建立连接，连接建立后，Client 发送请求信息，Server 返回响应信息。\n对时序有严格要求：客户端发起请求时，必须保证服务端已经启动。\n1.自定义服务消息类型srv文件：\n功能包下新建 srv 目录，添加 xxx.srv 文件，内容:\n1234567# 客户端请求时发送的两个数字int32 num1int32 num2---                                                       #在 srv 文件中请求和响应使用---分割# 服务器响应发送的数据int32 sum\n\n编辑配置文件\n1234567#package.xml  &lt;build_depend&gt;message_generation&lt;/build_depend&gt;  &lt;exec_depend&gt;message_runtime&lt;/exec_depend&gt;  &lt;!--   exce_depend 以前对应的是 run_depend 现在非法  --&gt;\n\n12345678910111213141516171819#CMakeListfind_package(catkin REQUIRED COMPONENTS  roscpp  rospy  std_msgs  message_generation)# 需要加入 message_generation,必须有 std_msgsadd_service_files(  FILES  AddInts.srv)generate_messages(  DEPENDENCIES  std_msgs)\n\n2.Server、Client的python实现\n12345678910111213141516171819202122232425262728#Server ： 解析客户端请求，产生响应# 1.导包import rospyfrom demo03_server_client.srv import AddInts,AddIntsRequest,AddIntsResponse# 回调函数的参数是请求对象，返回值是响应对象def doReq(req):    # 解析提交的数据    sum = req.num1 + req.num2    rospy.loginfo(&quot;提交的数据:num1 = %d, num2 = %d, sum = %d&quot;,req.num1, req.num2, sum)    #将结果封装进响应    # 创建响应对象，赋值并返回    # resp = AddIntsResponse()    # resp.sum = sum    resp = AddIntsResponse(sum)    return resp if __name__ == &quot;__main__&quot;:    # 2.初始化 ROS 节点    rospy.init_node(&quot;addints_server_p&quot;)    # 3.创建服务对象    server = rospy.Service(&quot;AddInts&quot;,AddInts,doReq)    #话题名称，消息类型，回调函数    # 4.回调函数处理请求并产生响应    # 5.spin 函数    rospy.spin()\n\n123456789101112131415161718192021222324252627282930313233343536373839404142#Client：#1.导包import rospyfrom demo03_server_client.srv import *import sysif __name__ == &quot;__main__&quot;:    #优化实现    if len(sys.argv) != 3:    #判断动态传入的参数是否为3个        rospy.logerr(&quot;请正确提交参数&quot;)        sys.exit(1)    # 2.初始化 ROS 节点    rospy.init_node(&quot;AddInts_Client_p&quot;)    # 3.创建Client对象    client = rospy.ServiceProxy(&quot;AddInts&quot;,AddInts)   #话题名称、消息类型        # 请求前，等待服务已经就绪：防止启动顺序出错（鲁棒性设置）    # 方式1:     rospy.wait_for_service(&quot;AddInts&quot;)    # 方式2    client.wait_for_service()        # 4.发送请求,接收并处理响应    # 方式1    resp = client(3,4)    # 方式2     resp = client(AddIntsRequest(1,5))    # 方式3    req = AddIntsRequest()     req.num1 = 100     req.num2 = 200     #优化：可以在执行节点时，动态传入参数    req.num1 = int(sys.argv[1])    # sys.argv表示：命令行参数列表    req.num2 = int(sys.argv[2])     resp = client.call(req)    rospy.loginfo(&quot;响应结果:%d&quot;,resp.sum)\n\n\n\n四、参数服务器实现不同节点之间的数据共享，参数服务器相当于是独立于所有节点的一个公共容器，可以将数据存储在该容器中，被不同的节点调用，当然不同的节点也可以往其中存储数据。类似于全局变量。\n举例：导航实现时，全局、本地路径规划都要考虑小车自身的尺寸，而小车尺寸就存储在参数服务器中。\n注意:参数服务器使用RPC协议，不是为高性能而设计的，因此最好用于存储静态的非二进制的简单数据\n参数以键值对的形式存储在参数服务器中。\n\n参数服务器操作的python实现：\n（1）增、改\n12345678910111213141516import rospyif __name__ == &quot;__main__&quot;:    #初始化节点    rospy.init_node(&quot;set_update_paramter_p&quot;)    # 设置各种类型参数    rospy.set_param(&quot;p_int&quot;,10)   #键、值    rospy.set_param(&quot;p_double&quot;,3.14)    rospy.set_param(&quot;p_bool&quot;,True)    rospy.set_param(&quot;p_string&quot;,&quot;hello python&quot;)    rospy.set_param(&quot;p_list&quot;,[&quot;hello&quot;,&quot;haha&quot;,&quot;xixi&quot;])    rospy.set_param(&quot;p_dict&quot;,&#123;&quot;name&quot;:&quot;hulu&quot;,&quot;age&quot;:8&#125;)    # 修改    rospy.set_param(&quot;p_int&quot;,100)\n\n（2）查询参数\n1234567891011121314151617181920212223242526272829303132333435363738394041import rospyif __name__ == &quot;__main__&quot;:    rospy.init_node(&quot;get_param_p&quot;)    #获取参数: get_param    int_value = rospy.get_param(&quot;p_int&quot;,10000)    double_value = rospy.get_param(&quot;p_double&quot;)    bool_value = rospy.get_param(&quot;p_bool&quot;)    string_value = rospy.get_param(&quot;p_string&quot;)    p_list = rospy.get_param(&quot;p_list&quot;)    p_dict = rospy.get_param(&quot;p_dict&quot;)    rospy.loginfo(&quot;获取的数据:%d,%.2f,%d,%s&quot;,                int_value,                double_value,                bool_value,                string_value)    for ele in p_list:        rospy.loginfo(&quot;ele = %s&quot;, ele)    rospy.loginfo(&quot;name = %s, age = %d&quot;,p_dict[&quot;name&quot;],p_dict[&quot;age&quot;])    # get_param_cached（效率比get_param高）    int_cached = rospy.get_param_cached(&quot;p_int&quot;)    rospy.loginfo(&quot;缓存数据:%d&quot;,int_cached)    # get_param_names    names = rospy.get_param_names()    for name in names:        rospy.loginfo(&quot;name = %s&quot;,name)    rospy.loginfo(&quot;-&quot;*80)    # 判断某个键是否存在：has_param    flag = rospy.has_param(&quot;p_int&quot;)    rospy.loginfo(&quot;包含p_int吗？%d&quot;,flag)    # 判断键是否存在，存在则返回键名：search_param    key = rospy.search_param(&quot;p_int&quot;)    rospy.loginfo(&quot;搜索的键 = %s&quot;,key)\n\n（3）删除参数：\n12345678910# delete_paramimport rospyif __name__ == &quot;__main__&quot;:    rospy.init_node(&quot;delete_param_p&quot;)    try:        rospy.delete_param(&quot;p_int&quot;)    except Exception as e:        rospy.loginfo(&quot;删除失败&quot;)\n\n五、常用命令以下介绍的命令都可以直接在命令行中实现，不需要创建节点；但缺点是不能包含太复杂的逻辑，只能做一些简单的实现（比如往参数服务器里添加参数、rostopic pub发布简单的话题）\n1.rosnode\n123456rosnode ping  xxx   #测试到节点的连接状态rosnode list    #列出活动节点rosnode info  xxx    #打印节点信息rosnode machine    #列出指定设备上节点rosnode kill  xxx    #杀死某个节点rosnode cleanup     #清除不可连接的节点\n\n2.rostopic\n123456789rostopic list   #显示所有活动状态下的主题rostopic echo   #打印话题消息到屏幕  rostopic  echo  /turtle1/cmd_velrostopic pub    #将数据发布到主题rostopic bw     #显示主题使用的带宽rostopic delay  #显示带有 header 的主题延迟rostopic find   #根据类型查找主题rostopic hz     #显示主题的发布频率rostopic info   #显示主题相关信息rostopic type   #打印主题类型\n\n3.rosmsg\n123456rosmsg show   # 显示消息描述rosmsg info    #显示消息信息rosmsg list    #列出所有消息rosmsg md5    #显示 md5 加密后的消息rosmsg package    #显示某个功能包下的所有消息rosmsg packages    #列出包含消息的功能包\n\n4.rosservice\n1234567rosservice args  #打印服务参数rosservice call    #使用提供的参数调用服务rosservice find    #按照服务类型查找服务rosservice info    #打印有关服务的信息rosservice list     #列出所有活动的服务rosservice type    #打印服务类型rosservice uri     #打印服务的 ROSRPC uri\n\n5.rossrv\n123456rossrv show    #显示服务消息详情rossrv info    #显示服务消息相关信息rossrv list    #列出所有服务信息rossrv md5    #显示 md5 加密后的服务消息rossrv package    #显示某个包下所有服务消息rossrv packages    #显示包含服务消息的所有包\n\n6.rosparam\n123456rosparam set    #设置参数  rosparam set name xiaohuangrosparam get    #获取参数rosparam load    #从外部文件加载参数  ---&gt;反序列化rosparam dump    #将参数写出到外部文件(yaml文件) ---&gt;序列化rosparam delete    #删除参数rosparam list    #列出所有参数\n\n\n\n六、实操1.乌龟控制节点实操举例：\n\n自己编写乌龟控制节点，实现乌龟的圆周运动。\n\n123rqt_graph   #通过计算图查看话题名称rostopic type /turtle1/cmd_vel  #查看话题信息，获知消息类型为geometry_msgs/Twistrosmsg info geometry_msgs/Twist  #查看消息格式\n\n消息格式：\ngeometry_msgs/Vector3 linear  float64 x  float64 y  float64 zgeometry_msgs/Vector3 angular  float64 x  float64 y  float64 z\nlinear线速度，xyz分别对应在x、y和z方向上的速度(单位是 m/s)；\nangular角速度，xyz分别对应x轴上的翻滚、y轴上俯仰和z轴上偏航的速度(单位是rad/s)\n偏航、翻滚与俯仰（RPY）：\n\n\n\n\n\n实现控制节点（话题发布节点）\n\n123456789101112131415161718192021222324252627  ##将控制乌龟做圆周运动      #1.获取topic(已知: /turtle1/cmd_vel)  #2.获取消息类型(已知: geometry_msgs/Twist)  #3.运行前，注意先启动 turtlesim_node 节点import rospyfrom geometry_msgs.msg import Twistif __name__ == &quot;__main__&quot;:    # 2.初始化 ROS 节点    rospy.init_node(&quot;control_circle_p&quot;)    # 3.创建发布者对象    pub = rospy.Publisher(&quot;/turtle1/cmd_vel&quot;,Twist,queue_size=1000)    # 4.循环发布运动控制消息    rate = rospy.Rate(10)    msg = Twist()    msg.linear.x = 1.0    #不能横着走    msg.linear.y = 0.0    msg.linear.z = 0.0    msg.angular.x = 0.0    msg.angular.y = 0.0    msg.angular.z = 0.5   #只能偏航            while not rospy.is_shutdown():        pub.publish(msg)        rate.sleep()\n\n12345#自定义的节点编写好之后：#三个终端中：roscorerosrun  turtlesim  turtlesim_node  rosrun  &lt;自定义的功能包&gt;  &lt;编写的节点文件名&gt;\n\n\n\n2.乌龟位姿信息订阅节点实操\n已知turtlesim_node的位姿消息类型为：turtlesim/Pose\nfloat32 xfloat32 yfloat32 thetafloat32 linear_velocityfloat32 angular_velocity\n位姿信息订阅节点的实现：\n1234567891011121314151617181920 #1.获取话题名称 /turtle1/pose #2.获取消息类型 turtlesim/Pose #3.运行前启动 turtlesim_node 与 turtle_teleop_key 节点    import rospyfrom turtlesim.msg import Posedef doPose(data):    rospy.loginfo(&quot;乌龟坐标:x=%.2f, y=%.2f,theta=%.2f&quot;,data.x,data.y,data.theta)if __name__ == &quot;__main__&quot;:    # 2.初始化 ROS 节点    rospy.init_node(&quot;sub_pose_p&quot;)    # 3.创建订阅者对象    sub = rospy.Subscriber(&quot;/turtle1/pose&quot;,Pose,doPose,queue_size=1000)    #     4.回调函数处理订阅的数据    #     5.spin    rospy.spin()\n\n\n\n3.（服务通信）指定位置添加turtle的服务端请求实现：\n服务也是基于话题的，所以首先是查看话题的消息类型：\n123# 新增乌龟的话题是/spawnrosservice type /spawn  #获取消息类型为turtlesim/Spawnrossrv info turtlesim/Spawn  #获取消息格式\n\n节点的实现大同小异，略\n4.（参数服务器）参数设置\n可通过launch文件传参，后面再介绍。\n七、常用API（python实现）1.节点初始化\n重点在于anonymous参数的使用：\n12rospy.init_node(&quot;happy_node&quot;, anonymous=True)    #anonymous = true 时，为节点名称后缀随机编号                                                                                                             #这样就可重复启动节点了！\n\n2.话题与服务相关对象\nPublisher、Subscriber、Server、Client的创建，publish操作等\n1#需要就查\n\n3.回调函数\n相比C++，没有spinOnce( )函数，只有spin( )函数\n1rospy.spin( )\n\n\n\n4.时间\n（1）获取、设置时刻\n12345678910# 获取当前时刻right_now = rospy.Time.now()  #rospy中有Time库，获取的是相对于1970年1月1日的时间rospy.loginfo(&quot;当前时刻:%.2f&quot;,right_now.to_sec())  #设置输出日志logrospy.loginfo(&quot;当前时刻:%.2f&quot;,right_now.to_nsec())# 自定义时刻some_time1 = rospy.Time(1234.567891011)  #some_time1是从1970.1.1的0时0分0秒开始往后1234.567891011秒some_time2 = rospy.Time(1234,567891011)rospy.loginfo(&quot;设置时刻1:%.2f&quot;,some_time1.to_sec())rospy.loginfo(&quot;设置时刻2:%.2f&quot;,some_time2.to_sec())\n\n（2）持续时间\n12345du = rospy.Duration(3.3)rospy.loginfo(&quot;du1 持续时间:%.2f&quot;,du.to_sec())rospy.sleep(du) #休眠函数rospy.loginfo(&quot;持续时间测试结束.....&quot;)\n\n（3）持续时间与时刻的运算\n123456789101112now = rospy.Time.now()du1 = rospy.Duration(10)du2 = rospy.Duration(20)#运算before_now = now - du1after_now = now + du1dd = du1 + du2# now = now + now  #非法rospy.loginfo(&quot;之前时刻:%.2f&quot;,before_now.to_sec())rospy.loginfo(&quot;之后时刻:%.2f&quot;,after_now.to_sec())rospy.loginfo(&quot;持续时间相加:%.2f&quot;,dd.to_sec())\n\n（4）设置运行频率\n123456#通过rate.sleep( )实现，隔某段时间执行某种操作rate = rospy.Rate(0.5)while not rospy.is_shutdown():    rate.sleep() #休眠    rospy.loginfo(&quot;+++++++++++++++&quot;)\n\n（5）定时器，类似于rospy.Rate的功能：隔某段时间执行某种操作\n12345rospy.Timer(rospy.Duration(1),doMsg)   #每隔1s，执行回调函数doMsgrospy.spin()rospy.Timer(rospy.Duration(1),doMsg,True)  # 只执行一次rospy.spin()\n\n（6）节点判断与关闭\n12345678#节点状态判断rospy.is_shutdown()#节点关闭函数rospy.signal_shutdown(&quot;不想用了&quot;)  #传参是字符串，说明关闭原因#关闭节点，同时执行回调函数rospy.on_shutdown(doMsg)\n\n（7）日志函数：相当于实时打印一些提示信息\n日志相关的函数也是极其常用的，在ROS中日志被划分成如下级别：\n12345rospy.logdebug(&quot;hello,debug&quot;)  #不会输出到控制台，调试时常用rospy.loginfo(&quot;hello,info&quot;)  #标准消息，默认白色字体rospy.logwarn(&quot;hello,warn&quot;)  #提醒一些异常情况，默认黄色字体rospy.logerr(&quot;hello,error&quot;)  #提示错误信息，默认红色字体rospy.logfatal(&quot;hello,fatal&quot;) #此类错误将阻止节点继续运行，默认红色字体\n\n\n\n5.python模块导入\n先编写自定义模块文件（相当于C++头文件）：\n123# tools.py文件num=1000\n\n另一个python文件中调用模块A：\n12import toolsrospy.loginfo(&quot;num = %d&quot;,tools.num)\n\n如果直接import新写的模块，会报错\n原因：rosrun执行时，参考路径是workspace的路径，在workspace下无法查找到依赖的模块\n解决：先声明环境变量\n123456789import osimport sys#为了增加代码的可移植性，用os自动获取当前路径的前一级path = os.path.abspath(&quot;.&quot;)sys.path.insert(0, path + &quot;/src/plumbing_pub_sub/scripts&quot;)  #将模块文件所在路径添加到sys.path中import tools    rospy.loginfo(&quot;num = %d&quot;,tools.num)  \n\n","dateCreated":"2021-04-14T14:22:51+08:00","dateModified":"2021-04-14T14:30:13+08:00","datePublished":"2021-04-14T14:22:51+08:00","description":"入门的概念已经了解，本系列是我在系统学习ROS中的笔记。ROS知识点繁多，有些内容用到的时候google或者wiki查询，不做记录。","headline":"系统学习ROS（一）","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"http://example.com/2021/04/14/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%80%EF%BC%89/"},"publisher":{"@type":"Organization","name":"Eric Tan","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"]},"url":"http://example.com/2021/04/14/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%80%EF%BC%89/"}</script>
-    <meta name="description" content="入门的概念已经了解，本系列是我在系统学习ROS中的笔记。ROS知识点繁多，有些内容用到的时候google或者wiki查询，不做记录。">
-<meta property="og:type" content="blog">
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Muse","version":"8.7.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="入门的概念已经了解，本系列是我在系统学习ROS中的笔记。ROS知识点繁多，有些内容用到的时候google或者wiki查询，不做记录。">
+<meta property="og:type" content="article">
 <meta property="og:title" content="系统学习ROS（一）">
 <meta property="og:url" content="http://example.com/2021/04/14/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%80%EF%BC%89/index.html">
 <meta property="og:site_name" content="Eric Tan">
@@ -26,327 +34,190 @@
 <meta property="article:author" content="Eric Tan">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://example.com/images/image-20210414142652602.png">
-    
-    
-        
-    
-    
-    
-    
-    
-    <!--STYLES-->
-    
-<link rel="stylesheet" href="/assets/css/style-avgrqz8jhyoidabpqs5wzkidsky3osgmw4xscwbmmpkuhuen3z0qho9qrrme.min.css">
 
-    <!--STYLES END-->
-    
 
-    
+<link rel="canonical" href="http://example.com/2021/04/14/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%80%EF%BC%89/">
 
-    
-        
-    
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://example.com/2021/04/14/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%80%EF%BC%89/","path":"2021/04/14/系统学习ROS（一）/","title":"系统学习ROS（一）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>系统学习ROS（一） | Eric Tan</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
 </head>
 
-    <body>
-        <div id="blog">
-            <!-- Define author's picture -->
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
 
-
-    
-
-<header id="header" data-behavior="4">
-    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
-    <div class="header-title">
-        <a
-            class="header-title-link"
-            href="/"
-            aria-label=""
-        >
-            Eric Tan
-        </a>
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
     </div>
-    
-        
-            <a
-                class="header-right-picture "
-                href="#about"
-                aria-label="Open the link: /#about"
-            >
-        
-        
-        </a>
-    
-</header>
+  </div>
 
-            <!-- Define author's picture -->
+  <div class="site-meta">
 
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Eric Tan</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Welcome, and thanks.</p>
+  </div>
 
-<nav id="sidebar" data-behavior="4">
-    <div class="sidebar-container">
-        
-        
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/"
-                            
-                            rel="noopener"
-                            title="Home"
-                        >
-                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Home</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/all-categories"
-                            
-                            rel="noopener"
-                            title="Categories"
-                        >
-                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Categories</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/all-tags"
-                            
-                            rel="noopener"
-                            title="Tags"
-                        >
-                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Tags</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/all-archives"
-                            
-                            rel="noopener"
-                            title="Archives"
-                        >
-                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Archives</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link open-algolia-search"
-                            href="#search"
-                            
-                            rel="noopener"
-                            title="Search"
-                        >
-                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Search</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="#about"
-                            
-                            rel="noopener"
-                            title="About"
-                        >
-                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">About</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://github.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="GitHub"
-                        >
-                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">GitHub</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="http://stackoverflow.com/users"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Stack Overflow"
-                        >
-                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Stack Overflow</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://twitter.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Twitter"
-                        >
-                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Twitter</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://facebook.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Facebook"
-                        >
-                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Facebook</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://plus.google.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Google +"
-                        >
-                        <i class="sidebar-button-icon fab fa-google-plus" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Google +</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://www.linkedin.com/profile/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="LinkedIn"
-                        >
-                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">LinkedIn</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/mailto"
-                            
-                            rel="noopener"
-                            title="Mail"
-                        >
-                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Mail</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/atom.xml"
-                            
-                            rel="noopener"
-                            title="RSS"
-                        >
-                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">RSS</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
     </div>
-</nav>
+  </div>
+</div>
 
-            
-            <div id="main" data-behavior="4"
-                 class="
-                        hasCoverMetaIn
-                        ">
-                
-<article class="post">
+
+
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86"><span class="nav-number">1.</span> <span class="nav-text">一、基础知识</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#1-%E5%9F%BA%E6%9C%AC%E5%BC%80%E5%8F%91%E6%B5%81%E7%A8%8B"><span class="nav-number">1.1.</span> <span class="nav-text">1.基本开发流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#2-workspace%E4%BB%A5%E5%8F%8A%E5%8A%9F%E8%83%BD%E5%8C%85%E7%9A%84%E7%BC%96%E8%AF%91%E4%B8%8E%E4%BD%BF%E7%94%A8"><span class="nav-number">1.2.</span> <span class="nav-text">2.workspace以及功能包的编译与使用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#3-%E9%9B%86%E6%88%90%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%EF%BC%9A"><span class="nav-number">1.3.</span> <span class="nav-text">3.集成开发环境：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#4-launch%E6%96%87%E4%BB%B6"><span class="nav-number">1.4.</span> <span class="nav-text">4.launch文件</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#5-%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84%EF%BC%9A"><span class="nav-number">1.5.</span> <span class="nav-text">5.文件系统架构：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#6-ROS%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="nav-number">1.6.</span> <span class="nav-text">6.ROS文件系统常用命令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#7-ROS%E8%AE%A1%E7%AE%97%E5%9B%BE"><span class="nav-number">1.7.</span> <span class="nav-text">7.ROS计算图</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%8C%E3%80%81%E8%AF%9D%E9%A2%98%E9%80%9A%E4%BF%A1"><span class="nav-number">1.8.</span> <span class="nav-text">二、话题通信</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%89%E3%80%81%E6%9C%8D%E5%8A%A1%E9%80%9A%E4%BF%A1"><span class="nav-number">1.9.</span> <span class="nav-text">三、服务通信</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E5%8F%82%E6%95%B0%E6%9C%8D%E5%8A%A1%E5%99%A8"><span class="nav-number">1.10.</span> <span class="nav-text">四、参数服务器</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4"><span class="nav-number">1.11.</span> <span class="nav-text">五、常用命令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%AD%E3%80%81%E5%AE%9E%E6%93%8D"><span class="nav-number">1.12.</span> <span class="nav-text">六、实操</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B8%83%E3%80%81%E5%B8%B8%E7%94%A8API%EF%BC%88python%E5%AE%9E%E7%8E%B0%EF%BC%89"><span class="nav-number">1.13.</span> <span class="nav-text">七、常用API（python实现）</span></a></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-overview">
+            <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Eric Tan</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+  </nav>
+</div>
+
+
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
     
-    
-        <div class="post-header main-content-wrap text-left">
-    
-        <h1 class="post-title">
-            系统学习ROS（一）
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/14/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%80%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Eric Tan">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Eric Tan">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          系统学习ROS（一）
         </h1>
-    
-    
-        <div class="post-meta">
-    <time datetime="2021-04-14T14:22:51+08:00">
-	
-		    Apr 14, 2021
-    	
-    </time>
-    
-        <span>in </span>
-        
-    <a class="category-link" href="/categories/ROS/">ROS</a>
 
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
 
-    
+      <time title="Created: 2021-04-14 14:22:51 / Modified: 14:30:13" itemprop="dateCreated datePublished" datetime="2021-04-14T14:22:51+08:00">2021-04-14</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/ROS/" itemprop="url" rel="index"><span itemprop="name">ROS</span></a>
+        </span>
+    </span>
+
+  
 </div>
 
-    
-</div>
+        </div>
+      </header>
 
     
-    <div class="post-content markdown">
-        <div class="main-content-wrap">
-            <p>入门的概念已经了解，本系列是我在系统学习ROS中的笔记。ROS知识点繁多，有些内容用到的时候google或者wiki查询，不做记录。</p>
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>入门的概念已经了解，本系列是我在系统学习ROS中的笔记。ROS知识点繁多，有些内容用到的时候google或者wiki查询，不做记录。</p>
 <span id="more"></span>
 
 <p>同时，只记录python实现版本。</p>
@@ -590,317 +461,72 @@
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"></span><br><span class="line"><span class="comment">#为了增加代码的可移植性，用os自动获取当前路径的前一级</span></span><br><span class="line">path = os.path.abspath(<span class="string">&quot;.&quot;</span>)</span><br><span class="line">sys.path.insert(<span class="number">0</span>, path + <span class="string">&quot;/src/plumbing_pub_sub/scripts&quot;</span>)  <span class="comment">#将模块文件所在路径添加到sys.path中</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> tools    </span><br><span class="line">rospy.loginfo(<span class="string">&quot;num = %d&quot;</span>,tools.num)  </span><br></pre></td></tr></table></figure>
 
 
-            
-
-
-        </div>
     </div>
-    <div id="post-footer" class="post-footer main-content-wrap">
-        
-        
-            <div class="post-actions-wrap">
-    <nav>
-        <ul class="post-actions post-action-nav">
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%BA%8C%EF%BC%89/"
-                    data-tooltip="系统学习ROS（二）"
-                    aria-label="PREVIOUS: 系统学习ROS（二）"
-                >
-                    
-                        <i class="fa fa-angle-left" aria-hidden="true"></i>
-                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
-                    </a>
-            </li>
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/"
-                    data-tooltip="ROS学习笔记：古月居入门21讲"
-                    aria-label="NEXT: ROS学习笔记：古月居入门21讲"
-                >
-                    
-                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
-                        <i class="fa fa-angle-right" aria-hidden="true"></i>
-                    </a>
-            </li>
-        </ul>
-    </nav>
-    <ul class="post-actions post-action-share">
-        <li class="post-action hide-lg hide-md hide-sm">
-            <a
-                class="post-action-btn btn btn--default btn-open-shareoptions"
-                href="#btn-open-shareoptions"
-                aria-label="Share this post"
-            >
-                <i class="fa fa-share-alt" aria-hidden="true"></i>
-            </a>
-        </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://example.com/2021/04/14/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%80%EF%BC%89/"
-                    title="Share on Facebook"
-                    aria-label="Share on Facebook"
-                >
-                    <i class="fab fa-facebook" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://example.com/2021/04/14/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%80%EF%BC%89/"
-                    title="Share on Twitter"
-                    aria-label="Share on Twitter"
-                >
-                    <i class="fab fa-twitter" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://example.com/2021/04/14/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%80%EF%BC%89/"
-                    title="Share on Google+"
-                    aria-label="Share on Google+"
-                >
-                    <i class="fab fa-google-plus" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-        
-            
-        
-        <li class="post-action">
-            
-                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
-            
-                <i class="fa fa-list" aria-hidden="true"></i>
-            </a>
-        </li>
-    </ul>
-</div>
-
-
-        
-        
-            
-        
-    </div>
-</article>
-
-
-
-                <footer id="footer" class="main-content-wrap">
-    <span class="copyrights">
-        Copyrights &copy; 2021 Eric Tan. All Rights Reserved.
-    </span>
-</footer>
-
-            </div>
-            
-                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
-                    <div class="post-actions-wrap">
-    <nav>
-        <ul class="post-actions post-action-nav">
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%BA%8C%EF%BC%89/"
-                    data-tooltip="系统学习ROS（二）"
-                    aria-label="PREVIOUS: 系统学习ROS（二）"
-                >
-                    
-                        <i class="fa fa-angle-left" aria-hidden="true"></i>
-                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
-                    </a>
-            </li>
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/"
-                    data-tooltip="ROS学习笔记：古月居入门21讲"
-                    aria-label="NEXT: ROS学习笔记：古月居入门21讲"
-                >
-                    
-                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
-                        <i class="fa fa-angle-right" aria-hidden="true"></i>
-                    </a>
-            </li>
-        </ul>
-    </nav>
-    <ul class="post-actions post-action-share">
-        <li class="post-action hide-lg hide-md hide-sm">
-            <a
-                class="post-action-btn btn btn--default btn-open-shareoptions"
-                href="#btn-open-shareoptions"
-                aria-label="Share this post"
-            >
-                <i class="fa fa-share-alt" aria-hidden="true"></i>
-            </a>
-        </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://example.com/2021/04/14/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%80%EF%BC%89/"
-                    title="Share on Facebook"
-                    aria-label="Share on Facebook"
-                >
-                    <i class="fab fa-facebook" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://example.com/2021/04/14/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%80%EF%BC%89/"
-                    title="Share on Twitter"
-                    aria-label="Share on Twitter"
-                >
-                    <i class="fab fa-twitter" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://example.com/2021/04/14/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%80%EF%BC%89/"
-                    title="Share on Google+"
-                    aria-label="Share on Google+"
-                >
-                    <i class="fab fa-google-plus" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-        
-            
-        
-        <li class="post-action">
-            
-                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
-            
-                <i class="fa fa-list" aria-hidden="true"></i>
-            </a>
-        </li>
-    </ul>
-</div>
-
-
-                </div>
-                
-    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
-        <i id="btn-close-shareoptions" class="fa fa-times"></i>
-        <ul class="share-options">
-            
-                
-                
-                <li class="share-option">
-                    <a
-                        class="share-option-btn"
-                        target="new"
-                        href="https://www.facebook.com/sharer/sharer.php?u=http://example.com/2021/04/14/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%80%EF%BC%89/"
-                        aria-label="Share on Facebook"
-                    >
-                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
-                    </a>
-                </li>
-            
-                
-                
-                <li class="share-option">
-                    <a
-                        class="share-option-btn"
-                        target="new"
-                        href="https://twitter.com/intent/tweet?text=http://example.com/2021/04/14/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%80%EF%BC%89/"
-                        aria-label="Share on Twitter"
-                    >
-                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
-                    </a>
-                </li>
-            
-                
-                
-                <li class="share-option">
-                    <a
-                        class="share-option-btn"
-                        target="new"
-                        href="https://plus.google.com/share?url=http://example.com/2021/04/14/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%80%EF%BC%89/"
-                        aria-label="Share on Google+"
-                    >
-                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
-                    </a>
-                </li>
-            
-        </ul>
-    </div>
-
-
-            
-        </div>
-        
-
-
-<div id="about">
-    <div id="about-card">
-        <div id="about-btn-close">
-            <i class="fa fa-times"></i>
-        </div>
-        
-            <h4 id="about-card-name">Eric Tan</h4>
-        
-            <div id="about-card-bio"><p>author.bio</p>
-</div>
-        
-        
-            <div id="about-card-job">
-                <i class="fa fa-briefcase"></i>
-                <br/>
-                <p>author.job</p>
-
-            </div>
-        
-        
-    </div>
-</div>
-
-        
-        
-<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
-        <!--SCRIPTS-->
-
-<script src="/assets/js/script-aruckjrapimnobkxs27htsu2kxkoy2szmjcde1n3gfjqfmv8qbkdebriarib.min.js"></script>
-
-<!--SCRIPTS END-->
-
 
     
+    
+    
+
+    <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/04/12/ROS%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%9A%E5%8F%A4%E6%9C%88%E5%B1%85%E5%85%A5%E9%97%A821%E8%AE%B2/" rel="prev" title="ROS学习笔记：古月居入门21讲">
+                  <i class="fa fa-chevron-left"></i> ROS学习笔记：古月居入门21讲
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%BA%8C%EF%BC%89/" rel="next" title="系统学习ROS（二）">
+                  系统学习ROS（二） <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
 
 
 
 
-    </body>
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Eric Tan</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+
+
+
+
+
+</body>
 </html>

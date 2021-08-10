@@ -1,19 +1,27 @@
-
 <!DOCTYPE html>
 <html lang="en">
-    
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="generator" content="Eric Tan">
-    <title>系统学习ROS（三） - Eric Tan</title>
-    <meta name="author" content="Eric Tan">
-    
-    
-    
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Eric Tan","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"]},"articleBody":"在实践中学习，本节介绍第一个上手案例：乌龟自动跟随\nIDE：VS Code\n\n\n学习地址（全文参考）：http://www.autolabor.com.cn/book/ROSTutorials/\n实操：乌龟跟随案例**\n\n流程：\n\n（1）创建功能包，用Service模式创建一只跟随乌龟；\n（2）编写发布方节点：发布两只乌龟的坐标\n​                  疑问：为什么一定要通过发布方先订阅坐标信息再发布，不能由订阅方直接订阅乌龟坐标信息进行处理吗？\n​                  解答：实际Publisher是将坐标转换消息发布到TF功能包中，Subscriber也是直接订阅TF中的坐标转换信息 (tf2_ros.Buffer中已经缓存了发布到TF中的坐标转换消息)。所以我们需要一个Publisher节点来完成发布到TF中的工作！\n（3）编写订阅方节点：解析坐标信息，并生成速度信息（带方向的速度，表示下一时刻要往哪走）\n（4）最后通过launch文件集成上述节点。\n\n实现：\n\n123456789101112131415161718192021222324251.Client生成新乌龟#1.导包import rospyfrom turtlesim.srv import Spawn, SpawnRequest, SpawnResponseif __name__ == &quot;__main__&quot;:    # 2.初始化 ros 节点    rospy.init_node(&quot;turtle_spawn_p&quot;)    # 3.创建服务客户端    client = rospy.ServiceProxy(&quot;/spawn&quot;,Spawn)    #话题名/spawn、消息类型turtlesim/Spawn    # 4.等待服务启动    client.wait_for_service()    # 5.创建请求数据    req = SpawnRequest()    req.x = 1.0     #新乌龟的坐标、名字    req.y = 1.0    req.theta = 3.14    req.name = &quot;turtle2&quot;    # 6.发送请求并处理响应    try:         response = client.call(req)      #返回服务器端相应。根据消息类型，返回的信息是新乌龟的名称        rospy.loginfo(&quot;乌龟创建成功，名字是:%s&quot;,response.name)    except Exception as e:        rospy.loginfo(&quot;服务调用失败....&quot;)\n\nPublisher实现说明：\n\n前面的代码订阅一个乌龟的坐标系，所以话题名是固定的turtle1/pose，但是现在要订阅两个乌龟的坐标，话题分别是turtle1/pose、turtle2/pose，考虑通过传参args来实现复用。\n\n在launch文件中node下传入args，然后在节点实现文件中，用sys.argv调用参数\n\n这里是分别订阅两个坐标信息，分别计算它们与world坐标系的转换关系；而后面在Subscriber中才实现两个乌龟节点间的直接转换\n\n\nTip：在launch文件中node下传入的args，传入的不仅仅是那一个参数，还有：文件全路径 + 传入的参数 + 节点名称 + 日志文件路径（4个）\n123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657582.Publisher  先订阅乌龟坐标，再发布转换关系# 1.导包import rospyimport sysfrom turtlesim.msg import Posefrom geometry_msgs.msg import TransformStampedimport tf2_rosimport tf_conversionsturtle_name = &quot;&quot;def doPose(pose):    # rospy.loginfo(&quot;x = %.2f&quot;,pose.x)    #1.创建坐标系广播器    broadcaster = tf2_ros.TransformBroadcaster()    #2.将 pose 信息转换成 TransFormStamped    tfs = TransformStamped()    tfs.header.frame_id = &quot;world&quot;    tfs.header.stamp = rospy.Time.now()    tfs.child_frame_id = turtle_name    tfs.transform.translation.x = pose.x    tfs.transform.translation.y = pose.y    tfs.transform.translation.z = 0.0    qtn = tf_conversions.transformations.quaternion_from_euler(0, 0, pose.theta)    tfs.transform.rotation.x = qtn[0]    tfs.transform.rotation.y = qtn[1]    tfs.transform.rotation.z = qtn[2]    tfs.transform.rotation.w = qtn[3]    #3.广播器发布 tfs    broadcaster.sendTransform(tfs)if __name__ == &quot;__main__&quot;:    # 2.初始化 ros 节点    rospy.init_node(&quot;sub_tfs_p&quot;)        # 3.解析传入的命名空间    if len(sys.argv) != 4:      #在launch文件中传入参数，应该解析到4个！！        rospy.loginfo(&quot;参数个数不对！&quot;)        sys.exit(1)    else:        turtle_name = sys.argv[1]   #第2个参数就是我们真正传入的参数    rospy.loginfo(&quot;--------乌龟:%s&quot;,turtle_name)    rospy.Subscriber(turtle_name + &quot;/pose&quot;,Pose,doPose, queue_size=10)    #实现复用！！！                                                                                                                        ##话题名称、消息类型、回调函数、队列长度        #     4.创建订阅对象    #     5.回调函数处理订阅的 pose 信息    #         5-1.创建 TF 广播器    #         5-2.将 pose 信息转换成 TransFormStamped    #         5-3.发布    #     6.spin    rospy.spin()\n\n此时启动launch文件（launch中有乌龟节点、Client节点、Publisher节点），则Publisher就将乌龟坐标信息发布到了TF功能包中。启动rviz，添加TF插件就可看到啦！！\nSubscriber实现说明：\n\n创建订阅对象buffer，它里面缓存有刚刚Publisher发布在TF中的坐标变换\n\n现在需要从turtle1到world、turtle2到world的转换关系获得turtle1到turtle2的直接转换关系，使用buffer.lookup_transform( )函数\n123456789101112#buffer.lookup_transform( )函数： #参数1：目标坐标系          #参数2：源坐标系           #参数3：rospy.Time(0) ---取时间间隔最近的两个坐标帧 #返回值：turtle1 与 turtle2 的坐标系关系 #两个坐标系的名称 与 Publisher中发布到TF中的child_frame_id一致 trans = buffer.lookup_transform(&quot;turtle2&quot;,&quot;turtle1&quot;,rospy.Time(0))      #偏移量：trans.transform.translation.x、trans.transform.translation.y、trans.transform.translation.z#\n转换关系获得后，要计算turtle2的速度信息，最终发布速度信息以控制turtle2。速度信息使用的消息类型是Twist：\n123456789#Twist消息类型geometry_msgs/Vector3 linear  float64 x  float64 y  float64 zgeometry_msgs/Vector3 angular  float64 x  float64 y  float64 z\n\n1234567891011121314151617181920212223242526272829303132333435363.Subscriber  将两个乌龟分别对`world`的转换关系变为两只乌龟之间直接的转换关系# 1.导包import rospyimport tf2_rosfrom geometry_msgs.msg import TransformStamped, Twistimport mathif __name__ == &quot;__main__&quot;:    # 2.初始化 ros 节点    rospy.init_node(&quot;sub_tfs_p&quot;)    # 3.创建 TF 订阅对象    buffer = tf2_ros.Buffer()    listener = tf2_ros.TransformListener(buffer)    # 4.处理订阅到的 TF    rate = rospy.Rate(10)    # 创建速度发布对象    pub = rospy.Publisher(&quot;/turtle2/cmd_vel&quot;,Twist,queue_size=1000)  #控制turtle2运动，所以发布的话题是`turtle2/cmd_vel`, 消息类型是Twist         while not rospy.is_shutdown():        rate.sleep()                try:            # 计算两只乌龟之间的直接转换关系：buffer.lookup_transform( )函数            trans = buffer.lookup_transform(&quot;turtle2&quot;,&quot;turtle1&quot;,rospy.Time(0))                           # 组织Twist消息（见上方Publisher的创建，Twist消息）（通过得到的转换关系，计算目标速度）            twist = Twist()            twist.linear.x = 0.5 * math.sqrt(math.pow(trans.transform.translation.x,2) + math.pow(trans.transform.translation.y,2))   #线速度            twist.angular.z = 4 * math.atan2(trans.transform.translation.y, trans.transform.translation.x)  #角速度                        #发布Twist消息            pub.publish(twist)        except Exception as e:            rospy.logwarn(&quot;警告:%s&quot;,e)\n\nlaunch文件集成上述节点：\n1234567891011&lt;launch&gt;    &lt;node pkg=&quot;turtlesim&quot; type=&quot;turtlesim_node&quot; name=&quot;turtle1&quot; output=&quot;screen&quot; /&gt;    &lt;node pkg=&quot;turtlesim&quot; type=&quot;turtle_teleop_key&quot; name=&quot;key_control&quot; output=&quot;screen&quot;/&gt;    &lt;node pkg=&quot;demo_test_flow_p&quot; type=&quot;test01_turtle_spawn_p.py&quot; name=&quot;turtle_spawn&quot; output=&quot;screen&quot;/&gt;    &lt;node pkg=&quot;demo_test_flow_p&quot; type=&quot;test02_turtle_tf_pub_p.py&quot; name=&quot;tf_pub1&quot; args=&quot;turtle1&quot; output=&quot;screen&quot;/&gt;    &lt;node pkg=&quot;demo_test_flow_p&quot; type=&quot;test02_turtle_tf_pub_p.py&quot; name=&quot;tf_pub2&quot; args=&quot;turtle2&quot; output=&quot;screen&quot;/&gt;    &lt;node pkg=&quot;demo_test_flow_p&quot; type=&quot;test03_turtle_tf_sub_p.py&quot; name=&quot;tf_sub&quot; output=&quot;screen&quot;/&gt;&lt;/launch&gt;\n\n\n\n总结：\n乌龟跟随案例的实现完全应用TF功能包，实现了坐标转换计算。实现过程比较复杂、集成度较高，所以对于初学者这是很好的第一个上手项目。在敲代码之前，一定要理清楚每个节点在做什么事情、通过什么方法什么库来做的，才能算真正掌握这个项目。\n","dateCreated":"2021-04-17T13:24:02+08:00","dateModified":"2021-04-17T13:26:37+08:00","datePublished":"2021-04-17T13:24:02+08:00","description":"在实践中学习，本节介绍第一个上手案例：乌龟自动跟随\nIDE：VS Code","headline":"系统学习ROS（三）","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"http://example.com/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%89%EF%BC%89/"},"publisher":{"@type":"Organization","name":"Eric Tan","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"]},"url":"http://example.com/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%89%EF%BC%89/"}</script>
-    <meta name="description" content="在实践中学习，本节介绍第一个上手案例：乌龟自动跟随 IDE：VS Code">
-<meta property="og:type" content="blog">
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Muse","version":"8.7.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="在实践中学习，本节介绍第一个上手案例：乌龟自动跟随 IDE：VS Code">
+<meta property="og:type" content="article">
 <meta property="og:title" content="系统学习ROS（三）">
 <meta property="og:url" content="http://example.com/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%89%EF%BC%89/index.html">
 <meta property="og:site_name" content="Eric Tan">
@@ -23,327 +31,189 @@
 <meta property="article:modified_time" content="2021-04-17T05:26:37.495Z">
 <meta property="article:author" content="Eric Tan">
 <meta name="twitter:card" content="summary">
-    
-    
-        
-    
-    
-    
-    
-    
-    <!--STYLES-->
-    
-<link rel="stylesheet" href="/assets/css/style-avgrqz8jhyoidabpqs5wzkidsky3osgmw4xscwbmmpkuhuen3z0qho9qrrme.min.css">
 
-    <!--STYLES END-->
-    
 
-    
+<link rel="canonical" href="http://example.com/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%89%EF%BC%89/">
 
-    
-        
-    
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://example.com/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%89%EF%BC%89/","path":"2021/04/17/系统学习ROS（三）/","title":"系统学习ROS（三）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>系统学习ROS（三） | Eric Tan</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
 </head>
 
-    <body>
-        <div id="blog">
-            <!-- Define author's picture -->
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
 
-
-    
-
-<header id="header" data-behavior="4">
-    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
-    <div class="header-title">
-        <a
-            class="header-title-link"
-            href="/"
-            aria-label=""
-        >
-            Eric Tan
-        </a>
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
     </div>
-    
-        
-            <a
-                class="header-right-picture "
-                href="#about"
-                aria-label="Open the link: /#about"
-            >
-        
-        
-        </a>
-    
-</header>
+  </div>
 
-            <!-- Define author's picture -->
+  <div class="site-meta">
 
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Eric Tan</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Welcome, and thanks.</p>
+  </div>
 
-<nav id="sidebar" data-behavior="4">
-    <div class="sidebar-container">
-        
-        
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/"
-                            
-                            rel="noopener"
-                            title="Home"
-                        >
-                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Home</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/all-categories"
-                            
-                            rel="noopener"
-                            title="Categories"
-                        >
-                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Categories</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/all-tags"
-                            
-                            rel="noopener"
-                            title="Tags"
-                        >
-                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Tags</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/all-archives"
-                            
-                            rel="noopener"
-                            title="Archives"
-                        >
-                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Archives</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link open-algolia-search"
-                            href="#search"
-                            
-                            rel="noopener"
-                            title="Search"
-                        >
-                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Search</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="#about"
-                            
-                            rel="noopener"
-                            title="About"
-                        >
-                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">About</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://github.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="GitHub"
-                        >
-                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">GitHub</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="http://stackoverflow.com/users"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Stack Overflow"
-                        >
-                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Stack Overflow</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://twitter.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Twitter"
-                        >
-                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Twitter</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://facebook.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Facebook"
-                        >
-                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Facebook</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://plus.google.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Google +"
-                        >
-                        <i class="sidebar-button-icon fab fa-google-plus" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Google +</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://www.linkedin.com/profile/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="LinkedIn"
-                        >
-                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">LinkedIn</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/mailto"
-                            
-                            rel="noopener"
-                            title="Mail"
-                        >
-                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Mail</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/atom.xml"
-                            
-                            rel="noopener"
-                            title="RSS"
-                        >
-                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">RSS</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
     </div>
-</nav>
+  </div>
+</div>
 
-            
-            <div id="main" data-behavior="4"
-                 class="
-                        hasCoverMetaIn
-                        ">
-                
-<article class="post">
+
+
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-overview-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-overview">
+            <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Eric Tan</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+  </nav>
+</div>
+
+
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
     
-    
-        <div class="post-header main-content-wrap text-left">
-    
-        <h1 class="post-title">
-            系统学习ROS（三）
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%89%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Eric Tan">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Eric Tan">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          系统学习ROS（三）
         </h1>
-    
-    
-        <div class="post-meta">
-    <time datetime="2021-04-17T13:24:02+08:00">
-	
-		    Apr 17, 2021
-    	
-    </time>
-    
-        <span>in </span>
-        
-    <a class="category-link" href="/categories/ROS/">ROS</a>
 
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
 
-    
+      <time title="Created: 2021-04-17 13:24:02 / Modified: 13:26:37" itemprop="dateCreated datePublished" datetime="2021-04-17T13:24:02+08:00">2021-04-17</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/ROS/" itemprop="url" rel="index"><span itemprop="name">ROS</span></a>
+        </span>
+    </span>
+
+  
 </div>
 
-    
-</div>
+        </div>
+      </header>
 
     
-    <div class="post-content markdown">
-        <div class="main-content-wrap">
-            <p>在实践中学习，本节介绍第一个上手案例：乌龟自动跟随</p>
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>在实践中学习，本节介绍第一个上手案例：乌龟自动跟随</p>
 <p>IDE：VS Code</p>
 <span id="more"></span>
 
@@ -395,317 +265,72 @@
 <p>总结：</p>
 <p>乌龟跟随案例的实现完全应用TF功能包，实现了坐标转换计算。实现过程比较复杂、集成度较高，所以对于初学者这是很好的第一个上手项目。在敲代码之前，一定要理清楚<strong>每个节点在做什么事情、通过什么方法什么库来做的</strong>，才能算真正掌握这个项目。</p>
 
-            
-
-
-        </div>
     </div>
-    <div id="post-footer" class="post-footer main-content-wrap">
-        
-        
-            <div class="post-actions-wrap">
-    <nav>
-        <ul class="post-actions post-action-nav">
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%9A%E9%97%AE%E9%A2%98%E7%AF%871/"
-                    data-tooltip="系统学习ROS：问题篇1"
-                    aria-label="PREVIOUS: 系统学习ROS：问题篇1"
-                >
-                    
-                        <i class="fa fa-angle-left" aria-hidden="true"></i>
-                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
-                    </a>
-            </li>
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%BA%8C%EF%BC%89/"
-                    data-tooltip="系统学习ROS（二）"
-                    aria-label="NEXT: 系统学习ROS（二）"
-                >
-                    
-                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
-                        <i class="fa fa-angle-right" aria-hidden="true"></i>
-                    </a>
-            </li>
-        </ul>
-    </nav>
-    <ul class="post-actions post-action-share">
-        <li class="post-action hide-lg hide-md hide-sm">
-            <a
-                class="post-action-btn btn btn--default btn-open-shareoptions"
-                href="#btn-open-shareoptions"
-                aria-label="Share this post"
-            >
-                <i class="fa fa-share-alt" aria-hidden="true"></i>
-            </a>
-        </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://example.com/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%89%EF%BC%89/"
-                    title="Share on Facebook"
-                    aria-label="Share on Facebook"
-                >
-                    <i class="fab fa-facebook" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://example.com/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%89%EF%BC%89/"
-                    title="Share on Twitter"
-                    aria-label="Share on Twitter"
-                >
-                    <i class="fab fa-twitter" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://example.com/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%89%EF%BC%89/"
-                    title="Share on Google+"
-                    aria-label="Share on Google+"
-                >
-                    <i class="fab fa-google-plus" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-        
-            
-        
-        <li class="post-action">
-            
-                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
-            
-                <i class="fa fa-list" aria-hidden="true"></i>
-            </a>
-        </li>
-    </ul>
-</div>
-
-
-        
-        
-            
-        
-    </div>
-</article>
-
-
-
-                <footer id="footer" class="main-content-wrap">
-    <span class="copyrights">
-        Copyrights &copy; 2021 Eric Tan. All Rights Reserved.
-    </span>
-</footer>
-
-            </div>
-            
-                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
-                    <div class="post-actions-wrap">
-    <nav>
-        <ul class="post-actions post-action-nav">
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%9A%E9%97%AE%E9%A2%98%E7%AF%871/"
-                    data-tooltip="系统学习ROS：问题篇1"
-                    aria-label="PREVIOUS: 系统学习ROS：问题篇1"
-                >
-                    
-                        <i class="fa fa-angle-left" aria-hidden="true"></i>
-                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
-                    </a>
-            </li>
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%BA%8C%EF%BC%89/"
-                    data-tooltip="系统学习ROS（二）"
-                    aria-label="NEXT: 系统学习ROS（二）"
-                >
-                    
-                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
-                        <i class="fa fa-angle-right" aria-hidden="true"></i>
-                    </a>
-            </li>
-        </ul>
-    </nav>
-    <ul class="post-actions post-action-share">
-        <li class="post-action hide-lg hide-md hide-sm">
-            <a
-                class="post-action-btn btn btn--default btn-open-shareoptions"
-                href="#btn-open-shareoptions"
-                aria-label="Share this post"
-            >
-                <i class="fa fa-share-alt" aria-hidden="true"></i>
-            </a>
-        </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://example.com/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%89%EF%BC%89/"
-                    title="Share on Facebook"
-                    aria-label="Share on Facebook"
-                >
-                    <i class="fab fa-facebook" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://example.com/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%89%EF%BC%89/"
-                    title="Share on Twitter"
-                    aria-label="Share on Twitter"
-                >
-                    <i class="fab fa-twitter" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://example.com/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%89%EF%BC%89/"
-                    title="Share on Google+"
-                    aria-label="Share on Google+"
-                >
-                    <i class="fab fa-google-plus" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-        
-            
-        
-        <li class="post-action">
-            
-                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
-            
-                <i class="fa fa-list" aria-hidden="true"></i>
-            </a>
-        </li>
-    </ul>
-</div>
-
-
-                </div>
-                
-    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
-        <i id="btn-close-shareoptions" class="fa fa-times"></i>
-        <ul class="share-options">
-            
-                
-                
-                <li class="share-option">
-                    <a
-                        class="share-option-btn"
-                        target="new"
-                        href="https://www.facebook.com/sharer/sharer.php?u=http://example.com/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%89%EF%BC%89/"
-                        aria-label="Share on Facebook"
-                    >
-                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
-                    </a>
-                </li>
-            
-                
-                
-                <li class="share-option">
-                    <a
-                        class="share-option-btn"
-                        target="new"
-                        href="https://twitter.com/intent/tweet?text=http://example.com/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%89%EF%BC%89/"
-                        aria-label="Share on Twitter"
-                    >
-                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
-                    </a>
-                </li>
-            
-                
-                
-                <li class="share-option">
-                    <a
-                        class="share-option-btn"
-                        target="new"
-                        href="https://plus.google.com/share?url=http://example.com/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%B8%89%EF%BC%89/"
-                        aria-label="Share on Google+"
-                    >
-                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
-                    </a>
-                </li>
-            
-        </ul>
-    </div>
-
-
-            
-        </div>
-        
-
-
-<div id="about">
-    <div id="about-card">
-        <div id="about-btn-close">
-            <i class="fa fa-times"></i>
-        </div>
-        
-            <h4 id="about-card-name">Eric Tan</h4>
-        
-            <div id="about-card-bio"><p>author.bio</p>
-</div>
-        
-        
-            <div id="about-card-job">
-                <i class="fa fa-briefcase"></i>
-                <br/>
-                <p>author.job</p>
-
-            </div>
-        
-        
-    </div>
-</div>
-
-        
-        
-<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
-        <!--SCRIPTS-->
-
-<script src="/assets/js/script-aruckjrapimnobkxs27htsu2kxkoy2szmjcde1n3gfjqfmv8qbkdebriarib.min.js"></script>
-
-<!--SCRIPTS END-->
-
 
     
+    
+    
+
+    <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%BA%8C%EF%BC%89/" rel="prev" title="系统学习ROS（二）">
+                  <i class="fa fa-chevron-left"></i> 系统学习ROS（二）
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/04/17/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%9A%E9%97%AE%E9%A2%98%E7%AF%871/" rel="next" title="系统学习ROS：问题篇1">
+                  系统学习ROS：问题篇1 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
 
 
 
 
-    </body>
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Eric Tan</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+
+
+
+
+
+</body>
 </html>

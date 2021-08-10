@@ -1,19 +1,27 @@
-
 <!DOCTYPE html>
 <html lang="en">
-    
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="generator" content="Eric Tan">
-    <title>系统学习ROS（四） - Eric Tan</title>
-    <meta name="author" content="Eric Tan">
-    
-    
-    
-    <script type="application/ld+json">{"@context":"http://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Eric Tan","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"]},"articleBody":"从本文起，开始介绍ROS最强大的功能之一——仿真。\n简单来说，ROS仿真用URDF语法进行机器人建模，在Gazebo中实现，同时可以搭配Rviz对感知到的环境进行可视化。\n\n\n十、机器人仿真在 ROS 中，仿真实现涉及的内容主要有三:**对机器人建模(URDF)、创建仿真环境(Gazebo)以及感知环境(Rviz)**等系统性实现。\n仿真优势：\n1.**低成本:**当前机器人成本居高不下，动辄几十万，仿真可以大大降低成本，减小风险\n2.**高效:**搭建的环境更为多样且灵活，可以提高测试效率以及测试覆盖率\n3.**高安全性:**仿真环境下，无需考虑耗损问题\n仿真缺陷：\n1.仿真器所使用的物理引擎目前还不能够完全精确模拟真实世界的物理情况\n2.仿真器构建的是关节驱动器（电机&amp;齿轮箱）、传感器与信号通信的绝对理想情况，目前不支持模拟实际硬件缺陷或者一些临界状态等情形\n\n如果非仿真环境(真实环境)，那么使用 URDF 结合 Rviz 直接显示感知的真实环境信息\n如果是仿真环境，那么需要使用 URDF 结合 Gazebo 搭建仿真环境，并结合 Rviz 显示感知的虚拟环境信息\n\nURDF与Rviz集成使用URDF：统一(标准化)机器人描述格式，可以以一种 XML 的方式描述机器人的部分结构，比如底盘、摄像头、激光雷达、机械臂以及不同关节的自由度\nURDF 不能单独使用，需要结合 Rviz 或 Gazebo，URDF 只是一个文件，需要在 Rviz 或 Gazebo 中渲染成图形化的机器人模型。\n1.实现流程：\n（1）准备:新建功能包，导入依赖：urdf、xacro\n（2）核心:编写 urdf 文件\n（3）核心:在 launch 文件集成 URDF 与 Rviz\n123456&lt;launch&gt;\t#使用的参数名是:robot_description    &lt;param name=&quot;robot_description&quot; textfile=&quot;$(find 包名)/urdf/urdf/urdf01_HelloWorld.urdf&quot; /&gt;     &lt;node pkg=&quot;rviz&quot; type=&quot;rviz&quot; name=&quot;rviz&quot; /&gt;&lt;/launch&gt;\n\n（4）在 Rviz 中显示机器人模型：add插件RobotModel，然后修改参考坐标系\nTip: 优化第四步：如果每次启动rviz都要手动add插件太麻烦！可以保存rviz配置文件，然后在launch文件中加载配置文件\n在rviz选在save config as，保存到刚刚的config文件夹下；重新编launch文件：给node rviz添加参数args=&quot;-d $(find 包名)/config/demo1.rviz&quot;\n2.URDF语法详解：\n可以主要简化为两部分:连杆(link标签) 与 关节(joint标签)\nURDF 中的不同标签:\n\nrobot 根标签，类似于 launch文件中的launch标签 \nlink 连杆标签 \njoint 关节标签 \ngazebo 集成gazebo需要使用的标签 \n\n（1）robot标签\n使用了robot标签作为根标签，所有的 link 和 joint 以及其他标签都必须包含在 robot 标签；\n唯一的属性name: 指定机器人模型的名称\n（2）link标签\n某个部件(也即刚体部分)的外观和物理属性，比如: 机器人底座、轮子、激光雷达、摄像头…每一个部件都对应一个 link；\n在 link 标签内，可以设计该部件的形状、尺寸、颜色、惯性矩阵、碰撞参数等一系列属性。\n12#属性name ---&gt; 为连杆命名\n\n123456789101112131415161718192021222324#子标签    visual ---&gt; 描述外观(对应的数据是可视的)        geometry 设置连杆的形状            标签1: box(盒状)                属性:size=长(x) 宽(y) 高(z)            标签2: cylinder(圆柱)                属性:radius=半径 length=高度            标签3: sphere(球体)                属性:radius=半径            标签4: mesh(为连杆添加皮肤)                属性: filename=资源路径(格式:package://&lt;packagename&gt;/&lt;path&gt;/文件)        origin 设置偏移量与倾斜弧度            属性1: xyz=x偏移 y便宜 z偏移            属性2: rpy=x翻滚 y俯仰 z偏航 (单位是弧度)        metrial 设置材料属性(颜色)            属性: name            标签: color                属性: rgba=红绿蓝权重值与透明度 (每个权重值以及透明度取值[0,1])                        collision ---&gt; 连杆的碰撞属性        Inertial ---&gt; 连杆的惯性矩阵\n\n举例：\n12345678910111213141516171819&lt;robot&gt;    &lt;link name=&quot;base_link&quot;&gt;    #机器人底盘的link，一般都取名为base_link        &lt;visual&gt;   #子级1：可视化标签            \t&lt;geometry&gt;  #子级2：设置几何形状               \t\t\t &lt;box size=&quot;0.5 0.3 0.1&quot; /&gt;                             #子级3：box长方体               \t \t\t &lt;cylinder radius=&quot;0.5&quot; length=&quot;0.1&quot; /&gt;  #子级3：cylinder圆柱体               \t\t\t &lt;sphere radius=&quot;0.3&quot; /&gt;                                #子级3：sphere球体                                                &lt;mesh filename=&quot;package://包名/mesh文件路径名&quot;&gt;  #子级3：mesh修改皮肤          \t    &lt;/geometry&gt;                        &lt;origin xyz=&quot;0 0 0&quot; rpy=&quot;0 0 0&quot; /&gt;  #子级2：设置偏移量、倾斜弧度            &lt;material name=&quot;black&quot;&gt;   #子级2：颜色                &lt;color rgba=&quot;0.7 0.5 0 0.5&quot; /&gt;  #子级3：color   rgba中的a表示透明度！            &lt;/material&gt;        &lt;/visual&gt;    &lt;/link&gt;&lt;/robot&gt;\n\n（3）joint标签\n12345678910#属性    name ---&gt; 为关节命名        type ---&gt; 关节运动形式        continuous: 旋转关节，可以绕单轴无限旋转  #常用        revolute: 旋转关节，类似于 continues,但是有旋转角度限制        prismatic: 滑动关节，沿某一轴线移动的关节，有位置极限        planer: 平面关节，允许在平面正交方向上平移或旋转        floating: 浮动关节，允许进行平移、旋转运动        fixed: 固定关节，不允许运动的特殊关节  #常用\n\n1234567891011121314#子标签    parent(必需的)    parent link的名字是一个强制的属性：        link:父级连杆的名字，是这个link在机器人结构树中的名字。                child(必需的)    child link的名字是一个强制的属性：        link:子级连杆的名字，是这个link在机器人结构树中的名字。                origin        属性: xyz=各轴线上的偏移量  rpy=各轴线上的偏移弧度。                axis        属性: xyz用于设置可以围绕哪个关节轴运动。#0表示不能围绕该轴转动，1表示可以围绕该轴转动\n\n举例：创建机器人模型，底盘为长方体，在长方体的前面添加一摄像头，摄像头可以沿着 Z 轴 360 度旋转。\n​          思路：底板link、摄像头link、二者之间的连接用一个joint\n1234567891011121314151617181920212223242526272829303132333435363738&lt;robot name=&quot;mycar&quot;&gt;\t#底盘    &lt;link name=&quot;base_link&quot;&gt;            &lt;visual&gt;            &lt;geometry&gt;                &lt;box size=&quot;0.5 0.2 0.1&quot; /&gt;            &lt;/geometry&gt;            &lt;origin xyz=&quot;0 0 0&quot; rpy=&quot;0 0 0&quot; /&gt;            &lt;material name=&quot;blue&quot;&gt;                &lt;color rgba=&quot;0 0 1.0 0.5&quot; /&gt;            &lt;/material&gt;        &lt;/visual&gt;    &lt;/link&gt;    #摄像头    &lt;link name=&quot;camera&quot;&gt;        &lt;visual&gt;            &lt;geometry&gt;               \t\t &lt;box size=&quot;0.02 0.05 0.05&quot; /&gt;            &lt;/geometry&gt;            &lt;origin xyz=&quot;0 0 0&quot; rpy=&quot;0 0 0&quot; /&gt;            &lt;material name=&quot;red&quot;&gt;                \t&lt;color rgba=&quot;1 0 0 0.5&quot; /&gt;            &lt;/material&gt;        &lt;/visual&gt;    &lt;/link&gt;    #关节    &lt;joint name=&quot;camera2baselink&quot; type=&quot;continuous&quot;&gt;  #可自由旋转        &lt;parent link=&quot;base_link&quot;/&gt;        &lt;child link=&quot;camera&quot; /&gt;                  #设置偏移量        &lt;origin xyz=&quot;0.2 0 0.075&quot; rpy=&quot;0 0 0&quot; /&gt;  #设置偏移量，否则子link会生成在父link的中心位置        &lt;axis xyz=&quot;0 0 1&quot; /&gt;    &lt;/joint&gt;&lt;/robot&gt;\n\njoint偏移量：\n\nchild link的gemotry属性中的偏移量是相对于joint位置而言的\n所以设置好了joint的偏移量，才能确定好child link的位置\n默认规则：一般情况下，link中的偏移量都设置为0；link的位置通过joint的偏移量来设置！\n所以当你要设置一个link的位置时，首先要设置好它的joint的偏移量！\n\njoint相对于parent link的偏移量解释：\n编写完urdf文件后，用launch文件集成启动：\n如果使用普通的办法，即只设置robot_description参数，则会报错原因：rviz缺少不同部件之间的坐标系关系（transform）解决：ROS中提供了关于机器人模型显示的坐标发布节点2个：joint_state_publisher、robot_state_publisher\n12345678910111213&lt;launch&gt;    &lt;param name=&quot;robot_description&quot; textfile=&quot;$(find urdf_rviz_demo)/urdf/urdf/urdf03_joint.urdf&quot; /&gt;    &lt;node pkg=&quot;rviz&quot; type=&quot;rviz&quot; name=&quot;rviz&quot; args=&quot;-d $(find urdf_rviz_demo)/config/helloworld.rviz&quot; /&gt;     #添加关节状态发布节点    &lt;node pkg=&quot;joint_state_publisher&quot; type=&quot;joint_state_publisher&quot; name=&quot;joint_state_publisher&quot; /&gt;    #添加机器人状态发布节点    &lt;node pkg=&quot;robot_state_publisher&quot; type=&quot;robot_state_publisher&quot; name=&quot;robot_state_publisher&quot; /&gt;    #可选:用于控制关节运动的节点，用于测试关节运动是否正常（主要用于测试）    &lt;node pkg=&quot;joint_state_publisher_gui&quot; type=&quot;joint_state_publisher_gui&quot; name=&quot;joint_state_publisher_gui&quot; /&gt;&lt;/launch&gt;\n\n总结：joint偏移量的设置需要自行计算，launch文件中要为rviz启动2个坐标关系发布节点！\n用base_footprint优化urdf：前面实现的模型，其base_link都是半沉到地下的；修改：用一个极小的物体（base_footprint）代替base_link去半沉到地下，然后将base_link连接到base_footprint上， 最后在rviz中选择参考坐标系为base_footprint，则base_footprint就一定会半沉下去，base_link就一定不会沉下去！\n问题篇2：在运行集成了urdf文件的launch文件时，报错：\n123UnicodeEncodeError: &#x27;ascii&#x27; codec can&#x27;t encode characters in position 463-464: ordinal not in range(128)[joint_state_publisher-3] process has died [pid 4443, exit code 1, cmd /opt/ros/melodic/lib/joint_state_publisher/joint_state_publisher __name:=joint_state_publisher __log:=/home/rosmelodic/.ros/log/b38967c0-0acb-11eb-aee3-0800278ee10c/joint_state_publisher-3.log].log file: /home/rosmelodic/.ros/log/b38967c0-0acb-11eb-aee3-0800278ee10c/joint_state_publisher-3*.log\n\n即出现编码问题\n解决：去除URDF中的中文注释即可～\n（4）实操项目2：简易机器人模型\n创建一个四轮圆柱状机器人模型，机器人参数如下,底盘为圆柱状，半径 10cm，高 8cm，四轮由两个驱动轮和两个万向支撑轮组成，两个驱动轮半径为  3.25cm,轮胎宽度1.5cm，两个万向轮为球状，半径 0.75cm，底盘离地间距为 1.5cm(与万向轮直径一致)\n2个驱动轮+2个万向轮+底盘\n123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778798081828384858687888990919293949596979899100101102103104105106107108109110111112&lt;robot name=&quot;mycar&quot;&gt;    &lt;!-- footprint --&gt;    &lt;link name=&quot;base_footprint&quot;&gt;    \t&lt;visual&gt;        \t&lt;geometry&gt;            \t&lt;sphere radius=&quot;0.001&quot; /&gt;            &lt;/geometry&gt;        &lt;/visual&gt;    &lt;/link&gt;        &lt;!-- 底盘 --&gt;    &lt;link name=&quot;base_link&quot;&gt;    \t&lt;visual&gt;        \t&lt;geometry&gt;            \t&lt;cylinder radius=&quot;0.1&quot; length=&quot;0.08&quot; /&gt;            &lt;/geometry&gt;                        &lt;origin xyz=&quot;0 0 0&quot; rpy=&quot;0 0 0&quot; /&gt;        &lt;/visual&gt;    &lt;/link&gt;        &lt;!-- joint1 --&gt;   &lt;joint name=&quot;link2footprint&quot; type=&quot;fixed&quot;&gt;    \t&lt;parent link =&quot;base_footprint&quot; /&gt;        &lt;child link=&quot;base_link&quot; /&gt;        &lt;origin xyz=&quot;0 0 0.055&quot; rpy=&quot;0 0 0&quot; /&gt;    &lt;/joint&gt;        &lt;!-- 左驱动轮  --&gt;    &lt;link name=&quot;left_wheel&quot;&gt;    \t&lt;visual&gt;        \t&lt;geometry&gt;            \t&lt;cylinder radius=&quot;0.0325&quot; length=&quot;0.015&quot; /&gt;            &lt;/geometry&gt;             &lt;origin xyz=&quot;0 0 0&quot; rpy=&quot;1.5705 0 0&quot; /&gt;            &lt;material name=&quot;black&quot;&gt;                &lt;color rgba=&quot;0.0 0.0 0.0 1.0&quot; /&gt;            &lt;/material&gt;        &lt;/visual&gt;    &lt;/link&gt;        &lt;!-- 右驱动轮  --&gt;    &lt;link name=&quot;right_wheel&quot;&gt;        &lt;visual&gt;        \t&lt;geometry&gt;            \t&lt;cylinder radius=&quot;0.0325&quot; length=&quot;0.015&quot; /&gt;            &lt;/geometry&gt;             &lt;origin xyz=&quot;0 0 0&quot; rpy=&quot;1.5705 0 0&quot; /&gt;            &lt;material name=&quot;black&quot;&gt;                &lt;color rgba=&quot;0.0 0.0 0.0 1.0&quot; /&gt;            &lt;/material&gt;        &lt;/visual&gt;    &lt;/link&gt;        &lt;!-- joint：左轮与底盘  --&gt;    &lt;joint name=&quot;left2link&quot; type=&quot;continuous&quot;&gt;    \t&lt;parent link =&quot;base_link&quot; /&gt;        &lt;child link=&quot;left_wheel&quot; /&gt;        &lt;origin xyz=&quot;0   0.1 -0.0225&quot; rpy=&quot;0 0 0&quot; /&gt;        &lt;axis xyz=&quot;0 1 0&quot; /&gt;    &lt;/joint&gt;        &lt;!-- joint：右轮与底盘  --&gt;    &lt;joint name=&quot;right2link&quot; type=&quot;continuous&quot;&gt;    \t&lt;parent link =&quot;base_link&quot; /&gt;        &lt;child link=&quot;right_wheel&quot; /&gt;        &lt;origin xyz=&quot;0   -0.1 -0.0225&quot; rpy=&quot;0 0 0&quot; /&gt;        &lt;axis xyz=&quot;0 1 0&quot; /&gt;    &lt;/joint&gt;        &lt;!-- 前万向轮  --&gt;    &lt;link name=&quot;front_wheel&quot;&gt;        &lt;visual&gt;        \t&lt;geometry&gt;            \t&lt;sphere radius=&quot;0.015&quot;  /&gt;            &lt;/geometry&gt;             &lt;origin xyz=&quot;0 0 0&quot; rpy=&quot;1.5705 0 0&quot; /&gt;            &lt;material name=&quot;black&quot;&gt;                &lt;color rgba=&quot;0.0 0.0 0.0 1.0&quot; /&gt;            &lt;/material&gt;        &lt;/visual&gt;    &lt;/link&gt;        &lt;!-- 后万向轮  --&gt;    &lt;link name=&quot;back_wheel&quot;&gt;        &lt;visual&gt;        \t&lt;geometry&gt;            \t&lt;sphere radius=&quot;0.015&quot;  /&gt;            &lt;/geometry&gt;             &lt;origin xyz=&quot;0 0 0&quot; rpy=&quot;1.5705 0 0&quot; /&gt;            &lt;material name=&quot;black&quot;&gt;                &lt;color rgba=&quot;0.0 0.0 0.0 1.0&quot; /&gt;            &lt;/material&gt;        &lt;/visual&gt;    &lt;/link&gt;        &lt;!-- joint：万向轮与底盘  --&gt;    &lt;joint name=&quot;front2link&quot; type=&quot;continuous&quot;&gt;    \t&lt;parent link =&quot;base_link&quot; /&gt;        &lt;child link=&quot;front_wheel&quot; /&gt;        &lt;origin xyz=&quot;0.08  0 -0.0475&quot; rpy=&quot;0 0 0&quot; /&gt;        &lt;axis xyz=&quot;0 1 0&quot; /&gt;    &lt;/joint&gt;        &lt;!-- joint：万向轮与底盘  --&gt;    &lt;joint name=&quot;back2link&quot; type=&quot;continuous&quot;&gt;    \t&lt;parent link =&quot;base_link&quot; /&gt;        &lt;child link=&quot;back_wheel&quot; /&gt;        &lt;origin xyz=&quot;-0.08  0 -0.0475&quot; rpy=&quot;0 0 0&quot; /&gt;        &lt;axis xyz=&quot;0 1 0&quot; /&gt;    &lt;/joint&gt;&lt;/robot&gt;\n\n模型中几个joint偏移量的解释：\n(1)joint: left2link   y是车体半径 z是车体中心高度 - 轮子半径\n(2)joint: front2link 几何推导类似 略\nlaunch文件集成：其中urdf文件通过param启动！\n123456&lt;launch&gt;    &lt;param name=&quot;robot_description&quot; textfile=&quot;$(find demo_urdf)/urdf/urdf/demo_test.urdf&quot; /&gt;    &lt;node pkg=&quot;rviz&quot; name=&quot;rviz&quot; type=&quot;rviz&quot; args=&quot;-d $(find demo_urdf)/config/demo1.rviz&quot; /&gt;    &lt;node pkg=&quot;robot_state_publisher&quot; type=&quot;robot_state_publisher&quot; name=&quot;robot_state_publisher&quot; /&gt;    &lt;node pkg=&quot;joint_state_publisher&quot; type=&quot;joint_state_publisher&quot; name=&quot;joint_state_publisher&quot; /&gt;&lt;/launch&gt;\n\n\n\n3.URDF常用工具\n（1）check_urdf 语法检查 check_urdf   demo.urdf\n（2）urdf_to_graphiz 结构查看  urdf_to_graphiz  xxx会生成 urdf 模型结构pdf文件保存到xxx目录下\nURDF优化——xacro普通urdf的问题及解决：\n\n代码复用 —— Xacro宏（函数）\n参数设计 —— Xacro变量\n\n示例程序：Xacro文件\n123456789101112131415161718192021222324252627282930313233343536373839404142&lt;robot name=&quot;mycar&quot; xmlns:xacro=&quot;http://wiki.ros.org/xacro&quot;&gt;    &lt;!-- 属性封装 --&gt;    &lt;xacro:property name=&quot;wheel_radius&quot; value=&quot;0.0325&quot; /&gt;    &lt;xacro:property name=&quot;wheel_length&quot; value=&quot;0.0015&quot; /&gt;    &lt;xacro:property name=&quot;PI&quot; value=&quot;3.1415927&quot; /&gt;    &lt;xacro:property name=&quot;base_link_length&quot; value=&quot;0.08&quot; /&gt;    &lt;xacro:property name=&quot;lidi_space&quot; value=&quot;0.015&quot; /&gt;    &lt;!-- 宏 --&gt;    &lt;xacro:macro name=&quot;wheel_func&quot; params=&quot;wheel_name flag&quot; &gt;        &lt;link name=&quot;$&#123;wheel_name&#125;_wheel&quot;&gt;            &lt;visual&gt;                &lt;geometry&gt;                    &lt;cylinder radius=&quot;$&#123;wheel_radius&#125;&quot; length=&quot;$&#123;wheel_length&#125;&quot; /&gt;                &lt;/geometry&gt;                &lt;origin xyz=&quot;0 0 0&quot; rpy=&quot;$&#123;PI / 2&#125; 0 0&quot; /&gt;                &lt;material name=&quot;wheel_color&quot;&gt;                    &lt;color rgba=&quot;0 0 0 0.3&quot; /&gt;                &lt;/material&gt;            &lt;/visual&gt;        &lt;/link&gt;        &lt;!-- 3-2.joint --&gt;        &lt;joint name=&quot;$&#123;wheel_name&#125;2link&quot; type=&quot;continuous&quot;&gt;            &lt;parent link=&quot;base_link&quot;  /&gt;            &lt;child link=&quot;$&#123;wheel_name&#125;_wheel&quot; /&gt;            &lt;!--                 x 无偏移                y 车体半径                z z= 车体高度 / 2 + 离地间距 - 车轮半径            --&gt;            &lt;origin xyz=&quot;0 $&#123;0.1 * flag&#125; $&#123;(base_link_length / 2 + lidi_space - wheel_radius) * -1&#125;&quot; rpy=&quot;0 0 0&quot; /&gt;            &lt;axis xyz=&quot;0 1 0&quot; /&gt;        &lt;/joint&gt;    &lt;/xacro:macro&gt;    &lt;xacro:wheel_func wheel_name=&quot;left&quot; flag=&quot;1&quot; /&gt;    &lt;xacro:wheel_func wheel_name=&quot;right&quot; flag=&quot;-1&quot; /&gt;&lt;/robot&gt;\n\n\n\n1.Xacro语法详解\n（1）在使用 xacro 生成 urdf 时，根标签robot中必须包含命名空间声明:xmlns:xacro=&quot;http://wiki.ros.org/xacro&quot;\n（2）属性：用于封装 URDF 中的一些字段，比如: PAI 值，小车的尺寸，轮子半径 ….\n1234&lt;xacro:property  name=&quot;xxxx&quot;  value=&quot;yyyy&quot; /&gt;  #属性定义    &lt;my_varible   length = &quot;$&#123;属性名称&#125;&quot;&gt;  #调用&lt;my_varible   radius = &quot;$&#123;数学表达式&#125;&quot;&gt;  #数学运算\n\n（3）宏：\n12345&lt;xacro:macro  name=&quot;宏名称&quot; params=&quot;参数列表(多参数之间使用空格分隔)&quot;&gt;  #宏定义\t...&lt;/xacro:macro&gt;    &lt;xacro:宏名称  参数1=xxx  参数2=xxx/&gt; #调用\n\n（4）文件包含：机器人由多部件组成，不同部件可能封装为单独的 xacro 文件；最后再将不同的文件集成，组合为完整机器人\n123456&lt;robot name=&quot;xxx&quot;  xmlns:xacro=&quot;http://wiki.ros.org/xacro&quot;&gt;      &lt;xacro:include  filename=&quot;my_base.xacro&quot; /&gt;      &lt;xacro:include  filename=&quot;my_camera.xacro&quot; /&gt;      &lt;xacro:include  filename=&quot;my_laser.xacro&quot; /&gt;      ....&lt;/robot&gt;\n\n\n\n2.Xacro完整流程实现——优化小车底盘模型\n\n流程：\n\n编写xacro文件 + 将xacro文件集成到launch文件中\n\n实现：\n\n1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697071727374757677787980818283848586878889909192&lt;robot name=&quot;my_base&quot; xmlns:xacro=&quot;http://www.ros.org/wiki/xacro&quot;&gt;        #底盘    &lt;xacro:property name=&quot;PI&quot; value=&quot;3.141&quot;/&gt; #封装变量、常量            &lt;xacro:property name=&quot;base_footprint_radius&quot; value=&quot;0.001&quot; /&gt;   #封装base_footprint 半径等等    &lt;xacro:property name=&quot;base_link_radius&quot; value=&quot;0.1&quot; /&gt;     &lt;xacro:property name=&quot;base_link_length&quot; value=&quot;0.08&quot; /&gt;    &lt;xacro:property name=&quot;earth_space&quot; value=&quot;0.015&quot; /&gt;    &lt;material name=&quot;black&quot;&gt;        &lt;color rgba=&quot;0.0 0.0 0.0 1.0&quot; /&gt;    &lt;/material&gt;    &lt;link name=&quot;base_footprint&quot;&gt;      &lt;visual&gt;        &lt;geometry&gt;          &lt;sphere radius=&quot;$&#123;base_footprint_radius&#125;&quot; /&gt;        &lt;/geometry&gt;      &lt;/visual&gt;    &lt;/link&gt;    &lt;link name=&quot;base_link&quot;&gt;      &lt;visual&gt;        &lt;geometry&gt;          &lt;cylinder radius=&quot;$&#123;base_link_radius&#125;&quot; length=&quot;$&#123;base_link_length&#125;&quot; /&gt;        &lt;/geometry&gt;        &lt;origin xyz=&quot;0 0 0&quot; rpy=&quot;0 0 0&quot; /&gt;        &lt;material name=&quot;yellow&quot;&gt;          &lt;color rgba=&quot;0.5 0.3 0.0 0.5&quot; /&gt;        &lt;/material&gt;      &lt;/visual&gt;    &lt;/link&gt;    &lt;joint name=&quot;base_link2base_footprint&quot; type=&quot;fixed&quot;&gt;      &lt;parent link=&quot;base_footprint&quot; /&gt;      &lt;child link=&quot;base_link&quot; /&gt;      &lt;origin xyz=&quot;0 0 $&#123;earth_space + base_link_length / 2 &#125;&quot; /&gt;    &lt;/joint&gt;    #驱动轮    &lt;xacro:property name=&quot;wheel_radius&quot; value=&quot;0.0325&quot; /&gt;  #封装驱动轮属性    &lt;xacro:property name=&quot;wheel_length&quot; value=&quot;0.015&quot; /&gt;    &lt;xacro:macro name=&quot;add_wheels&quot; params=&quot;name flag&quot;&gt;  #驱动轮宏  name是left/right    flag是1/-1 表示左或右      &lt;link name=&quot;$&#123;name&#125;_wheel&quot;&gt;        &lt;visual&gt;          &lt;geometry&gt;            &lt;cylinder radius=&quot;$&#123;wheel_radius&#125;&quot; length=&quot;$&#123;wheel_length&#125;&quot; /&gt;          &lt;/geometry&gt;          &lt;origin xyz=&quot;0.0 0.0 0.0&quot; rpy=&quot;$&#123;PI / 2&#125; 0.0 0.0&quot; /&gt;          &lt;material name=&quot;black&quot; /&gt;        &lt;/visual&gt;      &lt;/link&gt;      &lt;joint name=&quot;$&#123;name&#125;_wheel2base_link&quot; type=&quot;continuous&quot;&gt;        &lt;parent link=&quot;base_link&quot; /&gt;        &lt;child link=&quot;$&#123;name&#125;_wheel&quot; /&gt;        &lt;origin xyz=&quot;0 $&#123;flag * base_link_radius&#125; $&#123;-(earth_space + base_link_length / 2 - wheel_radius) &#125;&quot; /&gt;        &lt;axis xyz=&quot;0 1 0&quot; /&gt;      &lt;/joint&gt;    &lt;/xacro:macro&gt;    &lt;xacro:add_wheels name=&quot;left&quot; flag=&quot;1&quot; /&gt;    &lt;xacro:add_wheels name=&quot;right&quot; flag=&quot;-1&quot; /&gt;                    #万向轮    &lt;xacro:property name=&quot;support_wheel_radius&quot; value=&quot;0.0075&quot; /&gt;  #封装万向轮属性    &lt;xacro:macro name=&quot;add_support_wheel&quot; params=&quot;name flag&quot; &gt;  #封装宏      &lt;link name=&quot;$&#123;name&#125;_wheel&quot;&gt;        &lt;visual&gt;            &lt;geometry&gt;                &lt;sphere radius=&quot;$&#123;support_wheel_radius&#125;&quot; /&gt;            &lt;/geometry&gt;            &lt;origin xyz=&quot;0 0 0&quot; rpy=&quot;0 0 0&quot; /&gt;            &lt;material name=&quot;black&quot; /&gt;        &lt;/visual&gt;      &lt;/link&gt;      &lt;joint name=&quot;$&#123;name&#125;_wheel2base_link&quot; type=&quot;continuous&quot;&gt;          &lt;parent link=&quot;base_link&quot; /&gt;          &lt;child link=&quot;$&#123;name&#125;_wheel&quot; /&gt;          &lt;origin xyz=&quot;$&#123;flag * (base_link_radius - support_wheel_radius)&#125; 0 $&#123;-(base_link_length / 2 + earth_space / 2)&#125;&quot; /&gt;          &lt;axis xyz=&quot;1 1 1&quot; /&gt;      &lt;/joint&gt;    &lt;/xacro:macro&gt;    &lt;xacro:add_support_wheel name=&quot;front&quot; flag=&quot;1&quot; /&gt;    &lt;xacro:add_support_wheel name=&quot;back&quot; flag=&quot;-1&quot; /&gt;&lt;/robot&gt;\n\n在launch中集成：\n（1）方式1，先将xacro文件解析成urdf文件，再集成urdf文件；textfile\n（2）方式2，直接集成xacro文件（推荐）command\n​                            属性值就是调用 xacro 功能包的 xacro 程序直接解析 xacro 文件。\n123456789&lt;launch&gt;    &lt;param name=&quot;robot_description&quot; command=&quot;$(find xacro)/xacro $(find demo01_urdf_helloworld)/urdf/xacro/my_base.urdf.xacro&quot; /&gt;    &lt;node pkg=&quot;rviz&quot; type=&quot;rviz&quot; name=&quot;rviz&quot; args=&quot;-d $(find demo01_urdf_helloworld)/config/helloworld.rviz&quot; /&gt;    &lt;node pkg=&quot;joint_state_publisher&quot; type=&quot;joint_state_publisher&quot; name=&quot;joint_state_publisher&quot; output=&quot;screen&quot; /&gt;    &lt;node pkg=&quot;robot_state_publisher&quot; type=&quot;robot_state_publisher&quot; name=&quot;robot_state_publisher&quot; output=&quot;screen&quot; /&gt;    &lt;node pkg=&quot;joint_state_publisher_gui&quot; type=&quot;joint_state_publisher_gui&quot; name=&quot;joint_state_publisher_gui&quot; output=&quot;screen&quot; /&gt;&lt;/launch&gt;\n\n一般在项目中，有多个xacro文件分别用于实现多个机器人部件（例如底盘、摄像头、雷达等）\n通常情况下：先用一个新的xacro文件将这些零散的xacro文件先集成起来，然后在launch文件中启动最后这个xacro文件。\n12345&lt;robot name=&quot;my_car_camera&quot; xmlns:xacro=&quot;http://wiki.ros.org/xacro&quot;&gt;    &lt;xacro:include filename=&quot;my_base.urdf.xacro&quot; /&gt;    &lt;xacro:include filename=&quot;my_camera.urdf.xacro&quot; /&gt;    &lt;xacro:include filename=&quot;my_laser.urdf.xacro&quot; /&gt;&lt;/robot&gt;\n\n\n\n3.解析xacro文件（用xacro文件生成urdf文件）\n执行rosrun  xacro  xacro  xxx.xacro &gt; xxx.urdf\n在Rviz中控制机器人运动——ArbotixArbotix 是一款控制电机、舵机的控制板，并提供相应的 ros 功能包，这个功能包的功能不仅可以驱动真实的 Arbotix 控制板，它还提供一个差速控制器，通过接受速度控制指令更新机器人的 joint 状态，从而帮助我们实现机器人在 rviz 中的运动。\n1.添加 Arbotix 配置文件\n举例：\n1234567891011121314151617181920controllers: &#123;   # 单控制器设置   base_controller: &#123;          #类型: 差速控制器       type: diff_controller,       #参考坐标       base_frame_id: base_footprint,        #两个轮子之间的间距       base_width: 0.2,       #控制频率       ticks_meter: 2000,        #PID控制参数，使机器人车轮快速达到预期速度       Kp: 12,        Kd: 12,        Ki: 0,        Ko: 50,        #加速限制       accel_limit: 1.0     &#125;&#125;\n\n2.集成到launch文件中\n123456789&lt;node name=&quot;arbotix&quot; pkg=&quot;arbotix_python&quot; type=&quot;arbotix_driver&quot; output=&quot;screen&quot;&gt; #&lt;node&gt; 调用了 arbotix_python 功能包下的 arbotix_driver 节点     &lt;rosparam file=&quot;$(find my_urdf05_rviz)/config/hello.yaml&quot; command=&quot;load&quot; /&gt;    #&lt;rosparam&gt; arbotix 驱动机器人运行时，需要获取机器人信息，可以通过 file 加载配置文件         &lt;param name=&quot;sim&quot; value=&quot;true&quot; /&gt;    #&lt;param&gt; 在仿真环境下，需要配置 sim 为 true&lt;/node&gt;\n\n3.启动launch文件，在rviz中设置参考坐标系为odom；并发布消息控制机器人运动\n","dateCreated":"2021-05-21T18:58:46+08:00","dateModified":"2021-05-21T19:03:58+08:00","datePublished":"2021-05-21T18:58:46+08:00","description":"从本文起，开始介绍ROS最强大的功能之一——仿真。\n简单来说，ROS仿真用URDF语法进行机器人建模，在Gazebo中实现，同时可以搭配Rviz对感知到的环境进行可视化。","headline":"系统学习ROS（四）","image":[],"mainEntityOfPage":{"@type":"WebPage","@id":"http://example.com/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%9B%9B%EF%BC%89/"},"publisher":{"@type":"Organization","name":"Eric Tan","sameAs":["https://github.com/","http://stackoverflow.com/users","https://twitter.com/","https://facebook.com/","https://plus.google.com/","https://www.linkedin.com/profile/","mailto"]},"url":"http://example.com/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%9B%9B%EF%BC%89/"}</script>
-    <meta name="description" content="从本文起，开始介绍ROS最强大的功能之一——仿真。 简单来说，ROS仿真用URDF语法进行机器人建模，在Gazebo中实现，同时可以搭配Rviz对感知到的环境进行可视化。">
-<meta property="og:type" content="blog">
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.3/css/all.min.css" integrity="sha256-2H3fkXt6FEmrReK448mDVGKb3WW2ZZw35gI7vqHOE4Y=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Muse","version":"8.7.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="从本文起，开始介绍ROS最强大的功能之一——仿真。 简单来说，ROS仿真用URDF语法进行机器人建模，在Gazebo中实现，同时可以搭配Rviz对感知到的环境进行可视化。">
+<meta property="og:type" content="article">
 <meta property="og:title" content="系统学习ROS（四）">
 <meta property="og:url" content="http://example.com/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%9B%9B%EF%BC%89/index.html">
 <meta property="og:site_name" content="Eric Tan">
@@ -23,327 +31,190 @@
 <meta property="article:modified_time" content="2021-05-21T11:03:58.688Z">
 <meta property="article:author" content="Eric Tan">
 <meta name="twitter:card" content="summary">
-    
-    
-        
-    
-    
-    
-    
-    
-    <!--STYLES-->
-    
-<link rel="stylesheet" href="/assets/css/style-avgrqz8jhyoidabpqs5wzkidsky3osgmw4xscwbmmpkuhuen3z0qho9qrrme.min.css">
 
-    <!--STYLES END-->
-    
 
-    
+<link rel="canonical" href="http://example.com/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%9B%9B%EF%BC%89/">
 
-    
-        
-    
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://example.com/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%9B%9B%EF%BC%89/","path":"2021/05/21/系统学习ROS（四）/","title":"系统学习ROS（四）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>系统学习ROS（四） | Eric Tan</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
 </head>
 
-    <body>
-        <div id="blog">
-            <!-- Define author's picture -->
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
 
-
-    
-
-<header id="header" data-behavior="4">
-    <i id="btn-open-sidebar" class="fa fa-lg fa-bars"></i>
-    <div class="header-title">
-        <a
-            class="header-title-link"
-            href="/"
-            aria-label=""
-        >
-            Eric Tan
-        </a>
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
     </div>
-    
-        
-            <a
-                class="header-right-picture "
-                href="#about"
-                aria-label="Open the link: /#about"
-            >
-        
-        
-        </a>
-    
-</header>
+  </div>
 
-            <!-- Define author's picture -->
+  <div class="site-meta">
 
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Eric Tan</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">Welcome, and thanks.</p>
+  </div>
 
-<nav id="sidebar" data-behavior="4">
-    <div class="sidebar-container">
-        
-        
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/"
-                            
-                            rel="noopener"
-                            title="Home"
-                        >
-                        <i class="sidebar-button-icon fa fa-home" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Home</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/all-categories"
-                            
-                            rel="noopener"
-                            title="Categories"
-                        >
-                        <i class="sidebar-button-icon fa fa-bookmark" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Categories</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/all-tags"
-                            
-                            rel="noopener"
-                            title="Tags"
-                        >
-                        <i class="sidebar-button-icon fa fa-tags" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Tags</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/all-archives"
-                            
-                            rel="noopener"
-                            title="Archives"
-                        >
-                        <i class="sidebar-button-icon fa fa-archive" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Archives</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link open-algolia-search"
-                            href="#search"
-                            
-                            rel="noopener"
-                            title="Search"
-                        >
-                        <i class="sidebar-button-icon fa fa-search" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Search</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="#about"
-                            
-                            rel="noopener"
-                            title="About"
-                        >
-                        <i class="sidebar-button-icon fa fa-question" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">About</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://github.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="GitHub"
-                        >
-                        <i class="sidebar-button-icon fab fa-github" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">GitHub</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="http://stackoverflow.com/users"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Stack Overflow"
-                        >
-                        <i class="sidebar-button-icon fab fa-stack-overflow" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Stack Overflow</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://twitter.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Twitter"
-                        >
-                        <i class="sidebar-button-icon fab fa-twitter" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Twitter</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://facebook.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Facebook"
-                        >
-                        <i class="sidebar-button-icon fab fa-facebook" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Facebook</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://plus.google.com/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="Google +"
-                        >
-                        <i class="sidebar-button-icon fab fa-google-plus" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Google +</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="https://www.linkedin.com/profile/"
-                            
-                                target="_blank"
-                            
-                            rel="noopener"
-                            title="LinkedIn"
-                        >
-                        <i class="sidebar-button-icon fab fa-linkedin" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">LinkedIn</span>
-                    </a>
-            </li>
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/mailto"
-                            
-                            rel="noopener"
-                            title="Mail"
-                        >
-                        <i class="sidebar-button-icon fa fa-envelope" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">Mail</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
-            <ul class="sidebar-buttons">
-            
-                <li class="sidebar-button">
-                    
-                        <a
-                            class="sidebar-button-link "
-                            href="/atom.xml"
-                            
-                            rel="noopener"
-                            title="RSS"
-                        >
-                        <i class="sidebar-button-icon fa fa-rss" aria-hidden="true"></i>
-                        <span class="sidebar-button-desc">RSS</span>
-                    </a>
-            </li>
-            
-        </ul>
-        
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
     </div>
-</nav>
+  </div>
+</div>
 
-            
-            <div id="main" data-behavior="4"
-                 class="
-                        hasCoverMetaIn
-                        ">
-                
-<article class="post">
+
+
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8D%81%E3%80%81%E6%9C%BA%E5%99%A8%E4%BA%BA%E4%BB%BF%E7%9C%9F"><span class="nav-number">1.</span> <span class="nav-text">十、机器人仿真</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#URDF%E4%B8%8ERviz%E9%9B%86%E6%88%90%E4%BD%BF%E7%94%A8"><span class="nav-number"></span> <span class="nav-text">URDF与Rviz集成使用</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%A8base-footprint%E4%BC%98%E5%8C%96urdf%EF%BC%9A"><span class="nav-number">1.</span> <span class="nav-text">用base_footprint优化urdf：</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E7%AF%872%EF%BC%9A"><span class="nav-number">2.</span> <span class="nav-text">问题篇2：</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#URDF%E4%BC%98%E5%8C%96%E2%80%94%E2%80%94xacro"><span class="nav-number"></span> <span class="nav-text">URDF优化——xacro</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9C%A8Rviz%E4%B8%AD%E6%8E%A7%E5%88%B6%E6%9C%BA%E5%99%A8%E4%BA%BA%E8%BF%90%E5%8A%A8%E2%80%94%E2%80%94Arbotix"><span class="nav-number"></span> <span class="nav-text">在Rviz中控制机器人运动——Arbotix</span></a></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-overview">
+            <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Eric Tan</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+  </nav>
+</div>
+
+
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
     
-    
-        <div class="post-header main-content-wrap text-left">
-    
-        <h1 class="post-title">
-            系统学习ROS（四）
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%9B%9B%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Eric Tan">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Eric Tan">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          系统学习ROS（四）
         </h1>
-    
-    
-        <div class="post-meta">
-    <time datetime="2021-05-21T18:58:46+08:00">
-	
-		    May 21, 2021
-    	
-    </time>
-    
-        <span>in </span>
-        
-    <a class="category-link" href="/categories/ROS/">ROS</a>
 
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+      
 
-    
+      <time title="Created: 2021-05-21 18:58:46 / Modified: 19:03:58" itemprop="dateCreated datePublished" datetime="2021-05-21T18:58:46+08:00">2021-05-21</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/ROS/" itemprop="url" rel="index"><span itemprop="name">ROS</span></a>
+        </span>
+    </span>
+
+  
 </div>
 
-    
-</div>
+        </div>
+      </header>
 
     
-    <div class="post-content markdown">
-        <div class="main-content-wrap">
-            <p>从本文起，开始介绍ROS最强大的功能之一——仿真。</p>
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>从本文起，开始介绍ROS最强大的功能之一——仿真。</p>
 <p>简单来说，ROS仿真用URDF语法进行机器人建模，在Gazebo中实现，同时可以搭配Rviz对感知到的环境进行可视化。</p>
 <span id="more"></span>
 
@@ -493,317 +364,72 @@
 
 <p>3.启动launch文件，在rviz中设置参考坐标系为odom；并发布消息控制机器人运动</p>
 
-            
-
-
-        </div>
     </div>
-    <div id="post-footer" class="post-footer main-content-wrap">
-        
-        
-            <div class="post-actions-wrap">
-    <nav>
-        <ul class="post-actions post-action-nav">
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%BA%94%EF%BC%89/"
-                    data-tooltip="系统学习ROS（五）"
-                    aria-label="PREVIOUS: 系统学习ROS（五）"
-                >
-                    
-                        <i class="fa fa-angle-left" aria-hidden="true"></i>
-                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
-                    </a>
-            </li>
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/05/11/github%EF%BC%9A%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%E5%AF%BB%E6%89%BE%E9%80%94%E5%BE%84/"
-                    data-tooltip="github：开源项目寻找途径"
-                    aria-label="NEXT: github：开源项目寻找途径"
-                >
-                    
-                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
-                        <i class="fa fa-angle-right" aria-hidden="true"></i>
-                    </a>
-            </li>
-        </ul>
-    </nav>
-    <ul class="post-actions post-action-share">
-        <li class="post-action hide-lg hide-md hide-sm">
-            <a
-                class="post-action-btn btn btn--default btn-open-shareoptions"
-                href="#btn-open-shareoptions"
-                aria-label="Share this post"
-            >
-                <i class="fa fa-share-alt" aria-hidden="true"></i>
-            </a>
-        </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://example.com/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%9B%9B%EF%BC%89/"
-                    title="Share on Facebook"
-                    aria-label="Share on Facebook"
-                >
-                    <i class="fab fa-facebook" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://example.com/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%9B%9B%EF%BC%89/"
-                    title="Share on Twitter"
-                    aria-label="Share on Twitter"
-                >
-                    <i class="fab fa-twitter" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://example.com/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%9B%9B%EF%BC%89/"
-                    title="Share on Google+"
-                    aria-label="Share on Google+"
-                >
-                    <i class="fab fa-google-plus" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-        
-            
-        
-        <li class="post-action">
-            
-                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
-            
-                <i class="fa fa-list" aria-hidden="true"></i>
-            </a>
-        </li>
-    </ul>
-</div>
-
-
-        
-        
-            
-        
-    </div>
-</article>
-
-
-
-                <footer id="footer" class="main-content-wrap">
-    <span class="copyrights">
-        Copyrights &copy; 2021 Eric Tan. All Rights Reserved.
-    </span>
-</footer>
-
-            </div>
-            
-                <div id="bottom-bar" class="post-bottom-bar" data-behavior="4">
-                    <div class="post-actions-wrap">
-    <nav>
-        <ul class="post-actions post-action-nav">
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%BA%94%EF%BC%89/"
-                    data-tooltip="系统学习ROS（五）"
-                    aria-label="PREVIOUS: 系统学习ROS（五）"
-                >
-                    
-                        <i class="fa fa-angle-left" aria-hidden="true"></i>
-                        <span class="hide-xs hide-sm text-small icon-ml">PREVIOUS</span>
-                    </a>
-            </li>
-            <li class="post-action">
-                
-                    
-                <a
-                    class="post-action-btn btn btn--default tooltip--top"
-                    href="/2021/05/11/github%EF%BC%9A%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%E5%AF%BB%E6%89%BE%E9%80%94%E5%BE%84/"
-                    data-tooltip="github：开源项目寻找途径"
-                    aria-label="NEXT: github：开源项目寻找途径"
-                >
-                    
-                        <span class="hide-xs hide-sm text-small icon-mr">NEXT</span>
-                        <i class="fa fa-angle-right" aria-hidden="true"></i>
-                    </a>
-            </li>
-        </ul>
-    </nav>
-    <ul class="post-actions post-action-share">
-        <li class="post-action hide-lg hide-md hide-sm">
-            <a
-                class="post-action-btn btn btn--default btn-open-shareoptions"
-                href="#btn-open-shareoptions"
-                aria-label="Share this post"
-            >
-                <i class="fa fa-share-alt" aria-hidden="true"></i>
-            </a>
-        </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://www.facebook.com/sharer/sharer.php?u=http://example.com/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%9B%9B%EF%BC%89/"
-                    title="Share on Facebook"
-                    aria-label="Share on Facebook"
-                >
-                    <i class="fab fa-facebook" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://twitter.com/intent/tweet?text=http://example.com/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%9B%9B%EF%BC%89/"
-                    title="Share on Twitter"
-                    aria-label="Share on Twitter"
-                >
-                    <i class="fab fa-twitter" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-            
-            
-            <li class="post-action hide-xs">
-                <a
-                    class="post-action-btn btn btn--default"
-                    target="new" href="https://plus.google.com/share?url=http://example.com/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%9B%9B%EF%BC%89/"
-                    title="Share on Google+"
-                    aria-label="Share on Google+"
-                >
-                    <i class="fab fa-google-plus" aria-hidden="true"></i>
-                </a>
-            </li>
-        
-        
-            
-        
-        <li class="post-action">
-            
-                <a class="post-action-btn btn btn--default" href="#" aria-label="Back to top">
-            
-                <i class="fa fa-list" aria-hidden="true"></i>
-            </a>
-        </li>
-    </ul>
-</div>
-
-
-                </div>
-                
-    <div id="share-options-bar" class="share-options-bar" data-behavior="4">
-        <i id="btn-close-shareoptions" class="fa fa-times"></i>
-        <ul class="share-options">
-            
-                
-                
-                <li class="share-option">
-                    <a
-                        class="share-option-btn"
-                        target="new"
-                        href="https://www.facebook.com/sharer/sharer.php?u=http://example.com/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%9B%9B%EF%BC%89/"
-                        aria-label="Share on Facebook"
-                    >
-                        <i class="fab fa-facebook" aria-hidden="true"></i><span>Share on Facebook</span>
-                    </a>
-                </li>
-            
-                
-                
-                <li class="share-option">
-                    <a
-                        class="share-option-btn"
-                        target="new"
-                        href="https://twitter.com/intent/tweet?text=http://example.com/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%9B%9B%EF%BC%89/"
-                        aria-label="Share on Twitter"
-                    >
-                        <i class="fab fa-twitter" aria-hidden="true"></i><span>Share on Twitter</span>
-                    </a>
-                </li>
-            
-                
-                
-                <li class="share-option">
-                    <a
-                        class="share-option-btn"
-                        target="new"
-                        href="https://plus.google.com/share?url=http://example.com/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E5%9B%9B%EF%BC%89/"
-                        aria-label="Share on Google+"
-                    >
-                        <i class="fab fa-google-plus" aria-hidden="true"></i><span>Share on Google+</span>
-                    </a>
-                </li>
-            
-        </ul>
-    </div>
-
-
-            
-        </div>
-        
-
-
-<div id="about">
-    <div id="about-card">
-        <div id="about-btn-close">
-            <i class="fa fa-times"></i>
-        </div>
-        
-            <h4 id="about-card-name">Eric Tan</h4>
-        
-            <div id="about-card-bio"><p>author.bio</p>
-</div>
-        
-        
-            <div id="about-card-job">
-                <i class="fa fa-briefcase"></i>
-                <br/>
-                <p>author.job</p>
-
-            </div>
-        
-        
-    </div>
-</div>
-
-        
-        
-<div id="cover" style="background-image:url('/assets/images/cover.jpg');"></div>
-        <!--SCRIPTS-->
-
-<script src="/assets/js/script-aruckjrapimnobkxs27htsu2kxkoy2szmjcde1n3gfjqfmv8qbkdebriarib.min.js"></script>
-
-<!--SCRIPTS END-->
-
 
     
+    
+    
+
+    <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/05/11/github%EF%BC%9A%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%E5%AF%BB%E6%89%BE%E9%80%94%E5%BE%84/" rel="prev" title="github：开源项目寻找途径">
+                  <i class="fa fa-chevron-left"></i> github：开源项目寻找途径
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/05/21/%E7%B3%BB%E7%BB%9F%E5%AD%A6%E4%B9%A0ROS%EF%BC%88%E4%BA%94%EF%BC%89/" rel="next" title="系统学习ROS（五）">
+                  系统学习ROS（五） <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
 
 
 
 
-    </body>
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Eric Tan</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+  
+
+
+
+
+
+</body>
 </html>
