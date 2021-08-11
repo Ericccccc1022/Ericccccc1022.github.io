@@ -1,0 +1,467 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=&#34;auto&#34;>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/Tan.png">
+  <link rel="icon" href="/img/Tan.png">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="WSDDN源码总结与收获不完全，所有步骤与细节已经注释在源码当中。">
+  <meta name="author" content="Eric Tan">
+  <meta name="keywords" content="">
+  
+  <title>WSDDN源码总结与收获 - Eric Tan</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10.7.2/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+  
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.11","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"§"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 80vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand"
+       href="/">&nbsp;<strong>Eric Tan</strong>&nbsp;</a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                Home
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                Archives
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                Categories
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                Tags
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                About
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" data-toggle="modal" data-target="#modalSearch">&nbsp;<i
+                class="iconfont icon-search"></i>&nbsp;</a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/curry2.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="WSDDN源码总结与收获">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-08-11 19:58" pubdate>
+        August 11, 2021 pm
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      832 字
+    </span>
+  
+
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      10
+       分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+            <div class="scroll-down-bar">
+              <i class="iconfont icon-arrowdown"></i>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">WSDDN源码总结与收获</h1>
+            
+            <div class="markdown-body">
+              <h2 id="WSDDN源码总结与收获"><a href="#WSDDN源码总结与收获" class="headerlink" title="WSDDN源码总结与收获"></a>WSDDN源码总结与收获</h2><p>不完全，所有步骤与细节已经注释在源码当中。</p>
+<span id="more"></span>
+
+<h3 id="一、datasets-py"><a href="#一、datasets-py" class="headerlink" title="一、datasets.py"></a>一、datasets.py</h3><p>1.　所有文件的读取都用OS库中路径的方式的完成，放在<code>datasets.py</code>文件中<br>2.　<strong>EdgeBoxes</strong>等区域建议方法在经典数据集上（如VOC2007）上已经训练好，并且有每个proposal的类别得分，可以从网上下载**.mat文件<strong>；<br>   .mat文件用</strong>scipy.io库<strong>中的</strong>loadmat函数<strong>读取<br>3.　VOC2007数据集等官方标注都用</strong>.xml文件<strong>给出，xml语法由标签和子标签组成，可以看作树结构，所以用</strong>xml.etree.ElementTree库<strong>处理<br>4.　弱监督中，对于训练集而言，</strong>只有image-level标签，这是怎么获得的呢？**<br>   <strong>实际上是人工产生的！</strong>VOC2007这种数据集只有精细的instance-level标注，我们需要先将其转换为image-level标签，作为训练数据的target拿去训练；<br>   所以在datasets.py文件中，对训练集和测试集的处理是不同的，本源码中采用的方法是：用<code>self.split</code>变量存储”trainval”/“test”，后面搭配 <code>if </code>实现对不同分支的处理</p>
+<h3 id="二、network-py"><a href="#二、network-py" class="headerlink" title="二、network.py"></a>二、network.py</h3><ol>
+<li><p><code>__init__</code>函数的参数是实例化网络时需要传的</p>
+</li>
+<li><p>必须定义<code>forward</code>函数，以覆盖继承的nn.Module类方法</p>
+</li>
+<li><p>使用既定的网络作为backbone时，通常使用<code>torchvision.models</code>中的模型，如alexnet 、vgg16等；</p>
+<p>通常在pytorch的源码实现中，<code>features</code>是完成特征提取的卷积网络，<code>classifier</code>是后面的全连接层</p>
+<p>在此基础上fine-tune，通常需要<strong>修改最后一层的网络架构</strong>–&gt;通过切片实现，<strong>切片不包含第二个值</strong>，例如：features[:-1]表示去掉最后一层</p>
+</li>
+<li><p>SPP和roi_pool的本质相同，所以通常用<code>torchvision.ops</code>库的<code>roi_pool</code>方法进行实现</p>
+</li>
+<li><p><code>torch.nn.functional</code>模块中有<code>sotfmax()</code>、<code>binary_cross_entropy()</code>等函数</p>
+</li>
+<li><p>如果loss是自己设计的，那么可以定义在network架构中，用<code>cal_loss</code>函数</p>
+</li>
+</ol>
+<h3 id="三、utils-py"><a href="#三、utils-py" class="headerlink" title="三、utils.py"></a>三、utils.py</h3><ol>
+<li>通常在该文件里定义随机种子函数set_seed，要完成：random、np、torch、torch.cudnn的随机种子设置</li>
+<li>数据增强的方法定义在此</li>
+<li>评估函数<code>evaluate</code>定义在此</li>
+<li>实际中的小<strong>tricks</strong>也可定义在这里，比如<code>filter_small_boxes</code>、<code>swap_axes</code>等函数</li>
+</ol>
+<h3 id="四、train-py"><a href="#四、train-py" class="headerlink" title="四、train.py"></a>四、train.py</h3><ol>
+<li><p>通常要用argparse与终端进行交互</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs python">parser = argparse.ArgumentParser(description=<span class="hljs-string">&quot;Train&quot;</span>)<br>parser.add_argument(<span class="hljs-string">&quot;--base_net&quot;</span>,<span class="hljs-built_in">type</span>=xxx,default=xxx,<span class="hljs-built_in">help</span>=<span class="hljs-string">&quot;xxx&quot;</span>)<br>parser.add_argument()<br>parser.add_argument()<br>parser.add_argument()<br><br>args = parser.parse_args()<br><br>xxx=args.base_net<br>xxx=args.epoch<br>xxx=args.seed<br><span class="hljs-comment"># 后续就用新定义的变量xxx</span><br></code></pre></td></tr></table></figure></li>
+<li><p>用<code>DataLoader</code>完成batch的读取</p>
+</li>
+<li><p>养成习惯：train函数中，每定义完一个变量之后，就<code>.to(DEVICE)</code>存到GPU中</p>
+</li>
+<li><p>通常为了观察网络的中间结果，需要在一定的迭代次数时，保存模型，方便后面进行测试；<br>使用<code>torch.save()</code>函数，搭配<code>net.state_dict()</code>实现；<br>通常保存为**.pt** 或 <strong>.pth</strong>文件</p>
+</li>
+<li><p>通常不是只在最后才测试模型，而是在一定迭代次数时送入test：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 在一定迭代次数时，保存模型！！！   预设state_period参数</span><br>        <span class="hljs-keyword">if</span> epoch % STATE_PERIOD == <span class="hljs-number">0</span>:<br>            path = os.path.join(BASE_DIR, <span class="hljs-string">&quot;states&quot;</span>, <span class="hljs-string">f&quot;<span class="hljs-subst">&#123;net.base_net&#125;</span>_epoch_<span class="hljs-subst">&#123;epoch&#125;</span>.pt&quot;</span>)<br>            torch.save(net.state_dict(), path)  <br>            tqdm.write(<span class="hljs-string">f&quot;State saved to <span class="hljs-subst">&#123;path&#125;</span>&quot;</span>)  <br>        tqdm.write(<span class="hljs-string">f&quot;Avg loss is <span class="hljs-subst">&#123;epoch_loss / <span class="hljs-built_in">len</span>(train_ds)&#125;</span>&quot;</span>)<br><br>        <span class="hljs-keyword">if</span> epoch % EVAL_PERIOD == <span class="hljs-number">0</span>:<br>            tqdm.write(<span class="hljs-string">f&quot;Evaluation started at <span class="hljs-subst">&#123;datetime.now()&#125;</span>&quot;</span>)<br>            evaluate(net, test_dl)<br></code></pre></td></tr></table></figure></li>
+</ol>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Deep-Learning-Objects-Detection/">Deep Learning-Objects Detection</a>
+                    
+                  </div>
+                
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/08/10/Pytorch-Related%EF%BC%88%E4%B8%80%EF%BC%89/">
+                        <span class="hidden-mobile">Pytorch_Related（一）</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;TOC</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/tocbot@4.12.3/dist/tocbot.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4.3.1/anchor.min.js" ></script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js" ></script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
