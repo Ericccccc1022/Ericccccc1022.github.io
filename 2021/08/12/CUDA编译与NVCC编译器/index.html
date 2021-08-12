@@ -14,7 +14,9 @@
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
   <meta name="theme-color" content="#2f4154">
-  <meta name="description" content="">
+  <meta name="description" content="CUDA编译与NVCC编译器NVCC是什么？
+是一种编译器，对于C、C++等高级语言，需要通过编译器编译成可执行的二进制文件(binary)；
+nvcc对CUDA代码段(通常也是由C语言编写)进行编译，所有非CUDA的代码均交给通用的C编译器，windows下是C1编译器，Linux下是gcc编译器">
   <meta name="author" content="Eric Tan">
   <meta name="keywords" content="">
   
@@ -235,6 +237,8 @@
               <h2 id="CUDA编译与NVCC编译器"><a href="#CUDA编译与NVCC编译器" class="headerlink" title="CUDA编译与NVCC编译器"></a>CUDA编译与NVCC编译器</h2><p>NVCC是什么？</p>
 <p>是一种编译器，对于C、C++等高级语言，需要通过编译器编译成可执行的二进制文件(binary)；</p>
 <p><strong>nvcc对CUDA代码段(通常也是由C语言编写)进行编译</strong>，所有非CUDA的代码均交给通用的C编译器，windows下是C1编译器，Linux下是gcc编译器</p>
+<span id="more"></span>
+
 <h3 id="一、nvcc命令"><a href="#一、nvcc命令" class="headerlink" title="一、nvcc命令"></a>一、nvcc命令</h3><p>Nvcc的选项命令形式大概有以下3类：boolean (flag-)选项，单值选项和列表(multivalued-)选项。</p>
 <p>下面是使用规则举例：</p>
 <p>  -o file</p>
