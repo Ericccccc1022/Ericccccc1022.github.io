@@ -1,0 +1,551 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=&#34;auto&#34;>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/Tan.png">
+  <link rel="icon" href="/img/Tan.png">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="项目三：基于Pytorch搭建Faster RCNN实现飞机目标检测任务">
+  <meta name="author" content="Eric Tan">
+  <meta name="keywords" content="">
+  
+  <title>Pytorch_Related（四） - Eric Tan</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10.7.2/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+  
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.11","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"§"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 80vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand"
+       href="/">&nbsp;<strong>Eric Tan</strong>&nbsp;</a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                Home
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                Archives
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                Categories
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                Tags
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                About
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" data-toggle="modal" data-target="#modalSearch">&nbsp;<i
+                class="iconfont icon-search"></i>&nbsp;</a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/curry2.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="Pytorch_Related（四）">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-08-16 21:50" pubdate>
+        August 16, 2021 pm
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      4.5k 字
+    </span>
+  
+
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      71
+       分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+            <div class="scroll-down-bar">
+              <i class="iconfont icon-arrowdown"></i>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Pytorch_Related（四）</h1>
+            
+            <div class="markdown-body">
+              <h2 id="项目三：基于Pytorch搭建Faster-RCNN实现飞机目标检测任务"><a href="#项目三：基于Pytorch搭建Faster-RCNN实现飞机目标检测任务" class="headerlink" title="项目三：基于Pytorch搭建Faster RCNN实现飞机目标检测任务"></a>项目三：基于Pytorch搭建Faster RCNN实现飞机目标检测任务</h2><span id="more"></span>
+
+<h3 id="一、目标检测算法常用的评估指标——-mAP"><a href="#一、目标检测算法常用的评估指标——-mAP" class="headerlink" title="一、目标检测算法常用的评估指标—— mAP"></a>一、目标检测算法常用的评估指标—— mAP</h3><p>mAP指各类别AP的平均值，AP指PR曲线下面积，其计算比较复杂；PR曲线和<code>Precision</code>、<code>Recall</code>有关，涉及PR曲线面积时会使用<strong>“11点插值法”</strong>，</p>
+<p>具体方法见：<a target="_blank" rel="noopener" href="https://work.datafountain.cn/forum?id=90&type=2&source=1">个人工作平台 (datafountain.cn)</a></p>
+<p>mAP计算方法github原文：<a target="_blank" rel="noopener" href="https://github.com/rafaelpadilla/Object-Detection-Metrics">rafaelpadilla/Object-Detection-Metrics: Most popular metrics used to evaluate object detection algorithms. (github.com)</a></p>
+<h3 id="二、COCO数据集标注格式——-json"><a href="#二、COCO数据集标注格式——-json" class="headerlink" title="二、COCO数据集标注格式—— json"></a>二、COCO数据集标注格式—— json</h3><p>1.COCO的标注文件为json格式，共有三个字段：</p>
+<p>1）images  代表图片信息，包括图片id，图片名file_name, 图片的宽高<br>2）annotations 代表bbox的坐标信息，包括bbox id，所属图片的image_id， bbox格式为:[[x,y,w,h]]， 以及类别id<br>3）categories 代表类别信息，包括类别id，类别名称</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> json<br><span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(<span class="hljs-string">&quot;datasets/mini_airplane/annotations/mini_airplane_train.json&quot;</span>, <span class="hljs-string">&quot;r&quot;</span>) <span class="hljs-keyword">as</span> f:<br>    labels = json.load(f)<br>    <br><span class="hljs-comment"># labels[&quot;images&quot;]代表了所有图片的信息，labels[&quot;images&quot;][0]指第一张图片</span><br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;images:&quot;</span>)<br><span class="hljs-built_in">print</span>(labels[<span class="hljs-string">&quot;images&quot;</span>][<span class="hljs-number">0</span>])<br><span class="hljs-built_in">print</span>()<br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;annotations:&quot;</span>)<br><span class="hljs-built_in">print</span>(labels[<span class="hljs-string">&quot;annotations&quot;</span>][<span class="hljs-number">0</span>])<br><span class="hljs-built_in">print</span>()<br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;categories:&quot;</span>)<br><span class="hljs-built_in">print</span>(labels[<span class="hljs-string">&quot;categories&quot;</span>])<br></code></pre></td></tr></table></figure>
+
+<p>输出：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python">images:<br>&#123;<span class="hljs-string">&#x27;license&#x27;</span>: <span class="hljs-number">5</span>, <span class="hljs-string">&#x27;file_name&#x27;</span>: <span class="hljs-string">&#x27;COCO_val2014_000000253223.jpg&#x27;</span>, <span class="hljs-string">&#x27;coco_url&#x27;</span>: <span class="hljs-string">&#x27;http://images.cocodataset.org/val2014/COCO_val2014_000000253223.jpg&#x27;</span>, <span class="hljs-string">&#x27;height&#x27;</span>: <span class="hljs-number">480</span>, <span class="hljs-string">&#x27;width&#x27;</span>: <span class="hljs-number">640</span>, <span class="hljs-string">&#x27;date_captured&#x27;</span>: <span class="hljs-string">&#x27;2013-11-15 13:20:30&#x27;</span>, <span class="hljs-string">&#x27;flickr_url&#x27;</span>: <span class="hljs-string">&#x27;http://farm1.staticflickr.com/81/214855814_0da704e0f6_z.jpg&#x27;</span>, <span class="hljs-string">&#x27;id&#x27;</span>: <span class="hljs-number">1</span>&#125;<br>annotations:<br>&#123;<span class="hljs-string">&#x27;segmentation&#x27;</span>: [[<span class="hljs-number">83.76</span>, <span class="hljs-number">185.62</span>, <span class="hljs-number">88.9</span>, <span class="hljs-number">192.63</span>, <span class="hljs-number">87.97</span>, <span class="hljs-number">197.77</span>, <span class="hljs-number">92.64</span>, <span class="hljs-number">194.5</span>, <span class="hljs-number">103.39</span>, <span class="hljs-number">195.9</span>, <span class="hljs-number">108.54</span>, <span class="hljs-number">196.84</span>, <span class="hljs-number">110.87</span>, <span class="hljs-number">200.11</span>, <span class="hljs-number">110.87</span>, <span class="hljs-number">206.65</span>, <span class="hljs-number">111.81</span>, <span class="hljs-number">208.06</span>, <span class="hljs-number">115.55</span>, <span class="hljs-number">200.58</span>, <span class="hljs-number">121.62</span>, <span class="hljs-number">201.98</span>, <span class="hljs-number">121.62</span>, <span class="hljs-number">198.71</span>, <span class="hljs-number">116.95</span>, <span class="hljs-number">197.77</span>, <span class="hljs-number">120.69</span>, <span class="hljs-number">195.44</span>, <span class="hljs-number">129.1</span>, <span class="hljs-number">196.37</span>, <span class="hljs-number">128.17</span>, <span class="hljs-number">198.24</span>, <span class="hljs-number">134.24</span>, <span class="hljs-number">192.63</span>, <span class="hljs-number">133.78</span>, <span class="hljs-number">191.7</span>, <span class="hljs-number">126.3</span>, <span class="hljs-number">189.83</span>, <span class="hljs-number">123.49</span>, <span class="hljs-number">189.83</span>, <span class="hljs-number">116.48</span>, <span class="hljs-number">188.42</span>, <span class="hljs-number">113.68</span>, <span class="hljs-number">188.89</span>, <span class="hljs-number">102.93</span>, <span class="hljs-number">178.61</span>, <span class="hljs-number">101.52</span>, <span class="hljs-number">177.67</span>, <span class="hljs-number">100.12</span>, <span class="hljs-number">178.61</span>, <span class="hljs-number">102.93</span>, <span class="hljs-number">182.82</span>, <span class="hljs-number">101.99</span>, <span class="hljs-number">184.22</span>, <span class="hljs-number">107.13</span>, <span class="hljs-number">190.29</span>, <span class="hljs-number">98.25</span>, <span class="hljs-number">189.83</span>, <span class="hljs-number">94.05</span>, <span class="hljs-number">185.15</span>, <span class="hljs-number">89.37</span>, <span class="hljs-number">181.88</span>, <span class="hljs-number">88.44</span>, <span class="hljs-number">183.28</span>, <span class="hljs-number">88.9</span>, <span class="hljs-number">186.09</span>, <span class="hljs-number">88.9</span>, <span class="hljs-number">187.96</span>, <span class="hljs-number">88.44</span>, <span class="hljs-number">188.42</span>, <span class="hljs-number">84.7</span>, <span class="hljs-number">185.15</span>, <span class="hljs-number">83.76</span>, <span class="hljs-number">185.62</span>]],<span class="hljs-string">&#x27;area&#x27;</span>:<span class="hljs-number">460.263049996</span>, <span class="hljs-string">&#x27;iscrowd&#x27;</span>:<span class="hljs-number">0</span>, <span class="hljs-string">&#x27;image_id&#x27;</span>:<span class="hljs-number">1</span>, <span class="hljs-string">&#x27;bbox&#x27;</span>:[<span class="hljs-number">83.76</span>,<span class="hljs-number">177.67</span>,<span class="hljs-number">50.48</span>,<span class="hljs-number">30.39</span>], <span class="hljs-string">&#x27;category_id&#x27;</span>:<span class="hljs-number">1</span>, <span class="hljs-string">&#x27;id&#x27;</span>:<span class="hljs-number">1</span>&#125;<br>categories:<br>[&#123;<span class="hljs-string">&#x27;id&#x27;</span>:<span class="hljs-number">1</span>, <span class="hljs-string">&#x27;name&#x27;</span>:<span class="hljs-string">&#x27;airplane&#x27;</span>&#125;]<br></code></pre></td></tr></table></figure>
+
+<p>分析上述输出可总结coco标注 json文件的特点：</p>
+<p>(1) 三个大的字段<code>images</code>、<code>annotations</code>、<code>categories</code>，每个字段都是一个<code>list[dict]</code>：例如，取<code>labels[&quot;categories&quot;]</code>，则它是一个列表，取<code>labels[&quot;categories&quot;][0]</code>，则它是一个字典</p>
+<p>(2) 三个大字段下的键值：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># images字段下keys有：</span><br>license、file_name、coco_url、height、width、data_captured、flickr_url、<span class="hljs-built_in">id</span><br><span class="hljs-comment"># annotations字段下keys有：</span><br>segmentation、area、iscrowd、image_id、bbox、category_id、<span class="hljs-built_in">id</span><br><span class="hljs-comment"># categories字段下keys有：</span><br><span class="hljs-built_in">id</span>、name<br></code></pre></td></tr></table></figure>
+
+
+
+<p><strong>2.预获取一些变量，方便后续操作：</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># “映射字典”</span><br>imagename2id = &#123;&#125;<br>imageid2bbox = &#123;&#125;<br>imageid2anno = &#123;&#125;<br>imagename2imageinfo = &#123;&#125;<br><span class="hljs-keyword">for</span> image <span class="hljs-keyword">in</span> labels[<span class="hljs-string">&quot;images&quot;</span>]:  <span class="hljs-comment"># 遍历每张图片</span><br>    imagename2id[image[<span class="hljs-string">&quot;file_name&quot;</span>]] = image[<span class="hljs-string">&quot;id&quot;</span>]	<span class="hljs-comment"># file_name映射为id</span><br>    imagename2imageinfo[image[<span class="hljs-string">&quot;file_name&quot;</span>]] = image	  <span class="hljs-comment"># file_name映射为整个该图片的整个images字段</span><br><span class="hljs-keyword">for</span> anno <span class="hljs-keyword">in</span> labels[<span class="hljs-string">&quot;annotations&quot;</span>]:	<span class="hljs-comment"># 遍历所有标注（由于每张图片不一定只有1个标注，所有处理有些不同）</span><br>    <span class="hljs-keyword">if</span> anno[<span class="hljs-string">&quot;image_id&quot;</span>] <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> imageid2bbox:  <span class="hljs-comment"># 判断id没有出现过（即该图片没出现过）</span><br>        imageid2bbox[anno[<span class="hljs-string">&quot;image_id&quot;</span>]] = []		<span class="hljs-comment"># 则为该图片新建一个列表，用来存放所有属于该图片的annotation</span><br>    imageid2bbox[anno[<span class="hljs-string">&quot;image_id&quot;</span>]].append(anno[<span class="hljs-string">&quot;bbox&quot;</span>])<br>    <span class="hljs-keyword">if</span> anno[<span class="hljs-string">&quot;image_id&quot;</span>] <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> imageid2anno:<br>        imageid2anno[anno[<span class="hljs-string">&quot;image_id&quot;</span>]] = []<br>    imageid2anno[anno[<span class="hljs-string">&quot;image_id&quot;</span>]].append(anno)<br></code></pre></td></tr></table></figure>
+
+<p>这一步其实在预处理阶段很重要，有了这些<strong>映射字典</strong>，后面的处理会方便很多</p>
+<p>3.可视化一张图片</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> matplotlib.pyplot <span class="hljs-keyword">as</span> plt<br>%matplotlib inline<br>plt.rcParams[<span class="hljs-string">&#x27;figure.figsize&#x27;</span>] = (<span class="hljs-number">12.0</span>, <span class="hljs-number">12.0</span>) <br><span class="hljs-keyword">import</span> cv2<br><span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> np<br>img = cv2.imread(<span class="hljs-string">&#x27;datasets/mini_airplane/images/COCO_val2014_000000253223.jpg&#x27;</span>)<br>bboxes = imageid2bbox[imagename2id[<span class="hljs-string">&#x27;COCO_val2014_000000253223.jpg&#x27;</span>]]<br><span class="hljs-keyword">for</span> det <span class="hljs-keyword">in</span> bboxes:<br>    bbox = np.array(det[:<span class="hljs-number">4</span>]).astype(<span class="hljs-built_in">int</span>)<br>    <span class="hljs-comment"># 用openv在图片上画矩形</span><br>    <span class="hljs-comment"># coco的bbox格式为(x,y,w,h)</span><br>    cv2.rectangle(img, (bbox[<span class="hljs-number">0</span>],bbox[<span class="hljs-number">1</span>]), (bbox[<span class="hljs-number">0</span>]+bbox[<span class="hljs-number">2</span>], bbox[<span class="hljs-number">1</span>]+bbox[<span class="hljs-number">3</span>]), (<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">255</span>), <span class="hljs-number">1</span>)<br>    label_text = <span class="hljs-built_in">str</span>(<span class="hljs-string">&quot;airplane&quot;</span>)<br>    cv2.putText(img, label_text, (bbox[<span class="hljs-number">0</span>], bbox[<span class="hljs-number">1</span>] - <span class="hljs-number">2</span>),<br>            cv2.FONT_HERSHEY_COMPLEX, <span class="hljs-number">0.5</span>, (<span class="hljs-number">0</span>,<span class="hljs-number">0</span>,<span class="hljs-number">255</span>))<br>im2 = img[:,:,::-<span class="hljs-number">1</span>] <br>plt.imshow(im2)<br>plt.show()<br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="三、划分数据集方法总结"><a href="#三、划分数据集方法总结" class="headerlink" title="三、划分数据集方法总结"></a>三、划分数据集方法总结</h3><p>1.利用<code>pytorch</code>的<code>random_split()</code>方法</p>
+<p>用此方法的前提：数据用<code>ImageFolder</code>读取的对象(PIL Image对象)</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> torch.utils.data <span class="hljs-keyword">import</span> random_split<br>dataset=ImageFolder(<span class="hljs-string">&quot;Img2021&quot;</span>,transform=trans)<br><br><span class="hljs-comment"># 划分训练集、测试集</span><br>n_test = <span class="hljs-built_in">int</span>(<span class="hljs-built_in">len</span>(dataset) * <span class="hljs-number">0.2</span>)  <span class="hljs-comment"># 测试集占20%，训练集80%</span><br>n_train = <span class="hljs-built_in">len</span>(dataset) - n_test<br>train, test = random_split(dataset, [n_train, n_test])<br></code></pre></td></tr></table></figure>
+
+<p>2.利用<code>sklearn</code>的<code>train_test_split()</code>方法</p>
+<p>用此方法的前提：数据是numpy数组形式</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> sklearn.model_selection <span class="hljs-keyword">import</span> train_test_split<br>Xtrain, Xtest, Ytrain, Ytest = train_test_split(data_np, label_np, test_size=<span class="hljs-number">0.3</span>, random_state=<span class="hljs-number">1</span>)<br></code></pre></td></tr></table></figure>
+
+<p>3.利用<code>numpy</code>的<code>random.choice()</code>方法</p>
+<p>此方法的逻辑：实质是对图片的id / 索引 进行随机划分，而不是直接对数据本身的划分；</p>
+<p>因此这种方法通常可用于标准数据集如VOC、COCO等，容易获取图片id的数据集。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> np<br>np.random.seed(<span class="hljs-number">123</span>)<br>train_image_names = np.random.choice(<span class="hljs-built_in">list</span>(imagename2id.keys()), <span class="hljs-built_in">int</span>(<span class="hljs-built_in">len</span>(imagename2id.keys())*<span class="hljs-number">0.8</span>), <span class="hljs-literal">False</span>)	<span class="hljs-comment"># train的图片names</span><br>val_image_names = <span class="hljs-built_in">list</span>(<span class="hljs-built_in">set</span>(imagename2id.keys()) - <span class="hljs-built_in">set</span>(train_image_names))	<span class="hljs-comment"># test的图片names</span><br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;train_image_names length: &quot;</span>, <span class="hljs-built_in">len</span>(train_image_names))<br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;val_image_names length: &quot;</span>, <span class="hljs-built_in">len</span>(val_image_names))<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 本项目是目标检测，所以先会对labels进行划分</span><br><span class="hljs-comment"># 上面得到了划分完后的索引，还要继续划分到更具体的图片labels上</span><br><span class="hljs-keyword">import</span> os<br>train_images = []<br>train_annotations = []<br><span class="hljs-keyword">for</span> imgname <span class="hljs-keyword">in</span> train_image_names:	<span class="hljs-comment"># 遍历训练集所有names</span><br>    train_images.append(imagename2imageinfo[imgname])	<span class="hljs-comment"># 将所有图片info加入train_images中</span><br>    image_id = imagename2id[imgname]	<span class="hljs-comment"># 依次获得图片id，为下一行语句使用</span><br>    train_annotations.extend(imageid2anno[image_id])	<span class="hljs-comment"># 将该图片所有anno放入train_annotations中</span><br>train_instance = &#123;<br>    <span class="hljs-string">&quot;images&quot;</span>: train_images,		<span class="hljs-comment"># list</span><br>    <span class="hljs-string">&quot;annotations&quot;</span>: train_annotations,	<span class="hljs-comment"># list</span><br>    <span class="hljs-string">&quot;categories&quot;</span>: labels[<span class="hljs-string">&quot;categories&quot;</span>]<br>&#125;<br>dirs = <span class="hljs-string">r&#x27;temp/mini_airplane/annotations&#x27;</span><br><span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> os.path.exists(dirs):<br>    os.makedirs(dirs)<br><span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(<span class="hljs-string">&quot;temp/mini_airplane/annotations/train.json&quot;</span>, <span class="hljs-string">&quot;w&quot;</span>) <span class="hljs-keyword">as</span> f:	<span class="hljs-comment"># 写方式打开文件</span><br>    json.dump(train_instance, f, indent=<span class="hljs-number">2</span>)	<span class="hljs-comment"># 把训练集写入train.json文件</span><br>    									<span class="hljs-comment"># 综上，写入的内容有：图片info(整个images字段)、图片anno</span><br>    <br><span class="hljs-comment"># 测试集完全同理</span><br>val_images = []<br>val_annotations = []<br><span class="hljs-keyword">for</span> imgname <span class="hljs-keyword">in</span> val_image_names:<br>    val_images.append(imagename2imageinfo[imgname])<br>    image_id = imagename2id[imgname]<br>    val_annotations.extend(imageid2anno[image_id])<br>val_instance = &#123;<br>    <span class="hljs-string">&quot;images&quot;</span>: val_images,<br>    <span class="hljs-string">&quot;annotations&quot;</span>: val_annotations,<br>    <span class="hljs-string">&quot;categories&quot;</span>: labels[<span class="hljs-string">&quot;categories&quot;</span>]<br>&#125;<br><span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(<span class="hljs-string">&quot;temp/mini_airplane/annotations/val.json&quot;</span>, <span class="hljs-string">&quot;w&quot;</span>) <span class="hljs-keyword">as</span> f:<br>    json.dump(val_instance, f, indent=<span class="hljs-number">2</span>)<br></code></pre></td></tr></table></figure>
+
+<p>综上，写入的内容有：图片info(整个images字段)、图片anno</p>
+<p>知识漏洞之<code>list.extend()</code>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 用于在列表末尾一次性追加另一个序列中的多个值（用新列表扩展原来的列表)</span><br>aList = [<span class="hljs-number">123</span>, <span class="hljs-string">&#x27;xyz&#x27;</span>, <span class="hljs-string">&#x27;zara&#x27;</span>, <span class="hljs-string">&#x27;abc&#x27;</span>, <span class="hljs-number">123</span>];<br>bList = [<span class="hljs-number">2009</span>, <span class="hljs-string">&#x27;manni&#x27;</span>];<br>aList.extend(bList)<br><br><span class="hljs-comment"># 避免了append一次只能添加一个值的窘境</span><br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="四、定义数据类"><a href="#四、定义数据类" class="headerlink" title="四、定义数据类"></a>四、定义数据类</h3><p>通过继承torch的Dataset类来定义自己的数据类，从而用于训练</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> os<br><span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> np<br><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torch.utils.data<br><span class="hljs-keyword">from</span> PIL <span class="hljs-keyword">import</span> Image<br><span class="hljs-keyword">from</span> skimage <span class="hljs-keyword">import</span> io<br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AirplaneDetDataset</span>(<span class="hljs-params">torch.utils.data.Dataset</span>):</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, root, anno_file, transforms=<span class="hljs-literal">None</span></span>):</span><br>        self.root = root<br>        self.transforms = transforms<br>        self.imgs = []<br>        <span class="hljs-comment"># 从label文件中载入所有的图片，并且预先生成图片名称和图片label的对应，便于__getitem__使用</span><br>        <span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(os.path.join(root, <span class="hljs-string">&quot;annotations&quot;</span>, anno_file), <span class="hljs-string">&quot;r&quot;</span>) <span class="hljs-keyword">as</span> f:<br>            labels = json.load(f)	<span class="hljs-comment"># anno_file: &quot;train.json&quot; / &quot;val.json&quot;</span><br>        self.imagename2id = &#123;&#125;<br>        self.imageid2anno = &#123;&#125;<br>        <span class="hljs-keyword">for</span> image <span class="hljs-keyword">in</span> labels[<span class="hljs-string">&quot;images&quot;</span>]:	<span class="hljs-comment"># 遍历图片info</span><br>            self.imgs.append(image[<span class="hljs-string">&quot;file_name&quot;</span>])<br>            self.imagename2id[image[<span class="hljs-string">&quot;file_name&quot;</span>]] = image[<span class="hljs-string">&quot;id&quot;</span>]<br>        <span class="hljs-keyword">for</span> anno <span class="hljs-keyword">in</span> labels[<span class="hljs-string">&quot;annotations&quot;</span>]:	<span class="hljs-comment"># 遍历图片anno</span><br>            <span class="hljs-keyword">if</span> anno[<span class="hljs-string">&quot;image_id&quot;</span>] <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> self.imageid2anno:<br>                self.imageid2anno[anno[<span class="hljs-string">&quot;image_id&quot;</span>]] = []<br>            self.imageid2anno[anno[<span class="hljs-string">&quot;image_id&quot;</span>]].append(anno[<span class="hljs-string">&quot;bbox&quot;</span>])<br>    <br>    <span class="hljs-comment"># 读取实际的图片!</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__getitem__</span>(<span class="hljs-params">self, idx</span>):</span><br>        img_path = os.path.join(self.root, <span class="hljs-string">&quot;images&quot;</span>, self.imgs[idx])<br>        img_path = os.path.abspath(img_path)<br>        <span class="hljs-comment"># 载入图片并转换为pytorch所需格式</span><br>        img = cv2.imread(img_path, cv2.IMREAD_COLOR)<br>	    <span class="hljs-comment"># img = io.imread(img_path)</span><br>        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB).astype(np.float32)<br>        img = img / <span class="hljs-number">255.0</span><br>        img = img.transpose(<span class="hljs-number">2</span>, <span class="hljs-number">0</span>, <span class="hljs-number">1</span>)	<span class="hljs-comment"># 将通道数提前</span><br>        img = torch.tensor(img)<br>        img_id = self.imagename2id[self.imgs[idx]]<br>        boxes = []<br>        <span class="hljs-comment"># 读取该图片对应的bbox label</span><br>        <span class="hljs-keyword">for</span> bbox <span class="hljs-keyword">in</span> self.imageid2anno[img_id]:<br>            xmin = bbox[<span class="hljs-number">0</span>]<br>            ymin = bbox[<span class="hljs-number">1</span>]<br>            xmax = bbox[<span class="hljs-number">0</span>] + bbox[<span class="hljs-number">2</span>]<br>            ymax = bbox[<span class="hljs-number">1</span>] + bbox[<span class="hljs-number">3</span>]<br>            boxes.append([xmin, ymin, xmax, ymax])<br>        num_objs = <span class="hljs-built_in">len</span>(self.imageid2anno[img_id])<br>        boxes = torch.as_tensor(boxes, dtype=torch.float32)<br>        <span class="hljs-comment"># 只有飞机这一类，所以所有类别label都给1</span><br>        labels = torch.ones((num_objs,), dtype=torch.int64)<br>        <br>        image_id = torch.tensor([idx])<br>        area = (boxes[:, <span class="hljs-number">3</span>] - boxes[:, <span class="hljs-number">1</span>]) * (boxes[:, <span class="hljs-number">2</span>] - boxes[:, <span class="hljs-number">0</span>])<br>        <span class="hljs-comment"># 这里我们假设所有的目标label都是不互相严重遮挡的</span><br>        iscrowd = torch.zeros((num_objs,), dtype=torch.int64)<br>        <span class="hljs-comment"># 最终我们输出的label是一个dict的格式，里面包括以下的字段用于训练</span><br>        target = &#123;&#125;<br>        target[<span class="hljs-string">&quot;boxes&quot;</span>] = boxes<br>        target[<span class="hljs-string">&quot;labels&quot;</span>] = labels<br>        target[<span class="hljs-string">&quot;image_id&quot;</span>] = image_id<br>        target[<span class="hljs-string">&quot;area&quot;</span>] = area<br>        target[<span class="hljs-string">&quot;iscrowd&quot;</span>] = iscrowd<br><br>        <span class="hljs-keyword">if</span> self.transforms <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>            img, target = self.transforms(img, target)<br>        <span class="hljs-comment"># 最终返回图片矩阵，label以及图片名</span><br>        <span class="hljs-keyword">return</span> img, target, self.imgs[idx]<br>    <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__len__</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">len</span>(self.imgs)<br></code></pre></td></tr></table></figure>
+
+<p>调用举例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> shutil<br><span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> os.path.exists(<span class="hljs-string">&#x27;./temp/mini_airplane/images&#x27;</span>):<br>    shutil.copytree(<span class="hljs-string">&#x27;./datasets/mini_airplane/images&#x27;</span>,<span class="hljs-string">&#x27;./temp/mini_airplane/images&#x27;</span>)<br>dataset = AirplaneDetDataset(<span class="hljs-string">&#x27;./temp/mini_airplane&#x27;</span>, <span class="hljs-string">&#x27;train.json&#x27;</span>)<br>dataset[<span class="hljs-number">0</span>]  <span class="hljs-comment"># 有了__getitem__方法，就可以像使用列表一样了</span><br></code></pre></td></tr></table></figure>
+
+<p>输出：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs python">(tensor([[[<span class="hljs-number">0.9451</span>, <span class="hljs-number">0.9490</span>, <span class="hljs-number">0.9490</span>,  ..., <span class="hljs-number">0.9373</span>, <span class="hljs-number">0.9373</span>, <span class="hljs-number">0.9373</span>],<br>          [<span class="hljs-number">0.9490</span>, <span class="hljs-number">0.9490</span>, <span class="hljs-number">0.9451</span>,  ..., <span class="hljs-number">0.9373</span>, <span class="hljs-number">0.9373</span>, <span class="hljs-number">0.9373</span>],<br>          [<span class="hljs-number">0.9490</span>, <span class="hljs-number">0.9451</span>, <span class="hljs-number">0.9451</span>,  ..., <span class="hljs-number">0.9373</span>, <span class="hljs-number">0.9373</span>, <span class="hljs-number">0.9333</span>],<br>          ...,<br>          [<span class="hljs-number">0.3647</span>, <span class="hljs-number">0.1882</span>, <span class="hljs-number">0.0745</span>,  ..., <span class="hljs-number">0.0353</span>, <span class="hljs-number">0.0353</span>, <span class="hljs-number">0.0353</span>],<br>          [<span class="hljs-number">0.4941</span>, <span class="hljs-number">0.2980</span>, <span class="hljs-number">0.0824</span>,  ..., <span class="hljs-number">0.0314</span>, <span class="hljs-number">0.0353</span>, <span class="hljs-number">0.0392</span>],<br>          [<span class="hljs-number">0.1529</span>, <span class="hljs-number">0.1216</span>, <span class="hljs-number">0.2549</span>,  ..., <span class="hljs-number">0.0353</span>, <span class="hljs-number">0.0314</span>, <span class="hljs-number">0.0353</span>]],<br> <br>         [[<span class="hljs-number">0.9569</span>, <span class="hljs-number">0.9608</span>, <span class="hljs-number">0.9608</span>,  ..., <span class="hljs-number">0.9490</span>, <span class="hljs-number">0.9490</span>, <span class="hljs-number">0.9490</span>],<br>          [<span class="hljs-number">0.9608</span>, <span class="hljs-number">0.9608</span>, <span class="hljs-number">0.9569</span>,  ..., <span class="hljs-number">0.9490</span>, <span class="hljs-number">0.9490</span>, <span class="hljs-number">0.9490</span>],<br>          [<span class="hljs-number">0.9608</span>, <span class="hljs-number">0.9569</span>, <span class="hljs-number">0.9569</span>,  ..., <span class="hljs-number">0.9490</span>, <span class="hljs-number">0.9490</span>, <span class="hljs-number">0.9451</span>],<br>          ...,<br>          &#123;<span class="hljs-string">&#x27;boxes&#x27;</span>: tensor([[<span class="hljs-number">113.4800</span>,  <span class="hljs-number">51.8000</span>, <span class="hljs-number">362.9400</span>, <span class="hljs-number">237.8700</span>]]),<br>  		  <span class="hljs-string">&#x27;labels&#x27;</span>: tensor([<span class="hljs-number">1</span>]),<br> 		  <span class="hljs-string">&#x27;image_id&#x27;</span>: tensor([<span class="hljs-number">0</span>]),<br> 		  <span class="hljs-string">&#x27;area&#x27;</span>: tensor([<span class="hljs-number">46417.0195</span>]),<br>  		  <span class="hljs-string">&#x27;iscrowd&#x27;</span>: tensor([<span class="hljs-number">0</span>])&#125;,<br>		  <span class="hljs-string">&#x27;COCO_val2014_000000145019.jpg&#x27;</span>)<br></code></pre></td></tr></table></figure>
+
+
+
+<p>1）知识漏洞之<code>torch.as_tensor()</code>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 共享内存？</span><br>t1=torch.tensor(data)  <span class="hljs-comment"># 新内存</span><br>t2=torch.from_numpy(data)	<span class="hljs-comment"># 共享</span><br>t3=torch.as_tensor(data)	<span class="hljs-comment"># 共享</span><br><br><span class="hljs-comment"># 关于as_tensor是否共享内存的进一步说明：</span><br>torch.as_tensor(data, dtype=<span class="hljs-literal">None</span>,device=<span class="hljs-literal">None</span>)<br><span class="hljs-comment"># 只有当dtype和device都与data相同时，才会共享内存</span><br></code></pre></td></tr></table></figure>
+
+<p>综上，由其他python数据结构的数组创建tensor时，<strong>使用<code>as_tensor()</code>总是好的</strong>，它会自行判断是否共享内存。</p>
+<p><strong>2）知识漏洞之<code>__getitem__</code>类方法：</strong></p>
+<p>很多代码框架中，都出现了<code>__getitem__</code>类方法，到底是什么意思？Stack overflow上有人给出了好的解释：<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/43627405/understanding-getitem-method">python - Understanding <strong>getitem</strong> method - Stack Overflow</a></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 1. The primary use case, in my opinion, is when you are writing a custom class that represents a collection of things. This allows you to use the familiar list/array indexing like planets[i] to access a given item even though planets is not actually a list (and it could, under the covers, use any data structure it chooses, such as a linked list or graph, or implement any non-list functions that it chooses, which a list could not). – jarmod Oct 6 &#x27;20 at 11:15</span><br><br><span class="hljs-comment"># 2. The [] syntax for getting item by key or index is just syntax sugar. When you evaluate a[i] Python calls a.__getitem__(i) (or type(a).__getitem__(a, i), but this distinction is about inheritance models and is not important here). Even if the class of a may not explicitly define this method, it is usually inherited from an ancestor class.</span><br></code></pre></td></tr></table></figure>
+
+<p>也就是说，通过该方法，我们可以像使用列表一样使用类对象；定义了<code>__getitem__</code>类方法之后，使用 <code>a[i]</code> 就相当于在调用 <code>a.__getitem__(i)</code></p>
+<p>再看网友给出的一个例子：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># Without using __getitem__ we would have a class like this :</span><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Building</span>(<span class="hljs-params"><span class="hljs-built_in">object</span></span>):</span><br>     <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, floors</span>):</span><br>         self._floors = [<span class="hljs-literal">None</span>]*floors<br>     <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">occupy</span>(<span class="hljs-params">self, floor_number, data</span>):</span><br>          self._floors[floor_number] = data<br>     <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_floor_data</span>(<span class="hljs-params">self, floor_number</span>):</span><br>          <span class="hljs-keyword">return</span> self._floors[floor_number]<br><br>building1 = Building(<span class="hljs-number">4</span>) <span class="hljs-comment"># Construct a building with 4 floors</span><br>building1.occupy(<span class="hljs-number">0</span>, <span class="hljs-string">&#x27;Reception&#x27;</span>)<br>building1.occupy(<span class="hljs-number">1</span>, <span class="hljs-string">&#x27;ABC Corp&#x27;</span>)<br>building1.occupy(<span class="hljs-number">2</span>, <span class="hljs-string">&#x27;DEF Inc&#x27;</span>)<br><span class="hljs-built_in">print</span>( building1.get_floor_data(<span class="hljs-number">2</span>) )<br><br><span class="hljs-comment"># We could however use __getitem__ (and its counterpart __setitem__) to make the usage of the Building class &#x27;nicer&#x27;.</span><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Building</span>(<span class="hljs-params"><span class="hljs-built_in">object</span></span>):</span><br>     <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, floors</span>):</span><br>         self._floors = [<span class="hljs-literal">None</span>]*floors<br>     <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__setitem__</span>(<span class="hljs-params">self, floor_number, data</span>):</span><br>          self._floors[floor_number] = data<br>     <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__getitem__</span>(<span class="hljs-params">self, floor_number</span>):</span><br>          <span class="hljs-keyword">return</span> self._floors[floor_number]<br><br>building1 = Building(<span class="hljs-number">4</span>) <span class="hljs-comment"># Construct a building with 4 floors</span><br>building1[<span class="hljs-number">0</span>] = <span class="hljs-string">&#x27;Reception&#x27;</span><br>building1[<span class="hljs-number">1</span>] = <span class="hljs-string">&#x27;ABC Corp&#x27;</span><br>building1[<span class="hljs-number">2</span>] = <span class="hljs-string">&#x27;DEF Inc&#x27;</span><br><span class="hljs-built_in">print</span>( building1[<span class="hljs-number">2</span>] )<br></code></pre></td></tr></table></figure>
+
+<p>综上，<code>__setitem__</code>通常配套使用，让我们像使用list一样使用类对象，代码变得非常简洁。</p>
+<p>那么，同理，可以联想到<code>__len__</code>方法的作用，也是让我们可以直接对类对象写出这样的代码：<code>len(object)</code></p>
+<p>3）知识漏洞之<code>shutil</code>模块—— 高阶文件操作</p>
+<p>shutil模块提供了一系列对文件和文件及和的高阶操作，特别是提供了一些支持文件拷贝和删除的函数。</p>
+<p>具体参见：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/dianel/p/10776981.html">python中的shutil模块 - Python运维开发 - 博客园 (cnblogs.com)</a></p>
+<h3 id="五、模型构建"><a href="#五、模型构建" class="headerlink" title="五、模型构建"></a>五、模型构建</h3><p>1.获取现成的模型进行finetune：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torchvision<br><span class="hljs-keyword">from</span> torchvision.models.detection.faster_rcnn <span class="hljs-keyword">import</span> FastRCNNPredictor<br><span class="hljs-keyword">from</span> torchvision.models.detection <span class="hljs-keyword">import</span> FasterRCNN<br><span class="hljs-keyword">from</span> torchvision.models.detection.rpn <span class="hljs-keyword">import</span> AnchorGenerator<br><br><span class="hljs-keyword">from</span> torch.utils.data <span class="hljs-keyword">import</span> DataLoader, Dataset<br><span class="hljs-keyword">from</span> torch.utils.data.sampler <span class="hljs-keyword">import</span> SequentialSampler<br><br>      <br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_object_detection_model</span>(<span class="hljs-params">num_classes</span>):</span><br>    <span class="hljs-comment"># 载入一个在COCO数据集上预训练好的faster rcnn 模型，backbone为resnet50，neck网络使用fpn</span><br>    model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=<span class="hljs-literal">True</span>)<br><br>    <span class="hljs-comment"># 获取最后分类的head的输入特征维度</span><br>    in_features = model.roi_heads.box_predictor.cls_score.in_features<br>    <span class="hljs-comment"># 将最后分类的head从原始的COCO输出81类替换为我们现在输入的num_classes类，注意这里的num_classes=实际的类别数量+1，1代表背景</span><br>    model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)<br><br>    <span class="hljs-keyword">return</span> model<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python">device = torch.device(<span class="hljs-string">&#x27;cuda&#x27;</span>) <span class="hljs-keyword">if</span> torch.cuda.is_available() <span class="hljs-keyword">else</span> torch.device(<span class="hljs-string">&#x27;cpu&#x27;</span>)<br><span class="hljs-comment"># 构建我们的基于faster rcnn的飞机检测模型，类别数量如上所讲述=1+1=2</span><br>model = get_object_detection_model(<span class="hljs-number">2</span>).to(device)<br><br><span class="hljs-built_in">print</span>(model)  <span class="hljs-comment"># 可查看model架构</span><br></code></pre></td></tr></table></figure>
+
+
+
+<p><strong>torchvision模块</strong>是非常优秀的计算机视觉工具包，提供了很多盛行的网络架构，包括目标检测、实例分割！</p>
+<p>源码地址：<a target="_blank" rel="noopener" href="https://github.com/pytorch/vision/tree/master/torchvision/models">vision/torchvision/models at master · pytorch/vision (github.com)</a> 如有需要，可以好好研读！</p>
+<p>对该模块的目录做一个小总结：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># /detection</span><br>	anchor_utils(AnchorGenerator等)、generalized_rcnn、faster_rcnn、mask_rcnn、keypoint_rcnn、retinanet、ssd、(还有诸如roi_heads、rpn等偏功能化的模块)<br><span class="hljs-comment"># /quantization</span><br><span class="hljs-comment"># /segmentation</span><br><span class="hljs-comment"># /video</span><br><br><span class="hljs-comment"># 分类：</span><br>	alexnet、densenet、googlenet、inception、mnasnet、mobilenet、resnet、vgg、shufflenet、squeezenet<br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="六、训练与验证"><a href="#六、训练与验证" class="headerlink" title="六、训练与验证"></a>六、训练与验证</h3><p>1.训练数据集及相关计算函数的准备</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 这个Averager用于统计训练过程中的loss，便于打印</span><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Averager</span>:</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self</span>):</span><br>        self.current_total = <span class="hljs-number">0.0</span><br>        self.iterations = <span class="hljs-number">0.0</span><br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">send</span>(<span class="hljs-params">self, value</span>):</span><br>        self.current_total += value<br>        self.iterations += <span class="hljs-number">1</span><br><br><span class="hljs-meta">    @property</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">value</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-keyword">if</span> self.iterations == <span class="hljs-number">0</span>:<br>            <span class="hljs-keyword">return</span> <span class="hljs-number">0</span><br>        <span class="hljs-keyword">else</span>:<br>            <span class="hljs-keyword">return</span> <span class="hljs-number">1.0</span> * self.current_total / self.iterations<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">reset</span>(<span class="hljs-params">self</span>):</span><br>        self.current_total = <span class="hljs-number">0.0</span><br>        self.iterations = <span class="hljs-number">0.0</span><br></code></pre></td></tr></table></figure>
+
+<p>对<code>@property</code>的理解，可以参考：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/64487092">python @property的介绍与使用 - 知乎 (zhihu.com)</a></p>
+<p>简单理解：添加了<code>@property</code>的函数，应作为类属性来使用，即不再作为函数使用；同时该属性具备私有性，用户无法修改。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># collate_fn函数用于将一个batch的数据转换为tuple格式</span><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">collate_fn</span>(<span class="hljs-params">batch</span>):</span><br>    <span class="hljs-keyword">return</span> <span class="hljs-built_in">tuple</span>(<span class="hljs-built_in">zip</span>(*batch))<br><span class="hljs-comment"># 使用上面的AirplaneDetDataset来定义训练和验证的数据类</span><br>train_dataset = AirplaneDetDataset(<span class="hljs-string">&#x27;temp/mini_airplane&#x27;</span>, <span class="hljs-string">&#x27;train.json&#x27;</span>)<br>valid_dataset = AirplaneDetDataset(<span class="hljs-string">&#x27;temp/mini_airplane&#x27;</span>, <span class="hljs-string">&#x27;val.json&#x27;</span>)<br><span class="hljs-comment"># 定义训练data_loader</span><br>train_data_loader = DataLoader(<br>    train_dataset,<br>    batch_size=<span class="hljs-number">1</span>,<br>    shuffle=<span class="hljs-literal">False</span>,<br>    num_workers=<span class="hljs-number">0</span>,<br>    collate_fn=collate_fn<br>)<br><span class="hljs-comment"># 定义验证data_loader</span><br>valid_data_loader = DataLoader(<br>    valid_dataset,<br>    batch_size=<span class="hljs-number">1</span>,<br>    shuffle=<span class="hljs-literal">False</span>,<br>    num_workers=<span class="hljs-number">0</span>,<br>    collate_fn=collate_fn<br>)<br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python">params = [p <span class="hljs-keyword">for</span> p <span class="hljs-keyword">in</span> model.parameters() <span class="hljs-keyword">if</span> p.requires_grad]<br><span class="hljs-comment"># 建立sgd 优化器</span><br>optimizer = torch.optim.SGD(params, lr=<span class="hljs-number">0.0025</span>, momentum=<span class="hljs-number">0.9</span>, weight_decay=<span class="hljs-number">0.0005</span>)<br>lr_scheduler = <span class="hljs-literal">None</span><br><span class="hljs-comment"># 一共训练8个epoch</span><br>num_epochs = <span class="hljs-number">1</span> <span class="hljs-comment">#8</span><br></code></pre></td></tr></table></figure>
+
+
+
+<p>2.训练</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># resnet50模型过大，内存不足</span><br>loss_hist = Averager()<br>itr = <span class="hljs-number">1</span><br><br><span class="hljs-comment"># 按照每一个epoch循环训练</span><br><span class="hljs-keyword">for</span> epoch <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(num_epochs):<br>    loss_hist.reset()<br>    <span class="hljs-comment"># 从data loader 中采样每个batch数据用于训练</span><br>    <span class="hljs-keyword">for</span> images, targets, _ <span class="hljs-keyword">in</span> train_data_loader:<br>        <br>        <span class="hljs-comment"># 将image 和 label 挪到GPU中</span><br>        images = <span class="hljs-built_in">list</span>(image.to(device) <span class="hljs-keyword">for</span> image <span class="hljs-keyword">in</span> images)<br>        targets = [&#123;k: v.to(device) <span class="hljs-keyword">for</span> k, v <span class="hljs-keyword">in</span> t.items()&#125; <span class="hljs-keyword">for</span> t <span class="hljs-keyword">in</span> targets]<br>        <br>        <span class="hljs-comment"># 数据进入模型并反向传播得到loss</span><br>        loss_dict = model(images, targets)<br><br>        losses = <span class="hljs-built_in">sum</span>(loss <span class="hljs-keyword">for</span> loss <span class="hljs-keyword">in</span> loss_dict.values())<br>        loss_value = losses.item()<br><br>        loss_hist.send(loss_value)<br>		<br>        <span class="hljs-comment"># 更新模型参数</span><br>        optimizer.zero_grad()<br>        losses.backward()<br>        optimizer.step()<br><br>        <span class="hljs-keyword">if</span> itr % <span class="hljs-number">10</span> == <span class="hljs-number">0</span>:<br>            <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Iteration #<span class="hljs-subst">&#123;itr&#125;</span> loss: <span class="hljs-subst">&#123;loss_value&#125;</span>&quot;</span>)<br><br>        itr += <span class="hljs-number">1</span><br>        <span class="hljs-keyword">if</span> itr&gt;<span class="hljs-number">10</span>:<span class="hljs-keyword">break</span>;<br>    <br>    <span class="hljs-comment"># update the learning rate</span><br>    <span class="hljs-keyword">if</span> lr_scheduler <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>        lr_scheduler.step()<br><br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;Epoch #<span class="hljs-subst">&#123;epoch&#125;</span> loss: <span class="hljs-subst">&#123;loss_hist.value&#125;</span>&quot;</span>)<br></code></pre></td></tr></table></figure>
+
+
+
+<p>3.验证阶段：</p>
+<p>1）取训练集图片，验证bbox是否准确：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 循环load训练集的数据</span><br>itr = <span class="hljs-number">1</span><br><span class="hljs-keyword">for</span> images, _, imgname <span class="hljs-keyword">in</span> <span class="hljs-built_in">iter</span>(train_data_loader):<br>    images = <span class="hljs-built_in">list</span>(img.to(device) <span class="hljs-keyword">for</span> img <span class="hljs-keyword">in</span> images)<br>    sample = images[<span class="hljs-number">0</span>].permute(<span class="hljs-number">1</span>,<span class="hljs-number">2</span>,<span class="hljs-number">0</span>).cpu().numpy()<br>    model.<span class="hljs-built_in">eval</span>()<br>    cpu_device = torch.device(<span class="hljs-string">&quot;cpu&quot;</span>)<br>    <span class="hljs-comment"># 将图片送入网络infer得到预测结果</span><br>    <span class="hljs-keyword">with</span> torch.no_grad():<br>        outputs = model(images)<br>        outputs = [&#123;k: v.to(cpu_device) <span class="hljs-keyword">for</span> k, v <span class="hljs-keyword">in</span> t.items()&#125; <span class="hljs-keyword">for</span> t <span class="hljs-keyword">in</span> outputs]<br><br>    <span class="hljs-comment"># 从预测结果中解析出需要的bbox 和score内容</span><br>    boxes = outputs[<span class="hljs-number">0</span>][<span class="hljs-string">&#x27;boxes&#x27;</span>].data.cpu().numpy()<br>    scores = outputs[<span class="hljs-number">0</span>][<span class="hljs-string">&#x27;scores&#x27;</span>].data.cpu().numpy()<br>    <span class="hljs-comment"># 保留score大于0.5的预测框</span><br>    boxes = boxes[scores &gt;= <span class="hljs-number">0.5</span>].astype(np.int32)<br>    <span class="hljs-comment"># 在图上绘制所有预测框</span><br>    <span class="hljs-keyword">for</span> box <span class="hljs-keyword">in</span> boxes:<br>        cv2.rectangle(np.ascontiguousarray(sample),<br>                      (<span class="hljs-built_in">int</span>(box[<span class="hljs-number">0</span>]), <span class="hljs-built_in">int</span>(box[<span class="hljs-number">1</span>])),<br>                      (<span class="hljs-built_in">int</span>(box[<span class="hljs-number">2</span>]), <span class="hljs-built_in">int</span>(box[<span class="hljs-number">3</span>])),<br>                      (<span class="hljs-number">220</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>), <span class="hljs-number">3</span>)<br>    <span class="hljs-comment"># 保存结果图片</span><br><span class="hljs-comment">#     plt.savefig(&#x27;./results/train_vis/&#x27;+str(imgname))</span><br>    plt.imshow(sample)<br>    plt.show()<br>    itr+=<span class="hljs-number">1</span><br>    <span class="hljs-keyword">if</span> itr&gt;<span class="hljs-number">3</span>:<br>        <span class="hljs-keyword">break</span>;<br></code></pre></td></tr></table></figure>
+
+<p>2）在验证集上测试：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs python">itr = <span class="hljs-number">1</span><br><span class="hljs-keyword">for</span> images, _, imgname <span class="hljs-keyword">in</span> <span class="hljs-built_in">iter</span>(valid_data_loader):	<span class="hljs-comment"># 取验证集数据</span><br>    images = <span class="hljs-built_in">list</span>(img.to(device) <span class="hljs-keyword">for</span> img <span class="hljs-keyword">in</span> images)<br>    sample = images[<span class="hljs-number">0</span>].permute(<span class="hljs-number">1</span>,<span class="hljs-number">2</span>,<span class="hljs-number">0</span>).cpu().numpy()<br>    cpu_device = torch.device(<span class="hljs-string">&quot;cpu&quot;</span>)<br>    <span class="hljs-keyword">with</span> torch.no_grad():<br>        outputs = model(images)<br>        outputs = [&#123;k: v.to(cpu_device) <span class="hljs-keyword">for</span> k, v <span class="hljs-keyword">in</span> t.items()&#125; <span class="hljs-keyword">for</span> t <span class="hljs-keyword">in</span> outputs]<br><span class="hljs-comment">#     fig, ax = plt.subplots(1, 1, figsize=(16, 8))</span><br>    boxes = outputs[<span class="hljs-number">0</span>][<span class="hljs-string">&#x27;boxes&#x27;</span>].data.cpu().numpy()<br>    scores = outputs[<span class="hljs-number">0</span>][<span class="hljs-string">&#x27;scores&#x27;</span>].data.cpu().numpy()<br><br>    boxes = boxes[scores &gt;= <span class="hljs-number">0.5</span>].astype(np.int32)<br>    <span class="hljs-keyword">for</span> box <span class="hljs-keyword">in</span> boxes:<br>        cv2.rectangle(np.ascontiguousarray(sample),<br>                      (<span class="hljs-built_in">int</span>(box[<span class="hljs-number">0</span>]), <span class="hljs-built_in">int</span>(box[<span class="hljs-number">1</span>])),<br>                      (<span class="hljs-built_in">int</span>(box[<span class="hljs-number">2</span>]), <span class="hljs-built_in">int</span>(box[<span class="hljs-number">3</span>])),<br>                      (<span class="hljs-number">220</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>), <span class="hljs-number">3</span>)<br>    <br>    plt.imshow(sample)<br>    plt.savefig(<span class="hljs-string">&#x27;./temp/&#x27;</span>+<span class="hljs-built_in">str</span>(imgname[<span class="hljs-number">0</span>]))<br>    plt.show()<br>    itr += <span class="hljs-number">1</span><br>    <span class="hljs-keyword">if</span> itr&gt;<span class="hljs-number">3</span>:<br>        <span class="hljs-keyword">break</span>;<br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="七、检测结果的mAP计算"><a href="#七、检测结果的mAP计算" class="headerlink" title="七、检测结果的mAP计算"></a>七、检测结果的mAP计算</h3><p>一般计算mAP采用<strong>COCO的官方工具</strong>，所以我们需要做的是<strong>将我们的预测结果保存为COCO标准格式</strong>，然后和COCO格式的label文件一起来求出mAP值。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 首先预测每张验证集的图片，将每张图片的结果保存在字典imgname2bboxes中</span><br>imgname2bboxes = <span class="hljs-built_in">dict</span>()<br><span class="hljs-keyword">for</span> images, _, imgname <span class="hljs-keyword">in</span> <span class="hljs-built_in">iter</span>(valid_data_loader):<br>    imgname = imgname[<span class="hljs-number">0</span>]<br>    imgname2bboxes[imgname] = []<br>    images = <span class="hljs-built_in">list</span>(img.to(device) <span class="hljs-keyword">for</span> img <span class="hljs-keyword">in</span> images)<br>    sample = images[<span class="hljs-number">0</span>].permute(<span class="hljs-number">1</span>,<span class="hljs-number">2</span>,<span class="hljs-number">0</span>).cpu().numpy()<br>    cpu_device = torch.device(<span class="hljs-string">&quot;cpu&quot;</span>)<br>    <span class="hljs-keyword">with</span> torch.no_grad():<br>        outputs = model(images)<br>        outputs = [&#123;k: v.to(cpu_device) <span class="hljs-keyword">for</span> k, v <span class="hljs-keyword">in</span> t.items()&#125; <span class="hljs-keyword">for</span> t <span class="hljs-keyword">in</span> outputs]<br>    boxes = outputs[<span class="hljs-number">0</span>][<span class="hljs-string">&#x27;boxes&#x27;</span>].data.cpu().numpy()<br>    scores = outputs[<span class="hljs-number">0</span>][<span class="hljs-string">&#x27;scores&#x27;</span>].data.cpu().numpy()<br><br>    boxes = boxes[scores &gt;= <span class="hljs-number">0.05</span>].astype(np.int32)<br>    scores = scores[scores &gt;= <span class="hljs-number">0.05</span>]<br>    <span class="hljs-keyword">for</span> box, score <span class="hljs-keyword">in</span> <span class="hljs-built_in">zip</span>(boxes, scores):<br>        imgname2bboxes[imgname].append([box[<span class="hljs-number">0</span>], box[<span class="hljs-number">1</span>], box[<span class="hljs-number">2</span>], box[<span class="hljs-number">3</span>], score])<br><br><span class="hljs-comment"># 将imgname2bboxes字典的内容转换为COCO标准格式并保存下来，用于之后的计算mAP</span><br><br><span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(<span class="hljs-string">&quot;temp/mini_airplane/annotations/val.json&quot;</span>, <span class="hljs-string">&quot;r&quot;</span>) <span class="hljs-keyword">as</span> f:<br>    val_labels = json.load(f)<br>val_images = val_labels[<span class="hljs-string">&quot;images&quot;</span>]<br>imagename2id = <span class="hljs-built_in">dict</span>()<br><span class="hljs-keyword">for</span> img <span class="hljs-keyword">in</span> val_images:<br>    imagename2id[img[<span class="hljs-string">&quot;file_name&quot;</span>]] = img[<span class="hljs-string">&quot;id&quot;</span>]<br>val_annotations = []<br>anno_id = <span class="hljs-number">1</span><br><span class="hljs-keyword">for</span> imgname, bboxes <span class="hljs-keyword">in</span> imgname2bboxes.items():<br>    <span class="hljs-keyword">for</span> bbox <span class="hljs-keyword">in</span> bboxes:<br>        box = <span class="hljs-built_in">list</span>([<span class="hljs-built_in">int</span>(bbox[<span class="hljs-number">0</span>]), <span class="hljs-built_in">int</span>(bbox[<span class="hljs-number">1</span>]), <span class="hljs-built_in">int</span>(bbox[<span class="hljs-number">2</span>]) - <span class="hljs-built_in">int</span>(bbox[<span class="hljs-number">0</span>]) + <span class="hljs-number">1</span>, <span class="hljs-built_in">int</span>(bbox[<span class="hljs-number">3</span>]) - <span class="hljs-built_in">int</span>(bbox[<span class="hljs-number">1</span>]) + <span class="hljs-number">1</span>])<br>        score = <span class="hljs-built_in">float</span>(bbox[-<span class="hljs-number">1</span>])<br>        imgid = imagename2id[imgname]<br>        val_annotations.append(&#123;<br>            <span class="hljs-string">&quot;id&quot;</span>: anno_id,<br>            <span class="hljs-string">&quot;bbox&quot;</span>: box,<br>            <span class="hljs-string">&quot;score&quot;</span>: score,<br>            <span class="hljs-string">&quot;image_id&quot;</span>: imagename2id[imgname],<br>            <span class="hljs-string">&quot;category_id&quot;</span>: <span class="hljs-number">1</span><br>        &#125;)<br>        anno_id += <span class="hljs-number">1</span><br><br><span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(<span class="hljs-string">&quot;results/val_results.json&quot;</span>, <span class="hljs-string">&quot;w&quot;</span>) <span class="hljs-keyword">as</span> f:<br>    json.dump(val_annotations, f, indent=<span class="hljs-number">2</span>)<br></code></pre></td></tr></table></figure>
+
+<p>求mAP：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">! python datasets/src/coco_eval.py results/val_results.json --ann datasets/mini_airplane/annotations/val.json<br></code></pre></td></tr></table></figure>
+
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Deep-Learning-Objects-Detection/">Deep Learning-Objects Detection</a>
+                    
+                  </div>
+                
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/08/15/Pytorch-Related%EF%BC%88%E4%B8%89%EF%BC%89/">
+                        <span class="hidden-mobile">Pytorch_Related（三）</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;TOC</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/tocbot@4.12.3/dist/tocbot.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4.3.1/anchor.min.js" ></script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js" ></script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
