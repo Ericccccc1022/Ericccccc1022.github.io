@@ -1,0 +1,491 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=&#34;auto&#34;>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/Tan.png">
+  <link rel="icon" href="/img/Tan.png">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="在最近阅读源码的基础上，参考：深度学习pytorch训练代码模板(个人习惯) - 知乎 (zhihu.com)，总结了一套pytorch的代码模板。 这套模板比较简易，不涉及cuda代码的编译，但一般量级的项目完全可参考。">
+  <meta name="author" content="Eric Tan">
+  <meta name="keywords" content="">
+  
+  <title>总结-深度学习代码模板 - Eric Tan</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10.7.2/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+  
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.11","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"§"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 80vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand"
+       href="/">&nbsp;<strong>Eric Tan</strong>&nbsp;</a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                Home
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                Archives
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                Categories
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                Tags
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                About
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" data-toggle="modal" data-target="#modalSearch">&nbsp;<i
+                class="iconfont icon-search"></i>&nbsp;</a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/curry2.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="总结-深度学习代码模板">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-08-22 11:48" pubdate>
+        August 22, 2021 am
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      2k 字
+    </span>
+  
+
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      33
+       分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+            <div class="scroll-down-bar">
+              <i class="iconfont icon-arrowdown"></i>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">总结-深度学习代码模板</h1>
+            
+            <div class="markdown-body">
+              <p>在最近阅读源码的基础上，参考：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/396666255">深度学习pytorch训练代码模板(个人习惯) - 知乎 (zhihu.com)</a>，总结了一套pytorch的代码模板。 这套模板比较简易，不涉及cuda代码的编译，但一般量级的项目完全可参考。</p>
+<span id="more"></span>
+
+<h2 id="深度学习代码模板"><a href="#深度学习代码模板" class="headerlink" title="深度学习代码模板"></a>深度学习代码模板</h2><p>目录如下：</p>
+<p>1.导入包及设置随机种子</p>
+<p>2.以函数的方式获取超参数</p>
+<p>3.定义自己的model</p>
+<p>4.定义早停类(选)</p>
+<p>5.定义自己的数据集类Dataset</p>
+<p>6.实例化模型、设置loss、优化器等</p>
+<p>7.开始训练以及调整lr</p>
+<p>8.绘图</p>
+<p>9.预测</p>
+<h3 id="一、导入包以及设置随机种子"><a href="#一、导入包以及设置随机种子" class="headerlink" title="一、导入包以及设置随机种子"></a>一、导入包以及设置随机种子</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> np<br><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> np<br><span class="hljs-keyword">from</span> torch.utils.data <span class="hljs-keyword">import</span> DataLoader, Dataset<br><span class="hljs-keyword">from</span> sklearn.model_selection <span class="hljs-keyword">import</span> train_test_split<br><span class="hljs-keyword">import</span> matplotlib.pyplot <span class="hljs-keyword">as</span> plt<br><span class="hljs-keyword">import</span> ...<br><br><br>random.seed(seed)<br>np.random.seed(seed)<br>torch.manual_seed(seed)<br>torch.cuda.manual_seed(seed)	<span class="hljs-comment"># 可有可无：torch.manual_seed()已经包含了cuda</span><br>torch.backends.cudnn.deterministic = <span class="hljs-literal">True</span>	<span class="hljs-comment"># True: 固定一种卷积算法</span><br>torch.backends.cudnn.benchmark = <span class="hljs-literal">False</span>  <span class="hljs-comment"># False: 每次算法都一样</span><br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="二、以函数的方式获取超参数"><a href="#二、以函数的方式获取超参数" class="headerlink" title="二、以函数的方式获取超参数"></a>二、以函数的方式获取超参数</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> argparse<br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">parse_args</span>():</span><br>    parser = argparse.ArgumentParser(description=<span class="hljs-string">&#x27;Train a Fast R-CNN network&#x27;</span>)<br>    parser.add_argument(<span class="hljs-string">&#x27;--dataset&#x27;</span>, dest=<span class="hljs-string">&#x27;dataset&#x27;</span>,<br>                       <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;training dataset&#x27;</span>,<br>                       default=<span class="hljs-string">&#x27;pascal_voc&#x27;</span>, <span class="hljs-built_in">type</span>=<span class="hljs-built_in">str</span>)<br>    parser.add_argument(<span class="hljs-string">&#x27;--net&#x27;</span>, dest=<span class="hljs-string">&#x27;net&#x27;</span>,<br>                     <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;vgg16, vggm&#x27;</span>,<br>                     default=<span class="hljs-string">&#x27;vgg16&#x27;</span>, <span class="hljs-built_in">type</span>=<span class="hljs-built_in">str</span>)<br>    parser.add_argument(<span class="hljs-string">&#x27;--start_epoch&#x27;</span>, dest=<span class="hljs-string">&#x27;start_epoch&#x27;</span>,<br>                       <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;starting epoch&#x27;</span>,<br>                       default=<span class="hljs-number">1</span>, <span class="hljs-built_in">type</span>=<span class="hljs-built_in">int</span>)<br>    parser.add_argument(<span class="hljs-string">&#x27;--epochs&#x27;</span>, dest=<span class="hljs-string">&#x27;max_epochs&#x27;</span>,<br>                       <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;number of epochs to train&#x27;</span>,<br>                       default=<span class="hljs-number">20</span>, <span class="hljs-built_in">type</span>=<span class="hljs-built_in">int</span>)<br>    parser.add_argument(<span class="hljs-string">&#x27;--disp_interval&#x27;</span>, dest=<span class="hljs-string">&#x27;disp_interval&#x27;</span>,<br>                       <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;number of iterations to display&#x27;</span>,<br>                       default=<span class="hljs-number">100</span>, <span class="hljs-built_in">type</span>=<span class="hljs-built_in">int</span>)<br>    parser.add_argument(<span class="hljs-string">&#x27;--checkpoint_interval&#x27;</span>, dest=<span class="hljs-string">&#x27;checkpoint_interval&#x27;</span>,<br>                       <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;number of iterations to display&#x27;</span>,<br>                       default=<span class="hljs-number">1000</span>, <span class="hljs-built_in">type</span>=<span class="hljs-built_in">int</span>)<br>    parser.add_argument(<span class="hljs-string">&#x27;--save_dir&#x27;</span>, dest=<span class="hljs-string">&#x27;save_dir&#x27;</span>,<br>                       <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;directory to save models&#x27;</span>, default=<span class="hljs-string">&quot;models&quot;</span>,<br>                       <span class="hljs-built_in">type</span>=<span class="hljs-built_in">str</span>)<br>    parser.add_argument(<span class="hljs-string">&#x27;--nw&#x27;</span>, dest=<span class="hljs-string">&#x27;num_workers&#x27;</span>,<br>                       <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;number of worker to load data&#x27;</span>,<br>                       default=<span class="hljs-number">0</span>, <span class="hljs-built_in">type</span>=<span class="hljs-built_in">int</span>)<br>    parser.add_argument(<span class="hljs-string">&#x27;--cuda&#x27;</span>, dest=<span class="hljs-string">&#x27;cuda&#x27;</span>,<br>                       <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;whether use CUDA&#x27;</span>,<br>                       action=<span class="hljs-string">&#x27;store_true&#x27;</span>)<br>    parser.add_argument(<span class="hljs-string">&#x27;--ls&#x27;</span>, dest=<span class="hljs-string">&#x27;large_scale&#x27;</span>,<br>                       <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;whether use large imag scale&#x27;</span>,<br>                       action=<span class="hljs-string">&#x27;store_true&#x27;</span>)                      <br>    parser.add_argument(<span class="hljs-string">&#x27;--mGPUs&#x27;</span>, dest=<span class="hljs-string">&#x27;mGPUs&#x27;</span>,<br>                       <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;whether use multiple GPUs&#x27;</span>,<br>                       action=<span class="hljs-string">&#x27;store_true&#x27;</span>)<br>    parser.add_argument(<span class="hljs-string">&#x27;--bs&#x27;</span>, dest=<span class="hljs-string">&#x27;batch_size&#x27;</span>,<br>                       <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;batch_size, this should be 2n&#x27;</span>,<br>                       default=<span class="hljs-number">1</span>, <span class="hljs-built_in">type</span>=<span class="hljs-built_in">int</span>)<br>    parser.add_argument(<span class="hljs-string">&#x27;--cag&#x27;</span>, dest=<span class="hljs-string">&#x27;class_agnostic&#x27;</span>,<br>                       <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;whether perform class_agnostic bbox regression&#x27;</span>,<br>                       action=<span class="hljs-string">&#x27;store_true&#x27;</span>)<br>    parser.add_argument(<span class="hljs-string">&#x27;--model&#x27;</span>, default=<span class="hljs-string">&#x27;oicr&#x27;</span>, <span class="hljs-built_in">type</span>=<span class="hljs-built_in">str</span>)<br>    <br>    <span class="hljs-comment"># config optimization</span><br>    parser.add_argument(<span class="hljs-string">&#x27;--o&#x27;</span>, dest=<span class="hljs-string">&#x27;optimizer&#x27;</span>,<br>                       <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;training optimizer&#x27;</span>,<br>                       default=<span class="hljs-string">&quot;sgd&quot;</span>, <span class="hljs-built_in">type</span>=<span class="hljs-built_in">str</span>)<br>    parser.add_argument(<span class="hljs-string">&#x27;--lr&#x27;</span>, dest=<span class="hljs-string">&#x27;lr&#x27;</span>,<br>                       <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;starting learning rate&#x27;</span>,<br>                       default=<span class="hljs-number">0.001</span>, <span class="hljs-built_in">type</span>=<span class="hljs-built_in">float</span>)<br>    parser.add_argument(<span class="hljs-string">&#x27;--lr_decay_step&#x27;</span>, dest=<span class="hljs-string">&#x27;lr_decay_step&#x27;</span>,<br>                       <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;step to do learning rate decay, unit is epoch&#x27;</span>,<br>                       default=<span class="hljs-number">5</span>, <span class="hljs-built_in">type</span>=<span class="hljs-built_in">int</span>)<br>    parser.add_argument(<span class="hljs-string">&#x27;--lr_decay_gamma&#x27;</span>, dest=<span class="hljs-string">&#x27;lr_decay_gamma&#x27;</span>,<br>                       <span class="hljs-built_in">help</span>=<span class="hljs-string">&#x27;learning rate decay ratio&#x27;</span>,<br>                       default=<span class="hljs-number">0.1</span>, <span class="hljs-built_in">type</span>=<span class="hljs-built_in">float</span>)<br><br>    args = parser.parse_args()<br>    <span class="hljs-keyword">return</span> args<br><br><span class="hljs-comment"># 在train.py文件中的main函数中调用</span><br>args = parse_args()<br><span class="hljs-comment"># args.net、args.model等等</span><br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="三、定义自己的模型"><a href="#三、定义自己的模型" class="headerlink" title="三、定义自己的模型"></a>三、定义自己的模型</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> torch <span class="hljs-keyword">import</span> nn<br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">YOUR_MODEL</span>(<span class="hljs-params">nn.Module</span>):</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, base_net=<span class="hljs-string">&quot;vgg&quot;</span></span>):</span><br>        <span class="hljs-built_in">super</span>(YOUR_MODEL,self).__init__()<br>		<span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">        assert base_net in &#123;&quot;alexnet&quot;, &quot;vgg&quot;&#125;, &quot;`base_net` should be in &#123;alexnet, vgg&#125;&quot;</span><br><span class="hljs-string"></span><br><span class="hljs-string">        self.base_net = base_net</span><br><span class="hljs-string"></span><br><span class="hljs-string">        if self.base_net == &quot;alexnet&quot;:</span><br><span class="hljs-string">            self.base = alexnet(pretrained=False)</span><br><span class="hljs-string">            state_path = os.path.join(BASE_DIR, &quot;states&quot;, &quot;alexnet-owt-4df8aa71.pth&quot;)</span><br><span class="hljs-string">            self.roi_output_size = (6, 6)</span><br><span class="hljs-string">        else:</span><br><span class="hljs-string">            self.base = vgg16(pretrained=False)</span><br><span class="hljs-string">            state_path = os.path.join(BASE_DIR, &quot;states&quot;, &quot;vgg16-397923af.pth&quot;)</span><br><span class="hljs-string">            self.roi_output_size = (7, 7)</span><br><span class="hljs-string"></span><br><span class="hljs-string">        self.base.load_state_dict(torch.load(state_path))</span><br><span class="hljs-string">        self.features = self.base.features[:-1]</span><br><span class="hljs-string"></span><br><span class="hljs-string">        self.fcs = self.base.classifier[:-1]</span><br><span class="hljs-string">        self.fc_c = nn.Linear(4096, 20)</span><br><span class="hljs-string">        self.fc_d = nn.Linear(4096, 20)</span><br><span class="hljs-string">		&#x27;&#x27;&#x27;</span><br>        <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">forward</span>(<span class="hljs-params">self, batch_imgs, batch_boxes, batch_scores</span>):</span><br>        <span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">        # assume batch size is 1</span><br><span class="hljs-string">        batch_boxes = [batch_boxes[0]]</span><br><span class="hljs-string"></span><br><span class="hljs-string">        out = self.features(batch_imgs)  # [1, 256, 21, 29]</span><br><span class="hljs-string"></span><br><span class="hljs-string">        out = roi_pool(out, batch_boxes, self.roi_output_size, 1.0 / 16)</span><br><span class="hljs-string">        out = out.view(len(batch_boxes[0]), -1)</span><br><span class="hljs-string"></span><br><span class="hljs-string">        out = out * batch_scores[0]  # apply box scores</span><br><span class="hljs-string">        out = self.fcs(out)  # [4000, 4096]</span><br><span class="hljs-string"></span><br><span class="hljs-string">        classification_scores = F.softmax(self.fc_c(out), dim=1)</span><br><span class="hljs-string">        detection_scores = F.softmax(self.fc_d(out), dim=0)</span><br><span class="hljs-string">        combined_scores = classification_scores * detection_scores</span><br><span class="hljs-string">        &#x27;&#x27;&#x27;</span><br>        <span class="hljs-keyword">return</span> combined_scores<br>        <br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="四、定义早停类-可选"><a href="#四、定义早停类-可选" class="headerlink" title="四、定义早停类(可选)"></a>四、定义早停类(可选)</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">EarlyStopping</span>():</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self,patience=<span class="hljs-number">7</span>,verbose=<span class="hljs-literal">False</span>,delta=<span class="hljs-number">0</span></span>):</span><br>        self.patience = patience<br>        self.verbose = verbose<br>        self.counter = <span class="hljs-number">0</span><br>        self.best_score = <span class="hljs-literal">None</span><br>        self.early_stop = <span class="hljs-literal">False</span><br>        self.val_loss_min = np.Inf<br>        self.delta = delta<br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__call__</span>(<span class="hljs-params">self,val_loss,model,path</span>):</span><br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;val_loss=&#123;&#125;&quot;</span>.<span class="hljs-built_in">format</span>(val_loss))<br>        score = -val_loss<br>        <span class="hljs-keyword">if</span> self.best_score <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>            self.best_score = score<br>            self.save_checkpoint(val_loss,model,path)<br>        <span class="hljs-keyword">elif</span> score &lt; self.best_score+self.delta:<br>            self.counter+=<span class="hljs-number">1</span><br>            <span class="hljs-built_in">print</span>(<span class="hljs-string">f&#x27;EarlyStopping counter: <span class="hljs-subst">&#123;self.counter&#125;</span> out of <span class="hljs-subst">&#123;self.patience&#125;</span>&#x27;</span>)<br>            <span class="hljs-keyword">if</span> self.counter&gt;=self.patience:<br>                self.early_stop = <span class="hljs-literal">True</span><br>        <span class="hljs-keyword">else</span>:<br>            self.best_score = score<br>            self.save_checkpoint(val_loss,model,path)<br>            self.counter = <span class="hljs-number">0</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">save_checkpoint</span>(<span class="hljs-params">self,val_loss,model,path</span>):</span><br>        <span class="hljs-keyword">if</span> self.verbose:<br>            <span class="hljs-built_in">print</span>(<br>                <span class="hljs-string">f&#x27;Validation loss decreased (<span class="hljs-subst">&#123;self.val_loss_min:<span class="hljs-number">.6</span>f&#125;</span> --&gt; <span class="hljs-subst">&#123;val_loss:<span class="hljs-number">.6</span>f&#125;</span>).  Saving model ...&#x27;</span>)<br>        torch.save(model.state_dict(), path+<span class="hljs-string">&#x27;/&#x27;</span>+<span class="hljs-string">&#x27;model_checkpoint.pth&#x27;</span>)<br>        self.val_loss_min = val_loss<br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="五、定义自己的数据集类Dataset"><a href="#五、定义自己的数据集类Dataset" class="headerlink" title="五、定义自己的数据集类Dataset"></a>五、定义自己的数据集类Dataset</h3><p>为了能使自定义的dataset类能够用<code>DataLoader</code>进行batch读取：</p>
+<p>重点：</p>
+<p>1）必须继承<code>torch.utils.data.Dataset</code></p>
+<p>2）必须覆写其中的两个方法：<code>__len__</code>用于返回整个数据集大小、</p>
+<p>​                                                <code>__getitem__</code>用于索引一些数据，使<code>dataset[i]</code>放回第i个样本</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> torch.utils.data <span class="hljs-keyword">import</span> DataLoader,Dataset<br><span class="hljs-keyword">from</span> skimage <span class="hljs-keyword">import</span> io,transform<br><span class="hljs-keyword">import</span> matplotlib.pyplot <span class="hljs-keyword">as</span> plt<br><span class="hljs-keyword">import</span> os<br><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">from</span> torchvision <span class="hljs-keyword">import</span> transforms<br><span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> np<br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AnimalData</span>(<span class="hljs-params">Dataset</span>):</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, root_dir, transform=<span class="hljs-literal">None</span></span>):</span> <span class="hljs-comment">#__init__是初始化该类的一些基础参数</span><br>        self.root_dir = root_dir   <br>        self.transform = transform <br>        self.images = os.listdir(self.root_dir)	<span class="hljs-comment"># 目录里的所有文件名</span><br>    <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__len__</span>(<span class="hljs-params">self</span>):</span>	<br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">len</span>(self.images)	 <span class="hljs-comment"># 返回整个数据集大小</span><br>    <br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__getitem__</span>(<span class="hljs-params">self,index</span>):</span><br>        image_index = self.images[index]	<span class="hljs-comment"># 根据索引获取文件名</span><br>        img_path = os.path.join(self.root_dir, image_index)	<span class="hljs-comment"># 获取索引为index的图片的路径名</span><br>        img = io.imread(img_path)	<span class="hljs-comment"># 读取该图片；也可以用cv2.imread()</span><br>        label = img_path.split(<span class="hljs-string">&#x27;\\&#x27;</span>)[-<span class="hljs-number">1</span>].split(<span class="hljs-string">&#x27;.&#x27;</span>)[<span class="hljs-number">0</span>]	<span class="hljs-comment"># 根据该图片的路径名获取该图片的label，具体根据路径名进行分割。我这里是&quot;E:\\Python Project\\Pytorch\\dogs-vs-cats\\train\\cat.0.jpg&quot;，所以先用&quot;\\&quot;分割，选取最后一个为[&#x27;cat.0.jpg&#x27;]，然后使用&quot;.&quot;分割，选取[cat]作为该图片的标签</span><br>        sample = &#123;<span class="hljs-string">&#x27;image&#x27;</span>:img,<span class="hljs-string">&#x27;label&#x27;</span>:label&#125;	<span class="hljs-comment"># 根据图片和标签创建字典</span><br>        <br>        <span class="hljs-string">&#x27;&#x27;&#x27;	该步可以在DataLoader中完成</span><br><span class="hljs-string">        if self.transform:</span><br><span class="hljs-string">            sample = self.transform(sample)#对样本进行变换</span><br><span class="hljs-string">            &#x27;&#x27;&#x27;</span><br>        <span class="hljs-keyword">return</span> sample <span class="hljs-comment">#返回该样本</span><br></code></pre></td></tr></table></figure>
+
+<p>综上，在自定义数据集类中，要完成对“如何读取数据”进行定义——这一步通常通过操纵路径完成！</p>
+<p>注意理解：定义如何读取数据，不等于此时已经读取了数据；我的理解：是在后面<code>DataLoader</code>读取batch时才驱使数据集类调用<code>__getitem__</code>函数一个一个进行图片读取。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">if</span> __name__==<span class="hljs-string">&#x27;__main__&#x27;</span>:<br>    data = AnimalData(<span class="hljs-string">&#x27;E:/Python Project/PyTorch/dogs-vs-cats/train&#x27;</span>,transform=<span class="hljs-literal">None</span>)<br>    dataloader = DataLoader(data,batch_size=<span class="hljs-number">128</span>,shuffle=<span class="hljs-literal">True</span>)<br>    <span class="hljs-keyword">for</span> i_batch,batch_data <span class="hljs-keyword">in</span> <span class="hljs-built_in">enumerate</span>(dataloader):<br>        <span class="hljs-built_in">print</span>(i_batch)	<span class="hljs-comment"># 打印batch编号</span><br>        <span class="hljs-built_in">print</span>(batch_data[<span class="hljs-string">&#x27;image&#x27;</span>].size())	<span class="hljs-comment"># 打印该batch里面图片的大小</span><br>        <span class="hljs-built_in">print</span>(batch_data[<span class="hljs-string">&#x27;label&#x27;</span>])	<span class="hljs-comment"># 打印该batch里面图片的标签</span><br></code></pre></td></tr></table></figure>
+
+<p>最后可以打印什么内容，是由<code>__getitem__</code>的返回值所决定的，在本例中，返回了字典sample，key值有两个：image和label</p>
+<h3 id="六、实例化模型，设置loss、优化器等"><a href="#六、实例化模型，设置loss、优化器等" class="headerlink" title="六、实例化模型，设置loss、优化器等"></a>六、实例化模型，设置loss、优化器等</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs python">model = YOUR_MODEL().to(args.device)<br>criterion = torch.nn.MSELoss()<br>optimizer = torch.optim.Adam(YOUR_MODEL.parameters(), lr=args.learning_rate)<br><span class="hljs-comment"># scheduler = lr_scheduler.MultiStepLR(optimizer,milestones=[20,80],gamma = 0.9)  学习率衰减策略</span><br><br>train_loss = []<br>valid_loss = []<br>train_epochs_loss = []<br>valid_epochs_loss = []<br><br><span class="hljs-comment"># early_stopping = EarlyStopping(patience=args.patience,verbose=True)</span><br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="七、开始训练、调整lr"><a href="#七、开始训练、调整lr" class="headerlink" title="七、开始训练、调整lr"></a>七、开始训练、调整lr</h3><p>训练的代码可以直接放在main函数中，也可以定义为train函数使用，此处提供最基本的训练代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">for</span> epoch <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(args.epochs):<br>    Your_model.train()<br>    train_epoch_loss = []<br>    <span class="hljs-keyword">for</span> idx,(data_x,data_y) <span class="hljs-keyword">in</span> <span class="hljs-built_in">enumerate</span>(train_dataloader,<span class="hljs-number">0</span>):<br>        data_x = data_x.to(torch.float32).to(args.device)<br>        data_y = data_y.to(torch.float32).to(args.device)<br>        outputs = Your_model(data_x)<br>        optimizer.zero_grad()<br>        loss = criterion(data_y,outputs)<br>        loss.backward()<br>        optimizer.step()<br>        train_epoch_loss.append(loss.item())<br>        train_loss.append(loss.item())<br>        <span class="hljs-keyword">if</span> idx%(<span class="hljs-built_in">len</span>(train_dataloader)//<span class="hljs-number">2</span>)==<span class="hljs-number">0</span>:<br>            <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;epoch=&#123;&#125;/&#123;&#125;,&#123;&#125;/&#123;&#125;of train, loss=&#123;&#125;&quot;</span>.<span class="hljs-built_in">format</span>(<br>                epoch, args.epochs, idx, <span class="hljs-built_in">len</span>(train_dataloader),loss.item()))<br>    train_epochs_loss.append(np.average(train_epoch_loss))	<span class="hljs-comment"># epoch的loss是按列表存储的，所以用np.average</span><br>    <span class="hljs-comment"># 如果使用train_epoch_loss += loss.item() 即用一个变量存储，则此处用train_epoch_loss / n</span><br></code></pre></td></tr></table></figure>
+
+<p>测试集上进行测试：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python">Your_model.<span class="hljs-built_in">eval</span>()<br>valid_epoch_loss = []<br><span class="hljs-keyword">for</span> idx,(data_x,data_y) <span class="hljs-keyword">in</span> <span class="hljs-built_in">enumerate</span>(valid_dataloader,<span class="hljs-number">0</span>):<br>    data_x = data_x.to(torch.float32).to(args.device)<br>    data_y = data_y.to(torch.float32).to(args.device)<br>    outputs = Your_model(data_x)<br>    loss = criterion(outputs,data_y)<br>    valid_epoch_loss.append(loss.item())<br>    valid_loss.append(loss.item())<br>valid_epochs_loss.append(np.average(valid_epoch_loss))<br></code></pre></td></tr></table></figure>
+
+<p>手动调整lr：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python">lr_adjust = &#123;<br>           <span class="hljs-number">2</span>: <span class="hljs-number">5e-5</span>, <span class="hljs-number">4</span>: <span class="hljs-number">1e-5</span>, <span class="hljs-number">6</span>: <span class="hljs-number">5e-6</span>, <span class="hljs-number">8</span>: <span class="hljs-number">1e-6</span>,<br>           <span class="hljs-number">10</span>: <span class="hljs-number">5e-7</span>, <span class="hljs-number">15</span>: <span class="hljs-number">1e-7</span>, <span class="hljs-number">20</span>: <span class="hljs-number">5e-8</span><br>       &#125;<br>   <span class="hljs-keyword">if</span> epoch <span class="hljs-keyword">in</span> lr_adjust.keys():<br>       lr = lr_adjust[epoch]<br>       <span class="hljs-keyword">for</span> param_group <span class="hljs-keyword">in</span> optimizer.param_groups:<br>           param_group[<span class="hljs-string">&#x27;lr&#x27;</span>] = lr<br>       <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;Updating learning rate to &#123;&#125;&#x27;</span>.<span class="hljs-built_in">format</span>(lr))	<br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="八、绘图"><a href="#八、绘图" class="headerlink" title="八、绘图"></a>八、绘图</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python">plt.figure(figsize=(<span class="hljs-number">12</span>,<span class="hljs-number">4</span>))<br>plt.subplot(<span class="hljs-number">121</span>)<br>plt.plot(train_loss[:])<br>plt.title(<span class="hljs-string">&quot;train_loss&quot;</span>)<br>plt.subplot(<span class="hljs-number">122</span>)<br>plt.plot(train_epochs_loss[<span class="hljs-number">1</span>:],<span class="hljs-string">&#x27;-o&#x27;</span>,label=<span class="hljs-string">&quot;train_loss&quot;</span>)<br>plt.plot(valid_epochs_loss[<span class="hljs-number">1</span>:],<span class="hljs-string">&#x27;-o&#x27;</span>,label=<span class="hljs-string">&quot;valid_loss&quot;</span>)<br>plt.title(<span class="hljs-string">&quot;epochs_loss&quot;</span>)<br>plt.legend()<br>plt.show()<br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="九、预测"><a href="#九、预测" class="headerlink" title="九、预测"></a>九、预测</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 此处可定义一个预测集的Dataloader。也可以直接将你的预测数据reshape,添加batch_size=1</span><br>Your_model.<span class="hljs-built_in">eval</span>()<br>predict = Your_model(data)<br></code></pre></td></tr></table></figure>
+
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Deep-Learning-Objects-Detection/">Deep Learning-Objects Detection</a>
+                    
+                  </div>
+                
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/08/21/SQL%E5%9F%BA%E7%A1%80-%E5%BB%96%E9%9B%AA%E5%B3%B0%E6%95%99%E7%A8%8B/">
+                        <span class="hidden-mobile">SQL基础-廖雪峰教程</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;TOC</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/tocbot@4.12.3/dist/tocbot.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4.3.1/anchor.min.js" ></script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js" ></script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
