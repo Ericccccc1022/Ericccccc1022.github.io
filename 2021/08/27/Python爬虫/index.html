@@ -1,0 +1,563 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=&#34;auto&#34;>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/Tan.png">
+  <link rel="icon" href="/img/Tan.png">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="本文记录python爬虫学习笔记，重点是掌握数据解析的三种方法：Re正则、Bs4、Xpath， 以及浏览器抓包工具的使用，更深入的实战需要后面继续学习~">
+  <meta name="author" content="Eric Tan">
+  <meta name="keywords" content="">
+  
+  <title>Python爬虫 - Eric Tan</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10.7.2/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+  
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.11","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"§"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 80vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand"
+       href="/">&nbsp;<strong>Eric Tan</strong>&nbsp;</a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                Home
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                Archives
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                Categories
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                Tags
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                About
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" data-toggle="modal" data-target="#modalSearch">&nbsp;<i
+                class="iconfont icon-search"></i>&nbsp;</a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/curry2.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="Python爬虫">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2021-08-27 11:04" pubdate>
+        August 27, 2021 am
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      3.3k 字
+    </span>
+  
+
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      45
+       分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+            <div class="scroll-down-bar">
+              <i class="iconfont icon-arrowdown"></i>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">Python爬虫</h1>
+            
+            <div class="markdown-body">
+              <p>本文记录python爬虫学习笔记，重点是掌握数据解析的三种方法：Re正则、Bs4、Xpath， 以及浏览器抓包工具的使用，更深入的实战需要后面继续学习~</p>
+<span id="more"></span>
+
+<p>视频教程：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1i54y1h75W?p=46">2021年最新Python爬虫教程+实战项目案例（最新录制）_哔哩哔哩_bilibili</a></p>
+<h3 id="Web请求全过程"><a href="#Web请求全过程" class="headerlink" title="Web请求全过程"></a>Web请求全过程</h3><p>1.服务器渲染：在服务器(如百度服务器)那边直接把检索的数据和html源代码整合在一起，返回给本机浏览器</p>
+<p>​                        在页面源代码中能看到数据</p>
+<p>2.客户端渲染：数据和html源代码的结合在客户端发生</p>
+<p>​                        在页面源代码中看不到数据；</p>
+<p>​                        客户端在第二次发生请求时，才请求数据，所以要想获得数据，须熟练使用浏览器抓包工具</p>
+<h3 id="HTTP协议"><a href="#HTTP协议" class="headerlink" title="HTTP协议"></a>HTTP协议</h3><p>http：超文本传输协议        html：超文本标记语言</p>
+<img src="/images/image-20210821212712231.png" srcset="/img/loading.gif" lazyload alt="image-20210821212712231" style="zoom:67%;">
+
+<img src="/images/image-20210821212512322.png" srcset="/img/loading.gif" lazyload alt="image-20210821212512322" style="zoom: 67%;">
+
+
+
+<h3 id="请求Request入门"><a href="#请求Request入门" class="headerlink" title="请求Request入门"></a>请求<code>Request</code>入门</h3><p>请求有两种方式：</p>
+<p>(1)<code>Get</code>： 参数直接拼接在url中，url中<code>?</code>后面即为参数        <code>requests.get(url)</code></p>
+<p>​                url后面的一长串参数也可放在字典中，通过params参数传递：    <code>requests.get(url, params=dic)</code></p>
+<p>​                反爬技巧之一：伪装<code>User-Agent</code>，通过<code>headers</code>参数传递：         <code>requests.get(url, headers=dic)</code></p>
+<p>(2)<code>Post</code>：发送的数据必须放在字典中，通过data参数进行传递        <code>requests.post(url, data = dic)</code></p>
+<p>1.第一个反爬小程序</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> requests<br><br>url = <span class="hljs-string">&quot;http://www.sogou.com/web?query=周杰伦&quot;</span><br><br>resp = requests.get(url)<br><span class="hljs-built_in">print</span>(resp.text)	<span class="hljs-comment"># 打印页面源代码.text</span><br></code></pre></td></tr></table></figure>
+
+<p>这种情况下会出错，因为网站有反爬机制，会检查发送http请求的用户，即检查<code>User-Agent</code>字段，如果<code>User-Agent</code>不是浏览器，则会阻止http请求；</p>
+<p>所以要伪装成浏览器：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> requests<br><br>url = <span class="hljs-string">&quot;http://www.sogou.com/web?query=周杰伦&quot;</span><br><br>header = &#123;<span class="hljs-string">&quot;User-Agent&quot;</span>: <span class="hljs-string">&quot;User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36 Edg/92.0.902.78&quot;</span>&#125;<br><br>resp = requests.get(url, headers=header)	<span class="hljs-comment"># 修改请求标头中的User-Agent字段，伪装浏览器</span><br><span class="hljs-built_in">print</span>(resp.text)	<span class="hljs-comment"># 打印页面源代码.text</span><br><br>resp.close()	<span class="hljs-comment"># 爬取完毕后，关闭请求！</span><br></code></pre></td></tr></table></figure>
+
+<p>一般来说，同一台计算机下同一个浏览器发出的请求，<code>User-Agent</code>字段是不变的。</p>
+<p><img src="/images/image-20210821214645162.png" srcset="/img/loading.gif" lazyload alt="image-20210821214645162"></p>
+<p>2.熟练使用抓包工具<code>F12</code></p>
+<p>可以选择文件类型，<code>XHR</code>一般是二次请求数据的包，比较有用</p>
+<h3 id="数据解析"><a href="#数据解析" class="headerlink" title="数据解析"></a>数据解析</h3><img src="/.com//Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20210822084011571.png" srcset="/img/loading.gif" lazyload alt="image-20210822084011571" style="zoom:80%;">
+
+<h4 id="一、Re解析-正则表达式"><a href="#一、Re解析-正则表达式" class="headerlink" title="一、Re解析 正则表达式"></a>一、Re解析 正则表达式</h4><p>在线正则表达式测试：<a target="_blank" rel="noopener" href="https://tool.oschina.net/regex">在线正则表达式测试 (oschina.net)</a></p>
+<p>正则的语法：使用元字符进行排列组合来匹配字符串；一个元字符对应字符串的一位。</p>
+<p>1.元字符</p>
+<p><img src="/images/image-20210822084548021.png" srcset="/img/loading.gif" lazyload alt="image-20210822084548021"></p>
+<p><code>^</code>表示字符串必须以正则中的表达式开头，<code>$</code>表示必须以正则中的表达式结尾</p>
+<p><code>[...]</code>表示字符组，即字符串中只要有字符组中的字符，就匹配出来，一般字符组包括所有英文字母、数字等可以写作如下：<code>[a-zA-Z0-9]</code>        在字符组前加<code>^</code>表示非，除了字符组中的都能匹配</p>
+<p>2.量词</p>
+<p><img src="/images/image-20210822085621575.png" srcset="/img/loading.gif" lazyload alt="image-20210822085621575"></p>
+<p>搭配元字符使用，如<code>\d*</code>表示数字出现零次或更多次</p>
+<p>3.贪婪匹配、惰性匹配</p>
+<p><img src="/images/image-20210822085805932.png" srcset="/img/loading.gif" lazyload alt="image-20210822085805932"></p>
+<p>贪婪匹配：“尽可能长”地匹配</p>
+<p>惰性匹配：“尽可能短”地匹配</p>
+<p>4.python的Re模块</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> re<br><br><span class="hljs-comment"># findall：匹配所有内容，返回列表</span><br><br><span class="hljs-comment"># finditer:匹配字符串中所有的内容，返回迭代器	（最常用）</span><br>it = re.finditer(<span class="hljs-string">r&#x27;\d+&#x27;</span>, <span class="hljs-string">&quot;我的电话号是：10086&quot;</span>)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> it:<br>    <span class="hljs-built_in">print</span>(i.group())	<span class="hljs-comment"># match对象，需要通过group拿到文本</span><br>    <br><span class="hljs-comment"># search：找到一个结果就返回，返回match对象</span><br><br><span class="hljs-comment"># match：必须从头开始匹配</span><br><br><span class="hljs-comment"># 预加载正则表达式：</span><br>obj = re.<span class="hljs-built_in">compile</span>(<span class="hljs-string">r&#x27;\d+&#x27;</span>)<br>ret = obj.finditer(<span class="hljs-string">&quot;我的电话号是：10086&quot;</span>)<br></code></pre></td></tr></table></figure>
+
+<p>如何取出正则匹配出的语句内的内容（再过滤一层）：</p>
+<p><img src="/images/image-20210822100116497.png" srcset="/img/loading.gif" lazyload alt="image-20210822100116497"></p>
+<p>给要提取的内容加括号，然后用<code>?P&lt;分组名字&gt;</code>添加别名； 然后就可以在<code>group()</code>中添加别名以获得具体内容</p>
+<p>5.实战项目——手刃豆瓣top 250电影</p>
+<p>（1）首先确定页面的内容是否在页面源代码中：</p>
+<p>​            如果在，则直接抓取页面源代码，然后用正则表达式提取需要的数据；</p>
+<p>​            如果不在，则要用抓包工具查看第二次请求的url</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> requests<br><span class="hljs-keyword">import</span> re<br><span class="hljs-keyword">import</span> csv<br><br><span class="hljs-comment"># 获取数据</span><br>url = <span class="hljs-string">&quot;https://movie.douban.com/top250&quot;</span><br>header = &#123;<span class="hljs-string">&quot;user-agent&quot;</span>: <span class="hljs-string">&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36 Edg/92.0.902.78&quot;</span>&#125;<br>resp = requests.get(url, headers=header)<br>page_content = resp.text<br><br><span class="hljs-comment"># 解析数据</span><br><span class="hljs-comment"># 正则表达式用单引号</span><br>obj = re.<span class="hljs-built_in">compile</span>(<span class="hljs-string">r&#x27;&lt;li&gt;.*?&lt;span class=&quot;title&quot;&gt;(?P&lt;name&gt;.*?)&lt;/span&gt;.*?&lt;br&gt;\s*(?P&lt;year&gt;.*?)&amp;nbsp&#x27;</span>, re.S)	<span class="hljs-comment"># re.S让.能匹配空白</span><br>result = obj.finditer(page_content)<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> result:<br>    <span class="hljs-built_in">print</span>(i.group(<span class="hljs-string">&quot;name&quot;</span>))<br>    <span class="hljs-built_in">print</span>(i.group(<span class="hljs-string">&quot;year&quot;</span>))<br><br><span class="hljs-comment"># 存储数据csv</span><br>f = <span class="hljs-built_in">open</span>(<span class="hljs-string">&quot;data.csv&quot;</span>, mode=<span class="hljs-string">&quot;w&quot;</span>)	<span class="hljs-comment"># 准备一个csv文件</span><br>csv_writer = csv.writer(f)	<span class="hljs-comment"># 准备一个笔</span><br><span class="hljs-keyword">for</span> it <span class="hljs-keyword">in</span> result:<br>    dic = it.groupdict()	<span class="hljs-comment"># 把数据整理成字典格式，re模块的.groupdict()方法</span><br>    csv_writer.writerow(dic.values())	<span class="hljs-comment"># 把字典中的values写入</span><br>f.close()<br><span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;over!&#x27;</span>)<br></code></pre></td></tr></table></figure>
+
+<p>假设要提取下面这些信息：</p>
+<p><img src="/images/image-20210822101335168.png" srcset="/img/loading.gif" lazyload alt="image-20210822101335168"></p>
+<p>写正则表达式时，必须配合查看页面源代码：</p>
+<p>（1）从哪里开始匹配：一般都取需要内容处的前几级标签；</p>
+<p>（2）哪些内容是不用的：用<code>.*?</code>代替</p>
+<img src="/images/image-20210822101811242.png" srcset="/img/loading.gif" lazyload alt="image-20210822101811242" style="zoom: 67%;">
+
+
+
+<p>拓展：上述只爬取了第一页的内容，若要爬取所有页面的内容，则只需要添加查询参数然后遍历循环即可：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">爬取排行榜全部250部电影</span><br><span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-comment"># TODO：关键在于，理解不同页面的参数，通过抓包工具获取参数，并用params传参</span><br><br><span class="hljs-keyword">import</span> requests<br><span class="hljs-keyword">import</span> re<br><span class="hljs-keyword">import</span> csv<br><br>param=[&#123;<span class="hljs-string">&quot;start&quot;</span>: i,<br><span class="hljs-string">&quot;filter&quot;</span>: <span class="hljs-string">&quot;&quot;</span>&#125; <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">0</span>, <span class="hljs-number">250</span>, <span class="hljs-number">25</span>)]     <span class="hljs-comment"># 抓包工具获取的参数</span><br><br>f = <span class="hljs-built_in">open</span>(<span class="hljs-string">&quot;top250_all.csv&quot;</span>, mode=<span class="hljs-string">&quot;w&quot;</span>)	    <span class="hljs-comment"># 准备一个csv文件</span><br>csvwriterss = csv.writer(f)	    <span class="hljs-comment"># 准备一个笔</span><br><br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">10</span>):<br>    url = <span class="hljs-string">&quot;https://movie.douban.com/top250&quot;</span>     <span class="hljs-comment"># url只传基本的，参数通过params另传</span><br>    header = &#123;<br>        <span class="hljs-string">&quot;user-agent&quot;</span>: <span class="hljs-string">&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36 Edg/92.0.902.78&quot;</span>&#125;<br>    param_i = param[i]<br>    resp = requests.get(url, headers=header, params=param_i)<br>    page_content = resp.text<br><br>    <span class="hljs-comment"># 解析数据</span><br>    obj = re.<span class="hljs-built_in">compile</span>(<br>        <span class="hljs-string">r&#x27;&lt;li&gt;.*?&lt;span class=&quot;title&quot;&gt;(?P&lt;name&gt;.*?)&lt;/span&gt;.*?&lt;br&gt;\s*(?P&lt;year&gt;.*?)&amp;nbsp.*?&quot;v:average&quot;&gt;(?P&lt;score&gt;.*?)&lt;/span&gt;&#x27;</span>,<br>        re.S)  <span class="hljs-comment"># re.S让.能匹配空白</span><br>    result = obj.finditer(page_content)<br><br>    <span class="hljs-keyword">for</span> it <span class="hljs-keyword">in</span> result:<br>        dic = it.groupdict()  <span class="hljs-comment"># 把数据整理成字典格式，re模块的.groupdict()方法</span><br>        <span class="hljs-built_in">print</span>(dic.values())<br>        csvwriterss.writerow(dic.values())  <span class="hljs-comment"># 把字典中的values写入</span><br><br>f.close()<br><span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;over!&#x27;</span>)<br></code></pre></td></tr></table></figure>
+
+<p>抓包工具获取查询参数：</p>
+<p><img src="/images/image-20210822111127257.png" srcset="/img/loading.gif" lazyload alt="image-20210822111127257"></p>
+<p>6.实战项目——手刃盗版电影天堂网站信息</p>
+<p>任务：定位到“2021必看热片”，从中提取出子页面的链接地址</p>
+<p>储备知识：在html中，a标签表示超链接 <code>&lt;a href=&#39;url&#39;&gt;周杰伦&lt;/a&gt;</code>    那么点击周杰伦，就会跳转到<code>url</code></p>
+<p>​                  所以子页面链接就是<code>href</code>中的东西</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> requests<br><span class="hljs-keyword">import</span> re<br><span class="hljs-keyword">import</span> csv<br><br><span class="hljs-comment"># 获取数据</span><br>url = <span class="hljs-string">&quot;https://dytt89.com&quot;</span><br>header = &#123;<span class="hljs-string">&quot;user-agent&quot;</span>: <span class="hljs-string">&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36 Edg/92.0.902.78&quot;</span>&#125;<br>resp = requests.get(url, headers=header)<br>resp.encoding = <span class="hljs-string">&quot;gb2312&quot;</span>	<span class="hljs-comment"># 默认用utf-8编码，当网站使用其它类型时，必须显式指定</span><br>						  <span class="hljs-comment"># gb2312 = gbk， 都是国标码</span><br>page_content = resp.text<br><span class="hljs-built_in">print</span>(page_content)<br><br><span class="hljs-comment"># 解析数据</span><br>obj1 = re.<span class="hljs-built_in">compile</span>(<span class="hljs-string">r&#x27;2021必看热片.*?&lt;ul&gt;(?P&lt;uull&gt;.*?)&lt;/ul&gt;&#x27;</span>, re.S)	<span class="hljs-comment"># re.S让.能匹配空白</span><br>obj2 = re.compile(r&#x27;&lt;a href=&#x27;(?P&lt;href&gt;.*?)&#x27;&#x27;, re.S)<br>result = obj.finditer(page_content)<br><span class="hljs-keyword">for</span> it <span class="hljs-keyword">in</span> result:<br>    ul = it.group(<span class="hljs-string">&quot;uull&quot;</span>)<br>    <span class="hljs-built_in">print</span>(ul)<br>    <br>    <span class="hljs-comment"># 提取子页面链接：href中的内容</span><br>    result2 = obj2.finditer(ul)<br>    <span class="hljs-keyword">for</span> it2 <span class="hljs-keyword">in</span> result2:<br>        <span class="hljs-comment"># 拼接子页面url地址： 域名 + 子页面地址，拼之前把链接前的/去掉 （有些网站不需要拼接） </span><br>        child_href = domain + it2.group(<span class="hljs-string">&quot;href&quot;</span>).strip(<span class="hljs-string">&#x27;/&#x27;</span>)		<br>        <span class="hljs-built_in">print</span>(child_href)<br></code></pre></td></tr></table></figure>
+
+
+
+<h4 id="二、Bs4解析"><a href="#二、Bs4解析" class="headerlink" title="二、Bs4解析"></a>二、Bs4解析</h4><p>需要首先了解html语法，用Bs4时和html标签紧密相关。</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs html">&lt;标签 属性=&quot;属性值&quot;&gt;被标记内容&lt;/标签&gt;<br><span class="hljs-tag">&lt;<span class="hljs-name">img</span> <span class="hljs-attr">src</span>=<span class="hljs-string">&quot;xxx.jpg&quot;</span>/&gt;</span><br></code></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> requests<br><span class="hljs-keyword">from</span> bs4 <span class="hljs-keyword">import</span> BeautifulSoup<br><br>url = <span class="hljs-string">&quot;xxx&quot;</span><br>resp = requests.get(url)<br><br><span class="hljs-comment"># 解析数据</span><br><span class="hljs-comment"># 1.把页面源代码交给BeautifulSoup进行处理，生成bs对象</span><br>page = BeautifulSoup(resp.text, <span class="hljs-string">&quot;html.parser&quot;</span>)	<span class="hljs-comment"># 指定html解析器</span><br><span class="hljs-comment"># 2.从bs对象种查找数据</span><br><span class="hljs-comment"># find(标签，属性=值)</span><br><span class="hljs-comment"># find_all</span><br>table = page.find(&quot;table&quot;, class=&quot;hq_table&quot;)	# class是python关键字，会报错！<br>table = page.find(<span class="hljs-string">&quot;table&quot;</span>, class_=<span class="hljs-string">&quot;hq_table&quot;</span>)	<span class="hljs-comment"># bs4允许添加下划线以区别</span><br>table = page.find(<span class="hljs-string">&quot;table&quot;</span>, atrrs=&#123;<span class="hljs-string">&quot;class&quot;</span>: <span class="hljs-string">&quot;hq_table&quot;</span>&#125;)	<span class="hljs-comment"># 也可传字典来避免</span><br><br><span class="hljs-comment"># html中：tb标签是表格，tr是表格一行，td是一列</span><br><span class="hljs-comment"># 思路：先取出所有行，然后对每一行取列，单个元素就取出来了</span><br>trs = table.find_all(<span class="hljs-string">&quot;tr&quot;</span>)[<span class="hljs-number">1</span>:]	<span class="hljs-comment"># 取出所有行</span><br><span class="hljs-keyword">for</span> tr <span class="hljs-keyword">in</span> trs:	<span class="hljs-comment"># 遍历每一行</span><br>    tds = tr.find_all(<span class="hljs-string">&quot;td&quot;</span>)	<span class="hljs-comment"># 取列</span><br>    name = tds[<span class="hljs-number">0</span>].text<br>    low = tds[<span class="hljs-number">1</span>].text<br>    avg = tds[<span class="hljs-number">2</span>].text<br>    ...<br></code></pre></td></tr></table></figure>
+
+<img src="/images/image-20210823084354418.png" srcset="/img/loading.gif" lazyload alt="image-20210823084354418" style="zoom:80%;">
+
+<img src="/images/image-20210823085126691.png" srcset="/img/loading.gif" lazyload alt="image-20210823085126691" style="zoom:80%;">
+
+
+
+<p>Bs4案例——抓取优美图库的图片</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> requests<br><span class="hljs-keyword">from</span> bs4 <span class="hljs-keyword">import</span> BeautifulSoup<br><span class="hljs-keyword">import</span> time<br><br><span class="hljs-comment"># 1.拿到主页面源代码，提取子页面链接地址href</span><br>url = <span class="hljs-string">&quot;xxx&quot;</span><br>resp = requests.get(url)<br>resp.encoding = <span class="hljs-string">&#x27;utf-8&#x27;</span><br><br>main_paeg = BeautifulSoup(resp.text, <span class="hljs-string">&quot;html.parser&quot;</span>)<br>alist = main_page.find(<span class="hljs-string">&quot;div&quot;</span>, class_=<span class="hljs-string">&quot;TypeList&quot;</span>).find_all(<span class="hljs-string">&quot;a&quot;</span>)	<span class="hljs-comment"># 找到a标签（href）</span><br><span class="hljs-keyword">for</span> a <span class="hljs-keyword">in</span> alist:<br>    href = a.get(<span class="hljs-string">&#x27;href&#x27;</span>)	<span class="hljs-comment"># 通过get拿到属性值</span><br>    <span class="hljs-comment"># 2.拿到子页面源代码</span><br>    child_page_resp = requests.get(href)<br>    child_page_resp.encoding = <span class="hljs-string">&#x27;utf-8&#x27;</span><br>    child_page_text = child_page_resp.text<br>    <span class="hljs-comment"># 3. 从子页面拿到图片下载路径</span><br>    child_page = BeautifulSoup(child_page_text, <span class="hljs-string">&quot;html.parser&quot;</span>)<br>    pp = child_page.find(<span class="hljs-string">&quot;p&quot;</span>, align=<span class="hljs-string">&quot;center&quot;</span>)	<span class="hljs-comment"># 用p标签和align属性定位</span><br>    img = pp.find(<span class="hljs-string">&quot;img&quot;</span>)<br>    src = img.get(<span class="hljs-string">&quot;src&quot;</span>)<br>    <span class="hljs-comment"># 4.下载图片</span><br>    <span class="hljs-comment"># 原理：请求图片的下载链接，然后把请求的content写入文件</span><br>    img_resp = requests.get(src)<br>    img_name = src.split(<span class="hljs-string">&quot;/&quot;</span>)[-<span class="hljs-number">1</span>]	<span class="hljs-comment"># url中最后一个/后面的内容作为图片名</span><br>    <span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(img_name, mode=<span class="hljs-string">&#x27;wb&#x27;</span>) <span class="hljs-keyword">as</span> f:<br>        f.write(img_resp.content)	<span class="hljs-comment"># img_resp.content是响应的内容，也即图片的字节</span><br>        <br>    <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;over!&quot;</span>)<br>    time.sleep(<span class="hljs-number">1</span>)	<span class="hljs-comment"># 技巧：防止高速request网站</span><br>    <br>    <br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;all over&quot;</span>)<br></code></pre></td></tr></table></figure>
+
+
+
+<h4 id="三、Xpath解析"><a href="#三、Xpath解析" class="headerlink" title="三、Xpath解析"></a>三、Xpath解析</h4><p>在xml文档中搜索内容的一门语言；html是xml的一个子集。</p>
+<p>Xpath主要是通过节点间的父子关系来查找节点。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> lxml <span class="hljs-keyword">import</span> etree<br><br>tree = etree.parse(<span class="hljs-string">&quot;b.html&quot;</span>)	<span class="hljs-comment"># 解析xml</span><br>result = tree.xpath()	<span class="hljs-comment"># /表示根标签；  //表示后代   /*/ 通配符</span><br>					  <span class="hljs-comment"># text()表示取文本</span><br>					  <span class="hljs-comment"># li[1]表示索引；xpath的索引从1开始！</span><br>        			   <span class="hljs-comment"># li[@href=&#x27;dapao&#x27;]也表示索引；@表示对属性值的筛选</span><br>            		   <span class="hljs-comment"># ./表示相对，从当前节点出发</span><br>                	   <span class="hljs-comment"># @href表示获取标签中的属性值</span><br>                    <br>result = tree.xpath(<span class="hljs-string">&quot;/html/body/ol/li[1]/a/text()&quot;</span>)<br>result = tree.xpath(<span class="hljs-string">&quot;/html/body/ol/li/a[@href=&#x27;dapao&#x27;]/text()&quot;</span>)<br><br>result = tree.xpath(<span class="hljs-string">&quot;/html/body/ol/li&quot;</span>)<br><span class="hljs-keyword">for</span> li <span class="hljs-keyword">in</span> result:<br>     result2 = li.xpath(<span class="hljs-string">&quot;./a/text()&quot;</span>)	<span class="hljs-comment"># 相对查找</span><br>     result3 = li.xpath(<span class="hljs-string">&quot;./a/@href&quot;</span>)	<span class="hljs-comment"># 取a标签的href属性值</span><br></code></pre></td></tr></table></figure>
+
+<img src="/images/image-20210823100032045.png" srcset="/img/loading.gif" lazyload alt="image-20210823100032045" style="zoom: 67%;">
+
+
+
+<p>1.Xpath实战——爬取猪八戒网信息</p>
+<p>善用技巧：使用浏览器的抓包工具，动态定位指定块的内容，并右键复制Xpath路径</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> requests<br><span class="hljs-keyword">from</span> lxml <span class="hljs-keyword">import</span> etree<br><br>url = <span class="hljs-string">&quot;&quot;</span><br>resp = requests.get(url)<br><br><span class="hljs-comment"># 解析数据</span><br>html = etree.HTML(resp.text)<br><br></code></pre></td></tr></table></figure>
+
+
+
+<h3 id="Requests进阶"><a href="#Requests进阶" class="headerlink" title="Requests进阶"></a>Requests进阶</h3><img src="/images/image-20210823105629767.png" srcset="/img/loading.gif" lazyload alt="image-20210823105629767" style="zoom: 67%;">
+
+<h4 id="1-处理cookie"><a href="#1-处理cookie" class="headerlink" title="1.处理cookie"></a>1.处理<code>cookie</code></h4><p>cookie机制：第一次发送（用户登录）后服务器会返回cookie，后续请求须发送cookie。</p>
+<img src="/images/image-20210823111034675.png" srcset="/img/loading.gif" lazyload alt="image-20210823111034675" style="zoom:67%;">
+
+<p>模拟用户登录的方法：</p>
+<p><img src="/images/image-20210823111126948.png" srcset="/img/loading.gif" lazyload alt="image-20210823111126948"></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> requests<br><br>session = requests.session()	<span class="hljs-comment"># 发起一个session (会话)</span><br>data=&#123;<br>    <span class="hljs-string">&quot;xxx&quot;</span>:xxx<br>    <span class="hljs-string">&quot;Xxx&quot;</span>:xxx<br>&#125;				<span class="hljs-comment"># 抓包工具获得参数</span><br><br><span class="hljs-comment"># 1.登录</span><br>url = <span class="hljs-string">&quot;&quot;</span><br>session.post(url, data=data)<br><br><span class="hljs-comment"># 2.拿数据</span><br>resp = session.get(url2)	<span class="hljs-comment"># 继续使用刚才的session，这个session中是有cookie的	</span><br></code></pre></td></tr></table></figure>
+
+
+
+<h4 id="2-处理防盗链——抓取梨视频"><a href="#2-处理防盗链——抓取梨视频" class="headerlink" title="2.处理防盗链——抓取梨视频"></a>2.处理防盗链——抓取梨视频</h4><p>初期流程：</p>
+<p>查看页面源代码，发现源码中没有视频地址 —&gt; 所以网站是通过“二次请求”获取数据 —&gt; 抓包工具，到<code>XHR</code>中找二次请求数据包：</p>
+<p><img src="/images/image-20210823113849372.png" srcset="/img/loading.gif" lazyload alt="image-20210823113849372"></p>
+<p>—&gt; 该数据包才是后续处理的对象 —&gt; 请求了另一个URL叫<code>videoStatus</code>，下面还有<code>cookie</code>、<code>Referer</code>等信息。</p>
+<p>梨视频对视频url进行了反爬处理，将其中的<code>contId</code>替换为了<code>SystemTime</code></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 1.拿到contId</span><br><span class="hljs-comment"># 2.拿到videoStatus中的视频srcURL</span><br><span class="hljs-comment"># 3.srcURL里面的内容进行修整</span><br><span class="hljs-comment"># 4.下载视频</span><br><br>url = <span class="hljs-string">&quot;https://www.pearvideo.com/video_1736704&quot;</span><br>contId = url.split(<span class="hljs-string">&quot;_&quot;</span>)[<span class="hljs-number">1</span>]<br><br>videoStatusURL = <span class="hljs-string">f&quot;https://www.pearvideo.com/videoStatus.jsp?contId=<span class="hljs-subst">&#123;contId&#125;</span>&amp;mrd=0.5904034213944991&quot;</span><br><br><span class="hljs-comment"># 配置一些参数(常规反爬)</span><br>headers = &#123;<br>    <span class="hljs-string">&quot;User-Agent&quot;</span>: <span class="hljs-string">&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36 Edg/92.0.902.78&quot;</span><br>    <span class="hljs-comment"># 防盗链：溯源</span><br>    <span class="hljs-string">&quot;Referer&quot;</span>: <span class="hljs-string">&quot;https://www.pearvideo.com/video_1736704&quot;</span><br>&#125;<br><br><span class="hljs-comment"># 2.拿到videoStatus中的视频srcURL</span><br>resp = requests.get(videoStatusURL, headers=headers)<br>dic = resp.json()<br>srcURL = dic[<span class="hljs-string">&#x27;videoInfo&#x27;</span>][<span class="hljs-string">&#x27;videos&#x27;</span>][<span class="hljs-string">&#x27;srcUrl&#x27;</span>]<br>systemTime = dic[<span class="hljs-string">&#x27;systemTime&#x27;</span>]<br><br><span class="hljs-comment"># 3.修整：使用python字符串的replace方法</span><br>srcURL = srcURL.replace(systemTime, <span class="hljs-string">f&quot;cont-<span class="hljs-subst">&#123;contId&#125;</span>&quot;</span>)<br><br><span class="hljs-comment"># 4.下载视频</span><br><span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(<span class="hljs-string">&quot;a.mp4&quot;</span>, mode=<span class="hljs-string">&quot;wb&quot;</span>) <span class="hljs-keyword">as</span> f:<br>    f.write(requests.get(srcURL).content)<br>    <br>f.close()<br><span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;over&quot;</span>)<br></code></pre></td></tr></table></figure>
+
+<p>在请求srcURL时会被反爬，因为网站使用了防盗链<code>Referer</code>：</p>
+<p>防盗链就是一个链式访问中间不能缺少环节，如果缺少就会报错；所以要给<code>headers</code>添加上<code>Referer</code>参数，以帮助程序”溯源“。</p>
+<p><img src="/images/image-20210823113320104.png" srcset="/img/loading.gif" lazyload alt="image-20210823113320104"></p>
+<p>在对srcURL进行修整时，要结合网页预览：</p>
+<p><img src="/images/image-20210823114949436.png" srcset="/img/loading.gif" lazyload alt="image-20210823114949436"></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Others/">Others</a>
+                    
+                  </div>
+                
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2021/08/27/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95-%E5%9F%BA%E7%A1%80/">
+                        <span class="hidden-mobile">数据结构与算法-基础</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;TOC</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/tocbot@4.12.3/dist/tocbot.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4.3.1/anchor.min.js" ></script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js" ></script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
