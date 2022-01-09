@@ -251,15 +251,15 @@
 <p>（3）解决过程</p>
 <p>首先确定是<strong>python解释器问题</strong>，ROS Melodic的默认环境是python2, 最新发布的ROS noetic才完全支持python3。但是我们编写程序时用的是python3，所以需要使用python3解释器。</p>
 <p>如果使用网上推荐的方法：创建python2到python3的软链接，虽然会将解释器自动链接为python3，但由于某些神秘力量，创建软链接后居然连roscore都打不开了！终端也打不开！（现在也未知原因）</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo ln -s /usr/<span class="built_in">bin</span>/python3 /usr/<span class="built_in">bin</span>/python</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">sudo ln -s /usr/<span class="hljs-built_in">bin</span>/python3 /usr/<span class="hljs-built_in">bin</span>/python<br></code></pre></td></tr></table></figure>
 
 <p>所以我们删除软链接：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo rm /usr/<span class="built_in">bin</span>/python</span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">sudo rm /usr/<span class="hljs-built_in">bin</span>/python<br></code></pre></td></tr></table></figure>
 
 <p>然后采用另一种方法：</p>
 <p>这种方法直接使用 python3，但存在问题: 不兼容之前的 ROS 相关 python 实现。</p>
 <p>在所有python文件头部，添加：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python3</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">#!/usr/bin/env python3</span><br></code></pre></td></tr></table></figure>
 
 <p>之后即可正常运行！</p>
 <p>总结：如果遇到python文件无法运行的情况，在所有在所有python文件头部，添加<code>#!/usr/bin/env python3</code></p>

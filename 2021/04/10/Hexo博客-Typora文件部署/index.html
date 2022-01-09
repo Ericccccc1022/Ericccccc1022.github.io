@@ -236,12 +236,12 @@
 <span id="more"></span>
 
 <h4 id="1-创建文章"><a href="#1-创建文章" class="headerlink" title="1.创建文章"></a>1.创建文章</h4><p>在站点文件夹下右键打开git bash</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo new &quot;title&quot;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs git">hexo new &quot;title&quot;<br></code></pre></td></tr></table></figure>
 
 <h4 id="2-编辑文章（使用Typora）"><a href="#2-编辑文章（使用Typora）" class="headerlink" title="2.编辑文章（使用Typora）"></a>2.编辑文章（使用Typora）</h4><p>在Typora中打开站点文件夹，即可编辑刚创建好的新文件，编辑好后保存</p>
-<h4 id="3-部署与发布"><a href="#3-部署与发布" class="headerlink" title="3.部署与发布"></a>3.部署与发布</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#方法一</span><br><span class="line">hexo g  #生成部署文件</span><br><span class="line">hexo s  #运行本站点</span><br><span class="line">        #然后打开localhost:4000进行预览</span><br><span class="line">hexo d  #确认无误后发布到github远端，登录Ericccccc1022.github.io可查看</span><br></pre></td></tr></table></figure>
+<h4 id="3-部署与发布"><a href="#3-部署与发布" class="headerlink" title="3.部署与发布"></a>3.部署与发布</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs git">#方法一<br>hexo g  #生成部署文件<br>hexo s  #运行本站点<br>        #然后打开localhost:4000进行预览<br>hexo d  #确认无误后发布到github远端，登录Ericccccc1022.github.io可查看<br></code></pre></td></tr></table></figure>
 
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#方法二</span><br><span class="line">hexo g -d #部署+发布一并完成</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs git">#方法二<br>hexo g -d #部署+发布一并完成<br></code></pre></td></tr></table></figure>
 
 
 
@@ -249,7 +249,7 @@
 <p>（1）删除<code>.deploy_git</code>文件夹</p>
 <p>（2）输入<code>git config --global core.autocrlf false</code></p>
 <p>（3）依次执行：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">hexo clean</span><br><span class="line">hexo g</span><br><span class="line">hexo d</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs git">hexo clean<br>hexo g<br>hexo d<br></code></pre></td></tr></table></figure>
 
 <p>直接暴力解决！</p>
 <p>暂时简单介绍这么多，今天用了2个小时左右搭建起Hexo博客+理清楚如何攥写与部署文章。当然，能先写文章是最重要的，博客美化都是后话。</p>

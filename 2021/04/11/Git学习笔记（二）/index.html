@@ -243,20 +243,20 @@
 <p>（b）用自己的电脑搭建一个Git服务器</p>
 <p>借助Github搭建远程Git仓库步骤：</p>
 <p>（1）创建SSH Key</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh-keygen -t rsa -C &quot;youremail@example.com&quot;   #一路回车默认</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">ssh-keygen -t rsa -C &quot;youremail@example.com&quot;   #一路回车默认<br></code></pre></td></tr></table></figure>
 
 <p>用户主目录里找到<code>.ssh</code>目录，里面有<code>id_rsa</code>和<code>id_rsa.pub</code>两个文件，这两个就是SSH Key的秘钥对，<code>id_rsa</code>是私钥，不能泄露出去，<code>id_rsa.pub</code>是公钥，可以放心地告诉任何人。</p>
 <p>首次使用，需要在Github账户管理处添加ssh公钥，添加完成后如下：</p>
 <img src="/images/image-20210410150920367.png" srcset="/img/loading.gif" lazyload alt="image-20210410150920367" style="zoom: 67%;">
 
 <p>（2）本地仓库关联Github的远程库</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">git remote add origin git@github.com:Ericccccc1022&#x2F;learngit.git  #在本地Git仓库目录下运行</span><br><span class="line">                                                                 #远程库默认名字是origin</span><br><span class="line">                                                               #learngit是刚在github中创建的仓库名</span><br><span class="line">                                                               </span><br><span class="line">git push -u origin master   #第一次推送master分支的所有内容</span><br><span class="line">git push origin master     #此后每次本地提交后，就可以直接推送至远程库，不需要-u参数</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git remote add origin git@github.com:Ericccccc1022&#x2F;learngit.git  #在本地Git仓库目录下运行<br>                                                                 #远程库默认名字是origin<br>                                                               #learngit是刚在github中创建的仓库名<br>                                                               <br>git push -u origin master   #第一次推送master分支的所有内容<br>git push origin master     #此后每次本地提交后，就可以直接推送至远程库，不需要-u参数<br></code></pre></td></tr></table></figure>
 
 <p>Git在没有网络时，也能完成<strong>本地提交</strong>工作，有网络后只需简单推送至远程库即可，非常方便！</p>
 <p>2.<strong>从远程库克隆</strong></p>
 <p>Github中的仓库都可以看作“远程库”，要克隆到本地，必须先知道仓库的地址，然后使用<code>git clone</code> 命令克隆</p>
 <p>Git支持多种协议，包括<strong>https</strong>和<strong>ssh</strong>，但ssh协议的速度最快。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git clone git@github.com:Ericccccc1022&#x2F;test.git  #使用ssh协议的克隆</span><br><span class="line"></span><br><span class="line">git clone https:&#x2F;&#x2F;github.com&#x2F;Ericccccc1022&#x2F;test.git  #使用https协议的克隆</span><br><span class="line"></span><br><span class="line">#test是我早前在github账户中创建的一个仓库</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git clone git@github.com:Ericccccc1022&#x2F;test.git  #使用ssh协议的克隆<br><br>git clone https:&#x2F;&#x2F;github.com&#x2F;Ericccccc1022&#x2F;test.git  #使用https协议的克隆<br><br>#test是我早前在github账户中创建的一个仓库<br></code></pre></td></tr></table></figure>
 
 
 
@@ -272,20 +272,20 @@
 <p><img src="/images/7" srcset="/img/loading.gif" lazyload alt="git-br-ff-merge"></p>
 <p>综上，Git创建分支、合并分支，仅仅只是指针的变动，因此速度非常快！</p>
 <p>（1）创建分支</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">git branch dev   #创建dev分支</span><br><span class="line">git checkout dev  #切换到dev分支上</span><br><span class="line"></span><br><span class="line">git checkout -b dev  #-b参数将上述两步合并，效果相同</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git branch dev   #创建dev分支<br>git checkout dev  #切换到dev分支上<br><br>git checkout -b dev  #-b参数将上述两步合并，效果相同<br></code></pre></td></tr></table></figure>
 
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git branch  #查看当前分支</span><br><span class="line"></span><br><span class="line">git checkout master  #回到master分支</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git branch  #查看当前分支<br><br>git checkout master  #回到master分支<br></code></pre></td></tr></table></figure>
 
 <p>（2）合并分支</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git merge dev  # 合并指定分支到当前分支</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git merge dev  # 合并指定分支到当前分支<br></code></pre></td></tr></table></figure>
 
 <p>（3）删除分支</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git branch -d dev  #删除dev分支</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git branch -d dev  #删除dev分支<br></code></pre></td></tr></table></figure>
 
 <p>由于操作非常方便，所以Git鼓励你使用分支完成某个任务，合并后再删掉分支，这和直接在<code>master</code>分支上工作效果是一样的，但过程更安全！</p>
 <p>（4）切换分支的新命令</p>
 <p>由于撤销修改是<code>git checkout -- &lt;filename&gt;</code> , 因此checkout容易歧义。对此，可用switch命令完成分支切换：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git switch -c dev  #创建并切换到新的分支</span><br><span class="line"></span><br><span class="line">git switch master  #直接切换分支</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git switch -c dev  #创建并切换到新的分支<br><br>git switch master  #直接切换分支<br></code></pre></td></tr></table></figure>
 
 
 
@@ -295,7 +295,7 @@
 <p>3.合并分支的方式</p>
 <p>默认采用<code>Fast forward</code>模式，但这种模式下，删除分支后，会丢掉分支信息。</p>
 <p>如果要强制禁用<code>Fast forward</code>模式，Git就会在merge时生成一个新的commit，这样，从分支历史上就可以看出分支信息。</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git merge --no-ff -m &quot;merge with no-ff&quot; dev  # --no-ff参数表明禁用Fast forward</span><br><span class="line">                                    #本次合并要创建一个新的commit，所以加上-m参数，把commit描述写进去</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git merge --no-ff -m &quot;merge with no-ff&quot; dev  # --no-ff参数表明禁用Fast forward<br>                                    #本次合并要创建一个新的commit，所以加上-m参数，把commit描述写进去<br></code></pre></td></tr></table></figure>
 
 <p>在<strong>实际开发</strong>中，我们应该按照几个基本原则进行分支管理：</p>
 <p>（1）首先，<code>master</code>分支应该是非常稳定的，也就是仅用来发布新版本，平时不能在上面干活；</p>
@@ -307,13 +307,13 @@
 <p>4.<strong>Bug分支</strong></p>
 <p>修复bug时，我们会通过创建新的bug分支进行修复，然后合并，最后删除；</p>
 <p>（1）当手头工作没有完成时，<strong>不能直接提交</strong>，但是又要进入新的分支修复bug，此时需要将<strong>工作现场</strong>保存一下：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git stash</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git stash<br></code></pre></td></tr></table></figure>
 
 <p>（2）然后去新的分支修复bug；假设在master分支上修复了bug，想在dev分支上也修复，Git提供了便捷的命令：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#切换到dev分支上</span><br><span class="line"></span><br><span class="line">git cherry-pick 4c805e2   # 4c805e2是在master分支上提交时的id</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">#切换到dev分支上<br><br>git cherry-pick 4c805e2   # 4c805e2是在master分支上提交时的id<br></code></pre></td></tr></table></figure>
 
 <p>（3）修复完成，现在需要继续工作，取出缓存的工作空间：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">git stash list  #查看stash内容</span><br><span class="line"></span><br><span class="line">git stash apply stash@&#123;0&#125;  #取出stash@&#123;0&#125;状态并在stash中删除它</span><br><span class="line">git stash drop stash@&#123;0&#125;</span><br><span class="line"></span><br><span class="line">git stash pop  #取出同时删除</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git stash list  #查看stash内容<br><br>git stash apply stash@&#123;0&#125;  #取出stash@&#123;0&#125;状态并在stash中删除它<br>git stash drop stash@&#123;0&#125;<br><br>git stash pop  #取出同时删除<br></code></pre></td></tr></table></figure>
 
 
 
@@ -322,10 +322,10 @@
 </ol>
 <p>在软件开发中，通常需要开发新功能；每开发一个新功能，最好创建一个feature分支</p>
 <p>例如现在要开发代号为scan_radar的新功能：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">git switch -c feature-scan</span><br><span class="line"></span><br><span class="line">#开发完成后</span><br><span class="line">git add scan.py</span><br><span class="line">git commit -m &quot;add feature scan&quot;</span><br><span class="line"></span><br><span class="line">#切回dev，合并分支</span><br><span class="line">git switch dev</span><br><span class="line">git merge feature-scan</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git switch -c feature-scan<br><br>#开发完成后<br>git add scan.py<br>git commit -m &quot;add feature scan&quot;<br><br>#切回dev，合并分支<br>git switch dev<br>git merge feature-scan<br></code></pre></td></tr></table></figure>
 
 <p>若要删除还未合并的分支：用大写参数-D，强制删除</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git branch -D feature-scan</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git branch -D feature-scan<br></code></pre></td></tr></table></figure>
 
 
 
@@ -341,39 +341,39 @@
 <p>这就是多人协作的工作模式，一旦熟悉了，就非常简单。</p>
 <p>本地分支与远程库：</p>
 <p>（1）查看远程库信息：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git remote -v</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git remote -v<br></code></pre></td></tr></table></figure>
 
 <p>（2）本地新建的分支如果不推送到远程，对其他人就是不可见的</p>
 <p>（3）从本地推送分支：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">git push origin &lt;branch-name&gt;</span><br><span class="line"></span><br><span class="line">#若推送失败，则先抓取远程的新提交：</span><br><span class="line">git pull</span><br><span class="line">#若提示no tracking information,则建立关联：</span><br><span class="line">git branch --set-upstream branch-name origin&#x2F;branch-name</span><br><span class="line">#若推送有冲突，则要先解决冲突</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git push origin &lt;branch-name&gt;<br><br>#若推送失败，则先抓取远程的新提交：<br>git pull<br>#若提示no tracking information,则建立关联：<br>git branch --set-upstream branch-name origin&#x2F;branch-name<br>#若推送有冲突，则要先解决冲突<br></code></pre></td></tr></table></figure>
 
 <p>（4）若远程有多个分支，在本地创建和远程分支对应的分支：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git checkout -b branch-name origin&#x2F;branch-name</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git checkout -b branch-name origin&#x2F;branch-name<br></code></pre></td></tr></table></figure>
 
 
 
 <p>7.Rebase操作</p>
 <p>rebase操作可以把本地未push的分叉提交历史整理成直线</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git rebase</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git rebase<br></code></pre></td></tr></table></figure>
 
 
 
 <h4 id="七、标签管理（tag）"><a href="#七、标签管理（tag）" class="headerlink" title="七、标签管理（tag）"></a>七、标签管理（tag）</h4><p>发布一个版本时，我们通常先在版本库中打一个标签（tag），这样，就唯一确定了打标签时刻的版本。将来无论什么时候，取某个标签的版本，就是把那个打标签的时刻的历史版本取出来。所以，标签也是版本库的一个快照。</p>
 <p>实际上tag是指向某个commit的指针，但该指针不能移动！</p>
 <p>1.创建标签</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">#切换到目标分支上</span><br><span class="line"></span><br><span class="line">git tag v1.0   #默认打在最新提交的commit上</span><br><span class="line"></span><br><span class="line">git tag v0.9 f52c63  #如果要给历史版本打标签，则后面添加commit id</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">#切换到目标分支上<br><br>git tag v1.0   #默认打在最新提交的commit上<br><br>git tag v0.9 f52c63  #如果要给历史版本打标签，则后面添加commit id<br></code></pre></td></tr></table></figure>
 
 <p>创建带有说明的tag：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git tag -a v0.1 -m &quot;version 0.1 released&quot; 1094adb  # -a标签名，-m说明文字</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git tag -a v0.1 -m &quot;version 0.1 released&quot; 1094adb  # -a标签名，-m说明文字<br></code></pre></td></tr></table></figure>
 
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git tag  #查看所有标签</span><br><span class="line">git show v1.0  #查看标签信息</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git tag  #查看所有标签<br>git show v1.0  #查看标签信息<br></code></pre></td></tr></table></figure>
 
 <p>2.操作标签</p>
 <p>（1）删除</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git tag -d v1.0</span><br><span class="line"></span><br><span class="line">#若已经推送到远程：</span><br><span class="line">git tag -d v1.0</span><br><span class="line">git push origin :refs&#x2F;tags&#x2F;v1.0</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git tag -d v1.0<br><br>#若已经推送到远程：<br>git tag -d v1.0<br>git push origin :refs&#x2F;tags&#x2F;v1.0<br></code></pre></td></tr></table></figure>
 
 <p>（2）推送tag到远程</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git push origin v1.0</span><br><span class="line"></span><br><span class="line">git push origin --tags  #一次性推送全部尚未推送标签</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git push origin v1.0<br><br>git push origin --tags  #一次性推送全部尚未推送标签<br></code></pre></td></tr></table></figure>
 
 
 
@@ -385,10 +385,10 @@
 <p>拓：如果没有梯子，可以使用github“国内版”——Gitee ( gitee.com)</p>
 <h4 id="九、自定义Git配置（简略了解）"><a href="#九、自定义Git配置（简略了解）" class="headerlink" title="九、自定义Git配置（简略了解）"></a>九、自定义Git配置（简略了解）</h4><p>1.忽略某些文件时，需要编写<code>.gitignore</code>文件，放到版本库里</p>
 <p>2.配置别名（为了输入命令时偷懒）</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git config --global alias.st status  #status设置别名st</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git config --global alias.st status  #status设置别名st<br></code></pre></td></tr></table></figure>
 
 <p>以下介绍一些常见的别名配置：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">git config --global alias.co checkout</span><br><span class="line">git config --global alias.ci commit</span><br><span class="line">git config --global alias.br branch</span><br><span class="line">git config --global alias.last &#39;log -1&#39;  # 用git last 就可以直接查看最新一次commit信息</span><br><span class="line"></span><br><span class="line">git config --global alias.lg &quot;log --color --graph --pretty&#x3D;format:&#39;%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)&lt;%an&gt;%Creset&#39; --abbrev-commit&quot; </span><br><span class="line"># 用git lg可以查看git log信息，且有颜色配置！！</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs ubuntu">git config --global alias.co checkout<br>git config --global alias.ci commit<br>git config --global alias.br branch<br>git config --global alias.last &#39;log -1&#39;  # 用git last 就可以直接查看最新一次commit信息<br><br>git config --global alias.lg &quot;log --color --graph --pretty&#x3D;format:&#39;%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)&lt;%an&gt;%Creset&#39; --abbrev-commit&quot; <br># 用git lg可以查看git log信息，且有颜色配置！！<br></code></pre></td></tr></table></figure>
 
 <p>3.搭建Git服务器</p>
 <p>如果不想被github的开源性影响，则可以搭建自己的Git服务器；</p>
