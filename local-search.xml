@@ -4,6 +4,25 @@
   
   
   <entry>
+    <title>GAN入门篇</title>
+    <link href="/2022/01/13/GAN%E5%85%A5%E9%97%A8%E7%AF%87/"/>
+    <url>/2022/01/13/GAN%E5%85%A5%E9%97%A8%E7%AF%87/</url>
+    
+    <content type="html"><![CDATA[<p>本节介绍GAN最基本的知识，理解对抗生成的数学过程</p><p>从GAN的JS Divergence → WGAN的Wasserstein Distance</p><span id="more"></span><h2 id="GAN入门篇"><a href="#GAN入门篇" class="headerlink" title="GAN入门篇"></a>GAN入门篇</h2><h3 id="1-数学推导"><a href="#1-数学推导" class="headerlink" title="1. 数学推导"></a>1. 数学推导</h3><img src="/images/image-20220113113624666.png" alt="image-20220113113624666" style="zoom:67%;"><img src="/images/image-20220113113635910.png" alt="image-20220113113635910" style="zoom:67%;"><h3 id="2-DCGAN"><a href="#2-DCGAN" class="headerlink" title="2.DCGAN"></a>2.DCGAN</h3><h4 id="转置卷积"><a href="#转置卷积" class="headerlink" title="转置卷积"></a>转置卷积</h4><p>普通卷积：输入维度下采样，最多也只能保持维度；</p><p>转置卷积：输入维度上采样，最早用在图像语义分割网络FCN中。Transposed conv / Deconv</p><p>​            有时被称为反卷积，其实不够恰当，因为转置卷积只能恢复图像尺寸，不能恢复原始值！严格来说不是逆运算。</p><img src="/images/image-20220113100615815.png" alt="image-20220113100615815" style="zoom:67%;"><p>输入的每个像素和kernel逐元素相乘，形成一个矩阵，即input的每一个像素→kernel大小的矩阵。</p><p>stride：上述小矩阵以什么步长在output上堆叠，不是卷积核的滑动步长！</p><p>padding：使输出维度减小！padding=1表示把输出的最外层一圈删除掉</p><p>注：在pytorch等框架中，使用和卷积<strong>相同的超参数</strong>，即可将尺寸还原</p><h3 id="3-问题"><a href="#3-问题" class="headerlink" title="3.问题"></a>3.问题</h3><p>traning stability</p><p>一开始当Generator分布与真实分布没有overlap时是很难训练的，存在严重的<strong>梯度消失</strong>问题，推导和JS Divergence有关，暂略。<br>说明JS Divergence作为优化目标是不宜的，需要新的优化思路：</p><p>Earth‘s Mover’s Distance，即将P分布转换为Q分布？</p><img src="/images/image-20220113103411865.png" alt="image-20220113103411865" style="zoom:50%;"><h3 id="4-WGAN"><a href="#4-WGAN" class="headerlink" title="4. WGAN"></a>4. WGAN</h3><p>WGAN采用的优化目标——Wasserstein Distance</p><img src="/images/image-20220113103502372.png" alt="image-20220113103502372" style="zoom:67%;"><p>添加惩罚项</p><img src="/images/image-20220113110921657.png" alt="image-20220113110921657" style="zoom:67%;">]]></content>
+    
+    
+    <categories>
+      
+      <category>Deep Learning-GAN</category>
+      
+    </categories>
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>Python爬虫</title>
     <link href="/2021/08/27/Python%E7%88%AC%E8%99%AB/"/>
     <url>/2021/08/27/Python%E7%88%AC%E8%99%AB/</url>
