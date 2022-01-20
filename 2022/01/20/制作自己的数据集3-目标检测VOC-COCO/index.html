@@ -1,0 +1,489 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=&#34;auto&#34;>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/Tan.png">
+  <link rel="icon" href="/img/Tan.png">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="xVOC –xml标注；COCO –json标注
+完整代码参考：https://github.com/WZMIAOMIAO/deep-learning-for-image-processing">
+  <meta name="author" content="Eric Tan">
+  <meta name="keywords" content="">
+  
+  <title>制作自己的数据集3--目标检测VOC/COCO - Eric Tan</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10.7.2/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+  
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.11","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"§"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 80vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand"
+       href="/">&nbsp;<strong>Eric Tan</strong>&nbsp;</a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                Home
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                Archives
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                Categories
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                Tags
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                About
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" data-toggle="modal" data-target="#modalSearch">&nbsp;<i
+                class="iconfont icon-search"></i>&nbsp;</a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/curry2.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="制作自己的数据集3--目标检测VOC/COCO">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-01-20 10:10" pubdate>
+        January 20, 2022 am
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      1.7k 字
+    </span>
+  
+
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      27
+       分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+            <div class="scroll-down-bar">
+              <i class="iconfont icon-arrowdown"></i>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">制作自己的数据集3--目标检测VOC/COCO</h1>
+            
+            <div class="markdown-body">
+              <p>xVOC –xml标注；COCO –json标注</p>
+<p>完整代码参考：<br><a target="_blank" rel="noopener" href="https://github.com/WZMIAOMIAO/deep-learning-for-image-processing">https://github.com/WZMIAOMIAO/deep-learning-for-image-processing</a></p>
+<span id="more"></span>
+
+<h3 id="二、目标检测–PASCAL-VOC-自己的图片"><a href="#二、目标检测–PASCAL-VOC-自己的图片" class="headerlink" title="二、目标检测–PASCAL VOC/自己的图片"></a>二、目标检测–PASCAL VOC/自己的图片</h3><h4 id="1-VOC数据集结构"><a href="#1-VOC数据集结构" class="headerlink" title="1.VOC数据集结构"></a>1.VOC数据集结构</h4><p>官网下载Development Kit，VOC2012的test数据集不公开</p>
+<img src="/images/image-20220113194001120.png" srcset="/img/loading.gif" lazyload alt="image-20220113194001120" style="zoom:80%;">
+
+<p><img src="/images/image-20220113194042652.png" srcset="/img/loading.gif" lazyload alt="image-20220113194042652"></p>
+<blockquote>
+<p>Annotations包含所有xml文件</p>
+<p>ImageSets中重点关注<code>train.txt</code>、<code>val.txt</code>、<code>trainval.txt</code>文件，包含对应图片的名称</p>
+</blockquote>
+<p>通常的训练模式：</p>
+<blockquote>
+<p>使用trainval训练，用VOC2007的test测试</p>
+<p>使用trainval训练，官网下载专门的测试软件</p>
+</blockquote>
+<p>通常制作数据集的流程：<br>        从<code>ImageSets\Main</code>文件下的<code>train.txt</code>出发，由其中的文件名称找（1）<code>Annotations</code>中的标注文件；（2）<code>JPEGImages</code>中的图片</p>
+<p>自己打标注：</p>
+<ol>
+<li><code>labelImg</code>：xml格式</li>
+<li><code>labelme</code>：json格式</li>
+</ol>
+<h4 id="2-构建Dataset"><a href="#2-构建Dataset" class="headerlink" title="2.构建Dataset"></a>2.构建Dataset</h4><p>此处提供的构建Dataset方法，适用于VOC / 自己的数据（只要标注由xml文件提供）</p>
+<blockquote>
+<p>注：自己的数据必须用VOC一样的形式组织文件</p>
+</blockquote>
+<h5 id="生成train-txt脚本"><a href="#生成train-txt脚本" class="headerlink" title="生成train.txt脚本"></a>生成train.txt脚本</h5><p>对于自己的数据集，首先要生成<code>train.txt</code>这样的脚本</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">PASCAL VOC: 标注由xml文件提供</span><br><span class="hljs-string">自己的数据集：标注由xml文件提供</span><br><span class="hljs-string">&quot;&quot;&quot;</span><br><br><span class="hljs-comment"># 自己的数据集生成train.txt文件</span><br><span class="hljs-keyword">import</span> os<br><span class="hljs-keyword">import</span> random<br><br><span class="hljs-comment"># 查看标注信息是否存在</span><br>file_path = <span class="hljs-string">&#x27;./VOCdevkit/VOC2012/Annotations&#x27;</span><br><span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> os.path.exists(file_path):<br>	<span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;文件夹不存在&quot;</span>)<br><br><span class="hljs-comment"># 验证集比例</span><br>val_rate = <span class="hljs-number">0.3</span><br><br>file_name = <span class="hljs-built_in">sorted</span>([file.split(<span class="hljs-string">&quot;.&quot;</span>)[<span class="hljs-number">0</span>] <span class="hljs-keyword">for</span> file <span class="hljs-keyword">in</span> os.listdir(file_path)])	<span class="hljs-comment"># 获取所有xml文件名</span><br><span class="hljs-comment"># 统计数量，随机采样</span><br>file_num = <span class="hljs-built_in">len</span>(file_name)<br>val_index = random.sample(<span class="hljs-built_in">range</span>(<span class="hljs-number">0</span>, file_num), k=<span class="hljs-built_in">int</span>(file_num*val_rate))<br><span class="hljs-comment"># 根据随机采样的索引构建val、train</span><br>train_files, val_files = [], []<br><span class="hljs-keyword">for</span> idx, file_name <span class="hljs-keyword">in</span> <span class="hljs-built_in">enumerate</span>(file_name):<br>	<span class="hljs-keyword">if</span> idx <span class="hljs-keyword">in</span> val_index:<br>		val_files.append(file_name)<br>	<span class="hljs-keyword">else</span>:<br>		train_files.appned(file_name)<br><br><span class="hljs-comment"># 写.txt文件</span><br><span class="hljs-keyword">try</span>:<br>	train_f = <span class="hljs-built_in">open</span>(<span class="hljs-string">&quot;train.txt&quot;</span>, <span class="hljs-string">&#x27;x&#x27;</span>)<br>	val_f = <span class="hljs-built_in">open</span>(<span class="hljs-string">&quot;val.txt&quot;</span>, <span class="hljs-string">&#x27;x&#x27;</span>)<br>	train_f.write(<span class="hljs-string">&quot;\n&quot;</span>.join(train_files))	<span class="hljs-comment"># train_files列表每两个元素之间用\n连接</span><br>	val_f.write(<span class="hljs-string">&quot;\n&quot;</span>.join(val_files))<br><br><span class="hljs-keyword">except</span> FileExistsError <span class="hljs-keyword">as</span> e:<br>	<span class="hljs-built_in">print</span>(e)	<br></code></pre></td></tr></table></figure>
+
+
+
+<h5 id="构建Dataset"><a href="#构建Dataset" class="headerlink" title="构建Dataset"></a>构建Dataset</h5><p>然后构建自己的Dataset</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 构建自己的Dataset</span><br><span class="hljs-keyword">from</span> torch.utils.data <span class="hljs-keyword">import</span> Dataset<br><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">from</span> PIL <span class="hljs-keyword">import</span> Image<br><span class="hljs-keyword">from</span> lxml <span class="hljs-keyword">import</span> etree<br><span class="hljs-keyword">import</span> json<br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">myDataset</span>(<span class="hljs-params">Dataset</span>):</span><br>	<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, voc_root, year=<span class="hljs-string">&quot;2012&quot;</span>, transforms=<span class="hljs-literal">None</span>, txt_name: <span class="hljs-built_in">str</span> = <span class="hljs-string">&quot;train.txt&quot;</span></span>):</span><br>        <span class="hljs-keyword">assert</span> year <span class="hljs-keyword">in</span> [<span class="hljs-string">&quot;2007&quot;</span>, <span class="hljs-string">&quot;2012&quot;</span>], <span class="hljs-string">&quot;year must be in [&#x27;2007&#x27;, &#x27;2012&#x27;]&quot;</span><br><br>        self.root = os.path.join(voc_root, <span class="hljs-string">&quot;VOCdevkit&quot;</span>, <span class="hljs-string">f&quot;VOC<span class="hljs-subst">&#123;year&#125;</span>&quot;</span>)<br>        self.img_root = os.path.join(self.root, <span class="hljs-string">&quot;JPEGImages&quot;</span>)<br>        self.annotations_root = os.path.join(self.root, <span class="hljs-string">&quot;Annotations&quot;</span>)<br><br>        <span class="hljs-comment"># read train.txt or val.txt file</span><br>        txt_path = os.path.join(self.root, <span class="hljs-string">&quot;ImageSets&quot;</span>, <span class="hljs-string">&quot;Main&quot;</span>, txt_name)<br>        <span class="hljs-keyword">assert</span> os.path.exists(txt_path), <span class="hljs-string">&quot;not found &#123;&#125; file.&quot;</span>.<span class="hljs-built_in">format</span>(txt_name)<br><br>        <span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(txt_path) <span class="hljs-keyword">as</span> read:<br>        	<span class="hljs-comment"># line.strip()方法去掉换行符 </span><br>            self.xml_list = [os.path.join(self.annotations_root, line.strip() + <span class="hljs-string">&quot;.xml&quot;</span>)<br>                             <span class="hljs-keyword">for</span> line <span class="hljs-keyword">in</span> read.readlines() <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(line.strip()) &gt; <span class="hljs-number">0</span>]<br><br>        <span class="hljs-comment"># check file</span><br>        <span class="hljs-keyword">assert</span> <span class="hljs-built_in">len</span>(self.xml_list) &gt; <span class="hljs-number">0</span>, <span class="hljs-string">&quot;in &#x27;&#123;&#125;&#x27; file does not find any information.&quot;</span>.<span class="hljs-built_in">format</span>(txt_path)<br>        <span class="hljs-keyword">for</span> xml_path <span class="hljs-keyword">in</span> self.xml_list:<br>            <span class="hljs-keyword">assert</span> os.path.exists(xml_path), <span class="hljs-string">&quot;not found &#x27;&#123;&#125;&#x27; file.&quot;</span>.<span class="hljs-built_in">format</span>(xml_path)<br><br>        <span class="hljs-comment"># read class_indict</span><br>        json_file = <span class="hljs-string">&#x27;./pascal_voc_classes.json&#x27;</span><br>        <span class="hljs-keyword">assert</span> os.path.exists(json_file), <span class="hljs-string">&quot;&#123;&#125; file not exist.&quot;</span>.<span class="hljs-built_in">format</span>(json_file)<br>        json_file = <span class="hljs-built_in">open</span>(json_file, <span class="hljs-string">&#x27;r&#x27;</span>)<br>        self.class_dict = json.load(json_file)	<span class="hljs-comment"># 每个类别对应一个数字</span><br>        json_file.close()<br><br>        self.transforms = transforms<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__len__</span>(<span class="hljs-params">self</span>):</span><br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">len</span>(self.xml_list)<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__getitem__</span>(<span class="hljs-params">self, idx</span>):</span><br>        <span class="hljs-comment"># read xml</span><br>        xml_path = self.xml_list[idx]<br>        <span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(xml_path) <span class="hljs-keyword">as</span> fid:<br>            xml_str = fid.read()<br><br>        <span class="hljs-comment"># 利用xlml包解析xml文件 </span><br>        xml = etree.fromstring(xml_str)<br>        data = self.parse_xml_to_dict(xml)[<span class="hljs-string">&quot;annotation&quot;</span>]	<span class="hljs-comment"># 自己实现的方法</span><br>        													<span class="hljs-comment"># 将xml解析成字典</span><br>        img_path = os.path.join(self.img_root, data[<span class="hljs-string">&quot;filename&quot;</span>])<br>        image = Image.<span class="hljs-built_in">open</span>(img_path)<br>        <span class="hljs-keyword">if</span> image.<span class="hljs-built_in">format</span> != <span class="hljs-string">&quot;JPEG&quot;</span>:<br>            <span class="hljs-keyword">raise</span> ValueError(<span class="hljs-string">&quot;Image &#x27;&#123;&#125;&#x27; format not JPEG&quot;</span>.<span class="hljs-built_in">format</span>(img_path))<br><br>        boxes = []<br>        labels = []<br>        iscrowd = []<br>        <span class="hljs-keyword">assert</span> <span class="hljs-string">&quot;object&quot;</span> <span class="hljs-keyword">in</span> data, <span class="hljs-string">&quot;&#123;&#125; lack of object information.&quot;</span>.<span class="hljs-built_in">format</span>(xml_path)<br>        <span class="hljs-keyword">for</span> obj <span class="hljs-keyword">in</span> data[<span class="hljs-string">&quot;object&quot;</span>]:<br>            xmin = <span class="hljs-built_in">float</span>(obj[<span class="hljs-string">&quot;bndbox&quot;</span>][<span class="hljs-string">&quot;xmin&quot;</span>])<br>            xmax = <span class="hljs-built_in">float</span>(obj[<span class="hljs-string">&quot;bndbox&quot;</span>][<span class="hljs-string">&quot;xmax&quot;</span>])<br>            ymin = <span class="hljs-built_in">float</span>(obj[<span class="hljs-string">&quot;bndbox&quot;</span>][<span class="hljs-string">&quot;ymin&quot;</span>])<br>            ymax = <span class="hljs-built_in">float</span>(obj[<span class="hljs-string">&quot;bndbox&quot;</span>][<span class="hljs-string">&quot;ymax&quot;</span>])<br><br>            <span class="hljs-comment"># 进一步检查数据，有的标注信息中可能有w或h为0的情况，这样的数据会导致计算回归loss为nan</span><br>            <span class="hljs-keyword">if</span> xmax &lt;= xmin <span class="hljs-keyword">or</span> ymax &lt;= ymin:<br>                <span class="hljs-built_in">print</span>(<span class="hljs-string">&quot;Warning: in &#x27;&#123;&#125;&#x27; xml, there are some bbox w/h &lt;=0&quot;</span>.<span class="hljs-built_in">format</span>(xml_path))<br>                <span class="hljs-keyword">continue</span><br>            <br>            boxes.append([xmin, ymin, xmax, ymax])<br>            labels.append(self.class_dict[obj[<span class="hljs-string">&quot;name&quot;</span>]])<br>            <span class="hljs-keyword">if</span> <span class="hljs-string">&quot;difficult&quot;</span> <span class="hljs-keyword">in</span> obj:<br>                iscrowd.append(<span class="hljs-built_in">int</span>(obj[<span class="hljs-string">&quot;difficult&quot;</span>]))<br>            <span class="hljs-keyword">else</span>:<br>                iscrowd.append(<span class="hljs-number">0</span>)<br><br>        <span class="hljs-comment"># convert everything into a torch.Tensor</span><br>        boxes = torch.as_tensor(boxes, dtype=torch.float32)<br>        labels = torch.as_tensor(labels, dtype=torch.int64)<br>        iscrowd = torch.as_tensor(iscrowd, dtype=torch.int64)<br>        image_id = torch.tensor([idx])<br>        area = (boxes[:, <span class="hljs-number">3</span>] - boxes[:, <span class="hljs-number">1</span>]) * (boxes[:, <span class="hljs-number">2</span>] - boxes[:, <span class="hljs-number">0</span>])<br><br>        target = &#123;&#125;<br>        target[<span class="hljs-string">&quot;boxes&quot;</span>] = boxes<br>        target[<span class="hljs-string">&quot;labels&quot;</span>] = labels<br>        target[<span class="hljs-string">&quot;image_id&quot;</span>] = image_id<br>        target[<span class="hljs-string">&quot;area&quot;</span>] = area<br>        target[<span class="hljs-string">&quot;iscrowd&quot;</span>] = iscrowd<br><br>        <span class="hljs-keyword">if</span> self.transforms <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>            image, target = self.transforms(image, target)<br><br>        <span class="hljs-keyword">return</span> image, target <br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">get_height_and_width</span>(<span class="hljs-params">self, idx</span>):</span><br>        <span class="hljs-comment"># read xml</span><br>        xml_path = self.xml_list[idx]<br>        <span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(xml_path) <span class="hljs-keyword">as</span> fid:<br>            xml_str = fid.read()<br>        xml = etree.fromstring(xml_str)<br>        data = self.parse_xml_to_dict(xml)[<span class="hljs-string">&quot;annotation&quot;</span>]<br>        data_height = <span class="hljs-built_in">int</span>(data[<span class="hljs-string">&quot;size&quot;</span>][<span class="hljs-string">&quot;height&quot;</span>])<br>        data_width = <span class="hljs-built_in">int</span>(data[<span class="hljs-string">&quot;size&quot;</span>][<span class="hljs-string">&quot;width&quot;</span>])<br>        <span class="hljs-keyword">return</span> data_height, data_width<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">parse_xml_to_dict</span>(<span class="hljs-params">self, xml</span>):</span><br>        <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">        将xml文件解析成字典形式，参考tensorflow的recursive_parse_xml_to_dict</span><br><span class="hljs-string">        Args:</span><br><span class="hljs-string">            xml: xml tree obtained by parsing XML file contents using lxml.etree</span><br><span class="hljs-string">        Returns:</span><br><span class="hljs-string">            Python dictionary holding XML contents.</span><br><span class="hljs-string">        &quot;&quot;&quot;</span><br><br>        <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(xml) == <span class="hljs-number">0</span>:  <span class="hljs-comment"># 遍历到底层，直接返回tag对应的信息</span><br>            <span class="hljs-keyword">return</span> &#123;xml.tag: xml.text&#125;<br><br>        result = &#123;&#125;<br>        <span class="hljs-keyword">for</span> child <span class="hljs-keyword">in</span> xml:	<span class="hljs-comment"># 遍历子标签   </span><br>            child_result = self.parse_xml_to_dict(child)  <span class="hljs-comment"># 递归遍历标签信息</span><br>            <span class="hljs-keyword">if</span> child.tag != <span class="hljs-string">&#x27;object&#x27;</span>:<br>                result[child.tag] = child_result[child.tag]<br>            <span class="hljs-keyword">else</span>:<br>                <span class="hljs-keyword">if</span> child.tag <span class="hljs-keyword">not</span> <span class="hljs-keyword">in</span> result:  <span class="hljs-comment"># 因为object可能有多个，所以需要放入列表里</span><br>                    result[child.tag] = []<br>                result[child.tag].append(child_result[child.tag])<br>        <span class="hljs-keyword">return</span> &#123;xml.tag: result&#125; <br></code></pre></td></tr></table></figure>
+
+
+
+<h5 id="目标检测数据增强：自己的transforms-py"><a href="#目标检测数据增强：自己的transforms-py" class="headerlink" title="目标检测数据增强：自己的transforms.py"></a>目标检测数据增强：自己的transforms.py</h5><p>注意在随机翻转时要同时翻转bbox，所以自己实现类：</p>
+<blockquote>
+<p>目标检测任务通常写自己的transforms.py函数，里面可实现随即反转、裁剪、平移等操作，连同bbox一起变换</p>
+<p>在train.py函数中用自己的transforms函数构建数据预处理</p>
+</blockquote>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">目标检测任务中，随机变换时要同时变换bbox</span><br><span class="hljs-string">自己实现transforms类：transforms.py</span><br><span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-keyword">import</span> random<br><span class="hljs-keyword">from</span> torchvision.transforms <span class="hljs-keyword">import</span> functional <span class="hljs-keyword">as</span> F<br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Compose</span>(<span class="hljs-params"><span class="hljs-built_in">object</span></span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;组合多个transform函数&quot;&quot;&quot;</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, transforms</span>):</span><br>        self.transforms = transforms<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__call__</span>(<span class="hljs-params">self, image, target</span>):</span><br>        <span class="hljs-keyword">for</span> t <span class="hljs-keyword">in</span> self.transforms:<br>            image, target = t(image, target)<br>        <span class="hljs-keyword">return</span> image, target<br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ToTensor</span>(<span class="hljs-params"><span class="hljs-built_in">object</span></span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;将PIL图像转为Tensor&quot;&quot;&quot;</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__call__</span>(<span class="hljs-params">self, image, target</span>):</span><br>        image = F.to_tensor(image)<br>        <span class="hljs-keyword">return</span> image, target<br><br><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">RandomHorizontalFlip</span>(<span class="hljs-params"><span class="hljs-built_in">object</span></span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;随机水平翻转图像以及bboxes&quot;&quot;&quot;</span><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span>(<span class="hljs-params">self, prob=<span class="hljs-number">0.5</span></span>):</span><br>        self.prob = prob<br><br>    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__call__</span>(<span class="hljs-params">self, image, target</span>):</span><br>        <span class="hljs-keyword">if</span> random.random() &lt; self.prob:<br>            height, width = image.shape[-<span class="hljs-number">2</span>:]<br>            image = image.flip(-<span class="hljs-number">1</span>)  <span class="hljs-comment"># 水平翻转图片</span><br>            bbox = target[<span class="hljs-string">&quot;boxes&quot;</span>]<br>            <span class="hljs-comment"># bbox: xmin, ymin, xmax, ymax</span><br>            bbox[:, [<span class="hljs-number">0</span>, <span class="hljs-number">2</span>]] = width - bbox[:, [<span class="hljs-number">2</span>, <span class="hljs-number">0</span>]]  <span class="hljs-comment"># 翻转对应bbox坐标信息</span><br>            target[<span class="hljs-string">&quot;boxes&quot;</span>] = bbox<br>        <span class="hljs-keyword">return</span> image, target<br></code></pre></td></tr></table></figure>
+
+<p>最后，就可直接用pytorch的<code>torch.utils.data.DataLoader</code>方法直接读取batch</p>
+<h3 id="三、目标检测–COCO与pycocotools使用"><a href="#三、目标检测–COCO与pycocotools使用" class="headerlink" title="三、目标检测–COCO与pycocotools使用"></a>三、目标检测–COCO与pycocotools使用</h3><h4 id="1-MS-COCO数据集结构"><a href="#1-MS-COCO数据集结构" class="headerlink" title="1. MS COCO数据集结构"></a>1. MS COCO数据集结构</h4><p><img src="/images/image-20220115181616429.png" srcset="/img/loading.gif" lazyload alt="image-20220115181616429"></p>
+<h4 id="2-pycocotools工具"><a href="#2-pycocotools工具" class="headerlink" title="2.pycocotools工具"></a>2.pycocotools工具</h4><p>（1）安装</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">pip install pycocotools		# Linux系统<br>pip install pycocotools-windows	 # windows系统<br></code></pre></td></tr></table></figure>
+
+<p>（2）使用</p>
+<p>annotations和imgs不在一个字段中，所以要先用img_id找出该张图片的所有annotations，具体转换过程不可能记下来的，只能：</p>
+<blockquote>
+<p>断点debug + 官网data-format 结合编写代码</p>
+</blockquote>
+<p>（3）结果检测-mAP</p>
+<p> 使用pycocotools可以方便地计算mAP</p>
+<p>前提：将预测结果保存为官网要求的格式，并写成json文件。<br>格式要求：去官网的<code>Evaluate</code>下面的<code>Results Format</code>查看，<br><a target="_blank" rel="noopener" href="https://cocodataset.org/#format-data">COCO - Common Objects in Context (cocodataset.org)</a><br>例如：<br><img src="/images/image-20220115201220734.png" srcset="/img/loading.gif" lazyload alt="image-20220115201220734"></p>
+<p>然后将所有结果写入一个json文件，之后调用pycocotools即可：</p>
+<p><img src="/images/image-20220115201350424.png" srcset="/img/loading.gif" lazyload alt="image-20220115201350424"></p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Deep-Learning-Objects-Detection/">Deep Learning-Objects Detection</a>
+                    
+                  </div>
+                
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/01/15/%E5%88%B6%E4%BD%9C%E8%87%AA%E5%B7%B1%E7%9A%84%E6%95%B0%E6%8D%AE%E9%9B%862-%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/">
+                        <span class="hidden-mobile">制作自己的数据集2-图像分类</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;TOC</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/tocbot@4.12.3/dist/tocbot.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4.3.1/anchor.min.js" ></script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js" ></script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
