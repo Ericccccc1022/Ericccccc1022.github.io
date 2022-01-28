@@ -241,8 +241,8 @@
 <p>two stage：Faster RCNN；（先候选区域，再针对<strong>候选区域</strong>分类、回归）</p>
 </blockquote>
 <p><code>Faster rcnn = RPN + Fast rcnn</code></p>
-<h3 id="二、RPN"><a href="#二、RPN" class="headerlink" title="二、RPN"></a>二、RPN</h3><p><img src="/.com//Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20220128160635245.png" srcset="/img/loading.gif" lazyload alt="image-20220128160635245"></p>
-<img src="/.com//Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20220128161631349.png" srcset="/img/loading.gif" lazyload alt="image-20220128161631349" style="zoom:80%;">
+<h3 id="二、RPN"><a href="#二、RPN" class="headerlink" title="二、RPN"></a>二、RPN</h3><p><img src="/images/image-20220128160635245.png" srcset="/img/loading.gif" lazyload alt="image-20220128160635245"></p>
+<img src="/images/image-20220128161631349.png" srcset="/img/loading.gif" lazyload alt="image-20220128161631349" style="zoom:80%;">
 
 <h4 id="（1）做法："><a href="#（1）做法：" class="headerlink" title="（1）做法："></a>（1）做法：</h4><p>​        在<code>feature map</code>上滑动窗口，每个位置计算出<code>256-d</code>向量，进而计算<code>2k scores</code>和<code>4k coordinates</code></p>
 <blockquote>
@@ -274,7 +274,7 @@
 <li>那些既不是正标签也不是负标签的锚点不会有助于训练目标函数。</li>
 </ol>
 </blockquote>
-<h4 id="（8）损失"><a href="#（8）损失" class="headerlink" title="（8）损失"></a>（8）损失</h4><img src="/.com//Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20220128165315744.png" srcset="/img/loading.gif" lazyload alt="image-20220128165315744" style="zoom:80%;">
+<h4 id="（8）损失"><a href="#（8）损失" class="headerlink" title="（8）损失"></a>（8）损失</h4><img src="/images/image-20220128165315744.png" srcset="/img/loading.gif" lazyload alt="image-20220128165315744" style="zoom:80%;">
 
 <ol>
 <li><p>分类损失<br>两种角度看待</p>
@@ -285,12 +285,12 @@
 </ol>
 </blockquote>
 <p>在<code>pytorch</code>中调用两种损失，都自动集成了<code>softmax</code>和<code>sigmoid</code>操作，这也是二者的主要区别：</p>
-<img src="/.com//Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20220128215646916.png" srcset="/img/loading.gif" lazyload alt="image-20220128215646916" style="zoom:67%;"></li>
+<img src="/images/image-20220128215646916.png" srcset="/img/loading.gif" lazyload alt="image-20220128215646916" style="zoom:67%;"></li>
 </ol>
 <h3 id="三、Fast-RCNN"><a href="#三、Fast-RCNN" class="headerlink" title="三、Fast RCNN"></a>三、Fast RCNN</h3><p>使用RPN生成候选框后，将候选框投影到特征图上获得相应的特征矩阵；</p>
 <p>每个特征矩阵通过<code>ROI pooling</code>层缩放到<code>7×7</code>大小的特征图，接着将特征图展平通过一系列全连接层得到预测结果。</p>
 <p>综上，Faster RCNN不像Fast RCNN需要额外的<code>SS</code>等区域建议算法，不像RCNN需要训练SVM分类器，直接在一个卷积网络中完成，实现<code>end-to-end</code>训练：</p>
-<img src="https://pic4.zhimg.com/80/v2-2af911b893e0592290baa35accd95fdb_720w.jpg" srcset="/img/loading.gif" lazyload alt="img" style="zoom:80%;">
+<img src="/images/v2-2af911b893e0592290baa35accd95fdb_720w.jpg" srcset="/img/loading.gif" lazyload alt="img" style="zoom:80%;">
 
 
             </div>
