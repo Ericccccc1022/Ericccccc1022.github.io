@@ -4,6 +4,44 @@
   
   
   <entry>
+    <title>如何将本地项目上传至Github</title>
+    <link href="/2022/02/09/%E5%A6%82%E4%BD%95%E5%B0%86%E6%9C%AC%E5%9C%B0%E9%A1%B9%E7%9B%AE%E4%B8%8A%E4%BC%A0%E8%87%B3Github/"/>
+    <url>/2022/02/09/%E5%A6%82%E4%BD%95%E5%B0%86%E6%9C%AC%E5%9C%B0%E9%A1%B9%E7%9B%AE%E4%B8%8A%E4%BC%A0%E8%87%B3Github/</url>
+    
+    <content type="html"><![CDATA[<p>本文介绍如何将代码上传至Github、团队内协作、跨团队协作、<code>.gitignore</code>文件配置</p><span id="more"></span><h2 id="如何将本地代码上传至Github"><a href="#如何将本地代码上传至Github" class="headerlink" title="如何将本地代码上传至Github"></a>如何将本地代码上传至Github</h2><p>简介如何将本地项目开源至Github平台</p><img src="/images/gitmode.png" alt="img" style="zoom: 33%;"><h3 id="一、本地端"><a href="#一、本地端" class="headerlink" title="一、本地端"></a>一、本地端</h3><ol><li>首先在本地开发代码时，在项目目录下使用Git工具：</li></ol><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 初始化本地仓库</span><br>git init<br><br>git add xxx.py<br>git commit xxx.py -m <span class="hljs-string">&#x27;add files&#x27;</span><br></code></pre></td></tr></table></figure><p>显然，上述<code>add</code>、<code>commit</code>等操作<strong>可以在Pycharm中完成</strong></p><ol start="2"><li>查看当前状态（是否有文件未添加到暂存区、未更新至版本库），查看历史版本，查看版本更新记录</li></ol><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 查看文件状态、当前分支</span><br>git status<br><br><span class="hljs-comment"># 查看历史版本信息</span><br>git reflog<br><span class="hljs-comment"># 回到历史版本（版本号在git reflog中有显示）</span><br>git reset --hard [版本号]<br><br><span class="hljs-comment"># 查看版本更新记录（作者、时间）</span><br>git log<br></code></pre></td></tr></table></figure><ol start="3"><li>撤销修改、删除恢复等操作：</li></ol><img src="/images/image-20220209102143593.png" alt="image-20220209102143593" style="zoom: 80%;"><h3 id="二、Github端"><a href="#二、Github端" class="headerlink" title="二、Github端"></a>二、Github端</h3><ol><li><p>创建远程库<br>首先在Github自己的账号下<code>Create Repository</code>；</p><blockquote><ol><li>仓库名最好和本地库同名；</li><li>Public和Private选择<code>Public</code>即可，所有人都可以clone你的代码；</li></ol></blockquote><img src="/images/image-20220209102410279.png" alt="image-20220209102410279" style="zoom:67%;"></li><li><p>在本地库关联<br>使用远程库<code>地址</code>即可完成推送，通常为地址创建别名：</p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 创建别名</span><br>git remote add [别名] https://github.com/Ericccccc/xxx.git<br>    <br><br><span class="hljs-comment"># 查看当前本地库关联的 远程库别名</span><br>git remote -v<br></code></pre></td></tr></table></figure></li></ol><h3 id="三、推送与拉取"><a href="#三、推送与拉取" class="headerlink" title="三、推送与拉取"></a>三、推送与拉取</h3><ol><li><p>推送更新<br>以分支为单位推送；<br>创建、切换、合并、删除分支等操作，设计<code>Git的分支管理</code>内容，具体命令见<a href="https://ericccccc1022.github.io/2021/04/11/Git%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%88%E4%BA%8C%EF%BC%89/">Git学习笔记（二） - Eric Tan (ericccccc1022.github.io)</a></p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 推送</span><br>git push [别名] [分支]<br><span class="hljs-comment"># 逻辑：先add、commit到本地库，然后从本地库push到远程库拉取</span><br></code></pre></td></tr></table></figure></li></ol><p>由于操作非常方便，所以Git鼓励你使用分支完成某个任务，合并后再删掉分支，这和直接在<code>master</code>分支上工作效果是一样的，但过程更安全！<br>这里一定要回顾上述贴出的笔记！</p><ol start="2"><li><p>拉取更新<br>团队内有同伴修改过代码，可拉取到本地；<br>拉取的一个重要意义：时刻保证 <strong>本地库=远程库</strong></p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 拉取</span><br>git pull [别名] [分支]<br></code></pre></td></tr></table></figure></li><li><p>克隆<br>克隆他人的项目代码，<code>git clone</code>命令会自动做3件事：</p><blockquote><ol><li>拉取代码；    2. 初始化本地仓库；    3. 创建别名（clone的别名固定为<code>origin</code>）</li></ol></blockquote></li></ol><h3 id="四、团队内协作"><a href="#四、团队内协作" class="headerlink" title="四、团队内协作"></a>四、团队内协作</h3><p>团队内不需要先<code>Fork</code>仓库，队内成员可以直接推送更新至队长的远程库，但是这一步需要队长在github上开放权限：</p><ol><li>添加<code>collaborator</code><br>队长在自己账号下，对应仓库中，选择<code>settings</code>–&gt;<code>manage access</code>–&gt;<code>invite a collaborator</code>，将队友添加进来；<br>添加后会生成一个网址，队长将该网址发给队友，队友登陆后“接受邀请”；<br>之后队友就可以直接推送更新至该仓库；</li><li>拉取更新<br>其他人可以随时拉取队友的更新</li><li>协作模式<br>整个开发模式、分支管理，都参考笔记<a href="https://ericccccc1022.github.io/2021/04/11/Git%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%88%E4%BA%8C%EF%BC%89/">Git学习笔记（二） - Eric Tan (ericccccc1022.github.io)</a><br>有非常详尽清晰的说明</li></ol><h3 id="五、跨团队协作"><a href="#五、跨团队协作" class="headerlink" title="五、跨团队协作"></a>五、跨团队协作</h3><p>先<code>Fork</code>，在<code>clone</code>至本地库；<br>任何更新只在fork分支上，要更新至原仓库，需要<code>pull request</code></p><h3 id="六、配置Git忽略文件-gitignore"><a href="#六、配置Git忽略文件-gitignore" class="headerlink" title="六、配置Git忽略文件.gitignore"></a>六、配置Git忽略文件<code>.gitignore</code></h3><p>与项目实际功能无关，不参与服务器部署运行，亦或是太大的权重文件，使用<code>.gitignore</code>文件进行配置，把它们忽略掉；<br>有时也用于屏蔽不同IDE之间的差异</p><p>在项目目录下创建<code>.gitignore</code>文件，写入需要忽略的文件即可</p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment">#过滤整个mtk文件夹</span><br>/mtk/              <br><br><span class="hljs-comment">#过滤所有.zip文件</span><br>*.<span class="hljs-built_in">zip</span>               <br><br><span class="hljs-comment">#过滤/mtk/do.c文件</span><br>/mtk/do.c        <br><br><span class="hljs-comment">#忽略目录 fd1 下的全部内容</span><br>fd1/*　　　   　　　<br><br><span class="hljs-comment">#不忽略 根目录下的 /fw/bin/ 和 /fw/sf/ 目录；</span><br>!/fw/<span class="hljs-built_in">bin</span>/<br>!/fw/sf/<br></code></pre></td></tr></table></figure><h3 id="七、在Pycharm中使用Git"><a href="#七、在Pycharm中使用Git" class="headerlink" title="七、在Pycharm中使用Git"></a>七、在Pycharm中使用Git</h3><p>参考<a href="https://ericccccc1022.github.io/2021/08/26/%E5%A6%82%E4%BD%95clone%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%E5%B9%B6%E5%9C%A8Pycharm%E6%8F%90%E4%BA%A4%E6%9B%B4%E6%96%B0/">如何clone开源项目并在Pycharm提交更新 - Eric Tan (ericccccc1022.github.io)</a><br>有简易全面的说明</p>]]></content>
+    
+    
+    <categories>
+      
+      <category>Git</category>
+      
+    </categories>
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>IoU Loss系列</title>
+    <link href="/2022/02/09/IoU-Loss%E7%B3%BB%E5%88%97/"/>
+    <url>/2022/02/09/IoU-Loss%E7%B3%BB%E5%88%97/</url>
+    
+    <content type="html"><![CDATA[<p>为了弥补传统loss在目标检测任务中的不足，诞生了一系列<code>iou loss</code>，本文做简要介绍。</p><span id="more"></span><h2 id="IoU-Loss系列"><a href="#IoU-Loss系列" class="headerlink" title="IoU Loss系列"></a>IoU Loss系列</h2><p>在<code>YOLOv3-SPP</code>中使用了<code>CIoU loss</code><br>发展历程：<br><img src="/images/image-20220206114721962.png" alt="image-20220206114721962"></p><h3 id="一、IoU-Loss"><a href="#一、IoU-Loss" class="headerlink" title="一、IoU Loss"></a>一、IoU Loss</h3><p>在引入IoU loss之前，使用的是边界框坐标的<code>L2 Loss</code>，会造成不同IoU下损失相同的情况（如下图）<br><img src="/images/image-20220206115017055.png" alt="image-20220206115017055"></p><p>因此引入<code>IoU Loss= -ln(iou)或者直接（1-iou）</code>；<br>缺点：当不相交时loss = 0；</p><h3 id="二、GIoU-Loss"><a href="#二、GIoU-Loss" class="headerlink" title="二、GIoU Loss"></a>二、GIoU Loss</h3><p><code>Generalized IoU Loss = 1 - GIoU</code><br><img src="/images/image-20220206115303191.png" alt="image-20220206115303191" style="zoom:80%;"></p><h3 id="三、DIoU-Loss"><a href="#三、DIoU-Loss" class="headerlink" title="三、DIoU Loss"></a>三、DIoU Loss</h3><p><code>Distance IoU Loss = 1 - DIoU</code></p><p>上述两种损失的缺点：收敛慢、回归不准确；</p><blockquote><p>上述两种损失均考虑了：重叠面积；<br>而<code>DIoU Loss</code>考虑了：重叠面积、中心点距离；</p></blockquote><h3 id="四、CIoU-Loss"><a href="#四、CIoU-Loss" class="headerlink" title="四、CIoU Loss"></a>四、CIoU Loss</h3><p><code>Complete IoU Loss = 1 - CIoU</code></p><p>考虑了3种几何参数：重叠面积、中心点距离、<strong>长宽比</strong>；<br><img src="/images/image-20220206120249223.png" alt="image-20220206120249223" style="zoom: 33%;"> </p><h3 id="Focal-Loss"><a href="#Focal-Loss" class="headerlink" title="Focal Loss"></a>Focal Loss</h3><p>关于Focal Loss是否真的有效，一直存在争议；在<code>YOLOv3</code>中作者指出使用Focal loss后降了2个点；<br>主要针对于<code>One-stage</code>目标检测网络：</p><blockquote><ol><li><code>One-stage</code>普遍存在“类别不平衡问题”，一张图像中能匹配到目标的候选框一般只有十几个，而没匹配到的有上万个！</li><li>而<code>two-stage</code>网络经过RPN的筛选后，输送给检测网络的样本基本不存在类别不平衡问题</li></ol></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>Deep Learning-Objects Detection</category>
+      
+    </categories>
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>Faster RCNN复读——RPN的训练与正负样本划分</title>
     <link href="/2022/01/28/Faster-RCNN%E5%A4%8D%E8%AF%BB%E2%80%94%E2%80%94RPN%E7%9A%84%E8%AE%AD%E7%BB%83%E4%B8%8E%E6%AD%A3%E8%B4%9F%E6%A0%B7%E6%9C%AC%E5%88%92%E5%88%86/"/>
     <url>/2022/01/28/Faster-RCNN%E5%A4%8D%E8%AF%BB%E2%80%94%E2%80%94RPN%E7%9A%84%E8%AE%AD%E7%BB%83%E4%B8%8E%E6%AD%A3%E8%B4%9F%E6%A0%B7%E6%9C%AC%E5%88%92%E5%88%86/</url>
@@ -203,7 +241,7 @@
     
     <categories>
       
-      <category>Deep Learning-Objects Detection</category>
+      <category>Git</category>
       
     </categories>
     

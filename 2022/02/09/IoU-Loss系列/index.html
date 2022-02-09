@@ -14,13 +14,29 @@
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   
   <meta name="theme-color" content="#2f4154">
-  <meta name="description" content="">
+  <meta name="description" content="为了弥补传统loss在目标检测任务中的不足，诞生了一系列iou loss，本文做简要介绍。">
   <meta name="author" content="Eric Tan">
   <meta name="keywords" content="">
   
-  <title>Archives - Eric Tan</title>
+  <title>IoU Loss系列 - Eric Tan</title>
 
   <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10.7.2/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+  
 
 
 
@@ -48,7 +64,7 @@
 
 
 <body>
-  <header style="height: 60vh;">
+  <header style="height: 80vh;">
     <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
   <div class="container">
     <a class="navbar-brand"
@@ -142,18 +158,59 @@
 </nav>
 
     <div class="banner" id="banner" parallax=true
-         style="background: url('/img/default.png') no-repeat center center;
+         style="background: url('/img/curry2.png') no-repeat center center;
            background-size: cover;">
       <div class="full-bg-img">
         <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
           <div class="page-header text-center fade-in-up">
-            <span class="h2" id="subtitle" title="Archive">
+            <span class="h2" id="subtitle" title="IoU Loss系列">
               
             </span>
 
             
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-02-09 18:35" pubdate>
+        February 9, 2022 pm
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      320 字
+    </span>
+  
+
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      3
+       分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
           </div>
 
+          
+            <div class="scroll-down-bar">
+              <i class="iconfont icon-arrowdown"></i>
+            </div>
           
         </div>
       </div>
@@ -162,94 +219,108 @@
 
   <main>
     
-      <div class="container nopadding-x-md">
-        <div class="py-5" id="board"
-          >
-          
-          <div class="container">
-            <div class="row">
-              <div class="col-12 col-md-10 m-auto">
-                
-
-<div class="list-group">
-  <p class="h4">40 posts in total.</p>
-  <hr>
-  
-  
-    
       
-      <p class="h5">2022</p>
-    
-    <a href="/2022/02/09/%E5%A6%82%E4%BD%95%E5%B0%86%E6%9C%AC%E5%9C%B0%E9%A1%B9%E7%9B%AE%E4%B8%8A%E4%BC%A0%E8%87%B3Github/" class="list-group-item list-group-item-action">
-      <span class="archive-post-title">如何将本地项目上传至Github</span>
-      <time style="float: right;">02-09</time>
-    </a>
-  
-    
-    <a href="/2022/02/09/IoU-Loss%E7%B3%BB%E5%88%97/" class="list-group-item list-group-item-action">
-      <span class="archive-post-title">IoU Loss系列</span>
-      <time style="float: right;">02-09</time>
-    </a>
-  
-    
-    <a href="/2022/01/28/Faster-RCNN%E5%A4%8D%E8%AF%BB%E2%80%94%E2%80%94RPN%E7%9A%84%E8%AE%AD%E7%BB%83%E4%B8%8E%E6%AD%A3%E8%B4%9F%E6%A0%B7%E6%9C%AC%E5%88%92%E5%88%86/" class="list-group-item list-group-item-action">
-      <span class="archive-post-title">Faster RCNN复读——RPN的训练与正负样本划分</span>
-      <time style="float: right;">01-28</time>
-    </a>
-  
-    
-    <a href="/2022/01/22/pycocotools%E4%BD%BF%E7%94%A8/" class="list-group-item list-group-item-action">
-      <span class="archive-post-title">pycocotools使用</span>
-      <time style="float: right;">01-22</time>
-    </a>
-  
-    
-    <a href="/2022/01/20/Transformer%E5%85%A5%E9%97%A8%E7%AF%87/" class="list-group-item list-group-item-action">
-      <span class="archive-post-title">Transformer入门篇</span>
-      <time style="float: right;">01-20</time>
-    </a>
-  
-    
-    <a href="/2022/01/20/%E5%9C%A8Pytorch%E4%B8%AD%E4%BD%BF%E7%94%A8Tensorboard%E5%8F%AF%E8%A7%86%E5%8C%96/" class="list-group-item list-group-item-action">
-      <span class="archive-post-title">在Pytorch中使用Tensorboard可视化</span>
-      <time style="float: right;">01-20</time>
-    </a>
-  
-    
-    <a href="/2022/01/20/%E5%88%B6%E4%BD%9C%E8%87%AA%E5%B7%B1%E7%9A%84%E6%95%B0%E6%8D%AE%E9%9B%863-%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8BVOC-COCO/" class="list-group-item list-group-item-action">
-      <span class="archive-post-title">制作自己的数据集3--目标检测VOC/COCO</span>
-      <time style="float: right;">01-20</time>
-    </a>
-  
-    
-    <a href="/2022/01/15/%E5%88%B6%E4%BD%9C%E8%87%AA%E5%B7%B1%E7%9A%84%E6%95%B0%E6%8D%AE%E9%9B%862-%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/" class="list-group-item list-group-item-action">
-      <span class="archive-post-title">制作自己的数据集2-图像分类</span>
-      <time style="float: right;">01-15</time>
-    </a>
-  
-    
-    <a href="/2022/01/14/%E5%88%B6%E4%BD%9C%E8%87%AA%E5%B7%B1%E7%9A%84%E6%95%B0%E6%8D%AE%E9%9B%861-%E5%9B%BE%E5%83%8F%E5%88%86%E7%B1%BB/" class="list-group-item list-group-item-action">
-      <span class="archive-post-title">制作自己的数据集1--图像分类</span>
-      <time style="float: right;">01-14</time>
-    </a>
-  
-    
-    <a href="/2022/01/13/GAN%E5%85%A5%E9%97%A8%E7%AF%87/" class="list-group-item list-group-item-action">
-      <span class="archive-post-title">GAN入门篇</span>
-      <time style="float: right;">01-13</time>
-    </a>
-  
-</div>
 
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">IoU Loss系列</h1>
+            
+            <div class="markdown-body">
+              <p>为了弥补传统loss在目标检测任务中的不足，诞生了一系列<code>iou loss</code>，本文做简要介绍。</p>
+<span id="more"></span>
 
+<h2 id="IoU-Loss系列"><a href="#IoU-Loss系列" class="headerlink" title="IoU Loss系列"></a>IoU Loss系列</h2><p>在<code>YOLOv3-SPP</code>中使用了<code>CIoU loss</code><br>发展历程：<br><img src="/images/image-20220206114721962.png" srcset="/img/loading.gif" lazyload alt="image-20220206114721962"></p>
+<h3 id="一、IoU-Loss"><a href="#一、IoU-Loss" class="headerlink" title="一、IoU Loss"></a>一、IoU Loss</h3><p>在引入IoU loss之前，使用的是边界框坐标的<code>L2 Loss</code>，会造成不同IoU下损失相同的情况（如下图）<br><img src="/images/image-20220206115017055.png" srcset="/img/loading.gif" lazyload alt="image-20220206115017055"></p>
+<p>因此引入<code>IoU Loss= -ln(iou)或者直接（1-iou）</code>；<br>缺点：当不相交时loss = 0；</p>
+<h3 id="二、GIoU-Loss"><a href="#二、GIoU-Loss" class="headerlink" title="二、GIoU Loss"></a>二、GIoU Loss</h3><p><code>Generalized IoU Loss = 1 - GIoU</code><br><img src="/images/image-20220206115303191.png" srcset="/img/loading.gif" lazyload alt="image-20220206115303191" style="zoom:80%;"></p>
+<h3 id="三、DIoU-Loss"><a href="#三、DIoU-Loss" class="headerlink" title="三、DIoU Loss"></a>三、DIoU Loss</h3><p><code>Distance IoU Loss = 1 - DIoU</code></p>
+<p>上述两种损失的缺点：收敛慢、回归不准确；</p>
+<blockquote>
+<p>上述两种损失均考虑了：重叠面积；<br>而<code>DIoU Loss</code>考虑了：重叠面积、中心点距离；</p>
+</blockquote>
+<h3 id="四、CIoU-Loss"><a href="#四、CIoU-Loss" class="headerlink" title="四、CIoU Loss"></a>四、CIoU Loss</h3><p><code>Complete IoU Loss = 1 - CIoU</code></p>
+<p>考虑了3种几何参数：重叠面积、中心点距离、<strong>长宽比</strong>；<br><img src="/images/image-20220206120249223.png" srcset="/img/loading.gif" lazyload alt="image-20220206120249223" style="zoom: 33%;"> </p>
+<h3 id="Focal-Loss"><a href="#Focal-Loss" class="headerlink" title="Focal Loss"></a>Focal Loss</h3><p>关于Focal Loss是否真的有效，一直存在争议；在<code>YOLOv3</code>中作者指出使用Focal loss后降了2个点；<br>主要针对于<code>One-stage</code>目标检测网络：</p>
+<blockquote>
+<ol>
+<li><code>One-stage</code>普遍存在“类别不平衡问题”，一张图像中能匹配到目标的候选框一般只有十几个，而没匹配到的有上万个！</li>
+<li>而<code>two-stage</code>网络经过RPN的筛选后，输送给检测网络的样本基本不存在类别不平衡问题</li>
+</ol>
+</blockquote>
 
-
-
-              </div>
             </div>
-          </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/Deep-Learning-Objects-Detection/">Deep Learning-Objects Detection</a>
+                    
+                  </div>
+                
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/02/09/%E5%A6%82%E4%BD%95%E5%B0%86%E6%9C%AC%E5%9C%B0%E9%A1%B9%E7%9B%AE%E4%B8%8A%E4%BC%A0%E8%87%B3Github/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">如何将本地项目上传至Github</span>
+                        <span class="visible-mobile">Previous</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/01/28/Faster-RCNN%E5%A4%8D%E8%AF%BB%E2%80%94%E2%80%94RPN%E7%9A%84%E8%AE%AD%E7%BB%83%E4%B8%8E%E6%AD%A3%E8%B4%9F%E6%A0%B7%E6%9C%AC%E5%88%92%E5%88%86/">
+                        <span class="hidden-mobile">Faster RCNN复读——RPN的训练与正负样本划分</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
         </div>
       </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;TOC</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
     
 
     
@@ -329,9 +400,15 @@
 
 
 
+  <script  src="https://cdn.jsdelivr.net/npm/tocbot@4.12.3/dist/tocbot.min.js" ></script>
 
 
 
+  <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4.3.1/anchor.min.js" ></script>
 
 
 
