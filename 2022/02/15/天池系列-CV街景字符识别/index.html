@@ -1,0 +1,467 @@
+
+
+<!DOCTYPE html>
+<html lang="en" data-default-color-scheme=&#34;auto&#34;>
+
+
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/Tan.png">
+  <link rel="icon" href="/img/Tan.png">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="description" content="深度学习中的集成学习（TTA、多模型融合）、多模型NMS后处理">
+  <meta name="author" content="Eric Tan">
+  <meta name="keywords" content="">
+  
+  <title>天池系列-CV街景字符识别 - Eric Tan</title>
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" />
+
+
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@4.0.0/github-markdown.min.css" />
+  <link  rel="stylesheet" href="/lib/hint/hint.min.css" />
+
+  
+    
+    
+      
+      <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@10.7.2/styles/github-gist.min.css" />
+    
+  
+
+  
+    <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+  
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1749284_ba1fz6golrf.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/font_1736178_kmeydafke9r.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+<!-- 自定义样式保持在最底部 -->
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.8.11","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"right","visible":"hover","icon":"§"},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"copy_btn":true,"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"baidu":null,"google":null,"gtag":null,"tencent":{"sid":null,"cid":null},"woyaola":null,"cnzz":null,"leancloud":{"app_id":null,"app_key":null,"server_url":null}},"search_path":"/local-search.xml"};
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+
+<body>
+  <header style="height: 80vh;">
+    <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand"
+       href="/">&nbsp;<strong>Eric Tan</strong>&nbsp;</a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/">
+                <i class="iconfont icon-home-fill"></i>
+                Home
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/">
+                <i class="iconfont icon-archive-fill"></i>
+                Archives
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/">
+                <i class="iconfont icon-category-fill"></i>
+                Categories
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/">
+                <i class="iconfont icon-tags-fill"></i>
+                Tags
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/">
+                <i class="iconfont icon-user-fill"></i>
+                About
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" data-toggle="modal" data-target="#modalSearch">&nbsp;<i
+                class="iconfont icon-search"></i>&nbsp;</a>
+          </li>
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self">&nbsp;<i
+                class="iconfont icon-dark" id="color-toggle-icon"></i>&nbsp;</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+    <div class="banner" id="banner" parallax=true
+         style="background: url('/img/curry2.png') no-repeat center center;
+           background-size: cover;">
+      <div class="full-bg-img">
+        <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+          <div class="page-header text-center fade-in-up">
+            <span class="h2" id="subtitle" title="天池系列-CV街景字符识别">
+              
+            </span>
+
+            
+              <div class="mt-3">
+  
+  
+    <span class="post-meta">
+      <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+      <time datetime="2022-02-15 11:29" pubdate>
+        February 15, 2022 am
+      </time>
+    </span>
+  
+</div>
+
+<div class="mt-1">
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-chart"></i>
+      1.4k 字
+    </span>
+  
+
+  
+    
+    <span class="post-meta mr-2">
+      <i class="iconfont icon-clock-fill"></i>
+      
+      
+      21
+       分钟
+    </span>
+  
+
+  
+  
+</div>
+
+            
+          </div>
+
+          
+            <div class="scroll-down-bar">
+              <i class="iconfont icon-arrowdown"></i>
+            </div>
+          
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="d-none d-lg-block col-lg-2"></div>
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div class="py-5" id="board">
+          <article class="post-content mx-auto">
+            <!-- SEO header -->
+            <h1 style="display: none">天池系列-CV街景字符识别</h1>
+            
+            <div class="markdown-body">
+              <p>深度学习中的集成学习（<code>TTA</code>、多模型融合）、多模型NMS后处理</p>
+<span id="more"></span>
+
+<h2 id="天池系列-CV街景字符识别"><a href="#天池系列-CV街景字符识别" class="headerlink" title="天池系列-CV街景字符识别"></a>天池系列-CV街景字符识别</h2><h3 id="一、数据增强"><a href="#一、数据增强" class="headerlink" title="一、数据增强"></a>一、数据增强</h3><p>在深度学习中数据扩增方法非常重要，数据扩增可以增加训练集的样本，同时也可以有效缓解模型过拟合的情况，也可以给模型带来的更强的泛化能力；<br>在深度学习模型的训练过程中，数据扩增是必不可少的环节；<br>常用的数据增强库：<br><img src="/images/image-20220210113754648.png" srcset="/img/loading.gif" lazyload alt="image-20220210113754648"></p>
+<blockquote>
+<p>注：使用<code>albumentations</code>与<code>pytorch</code>搭配时，用法与<code>transforms</code>一致！</p>
+</blockquote>
+<h3 id="二、深度学习中的集成学习"><a href="#二、深度学习中的集成学习" class="headerlink" title="二、深度学习中的集成学习"></a>二、深度学习中的集成学习</h3><ol>
+<li><p>传统的交叉验证方法<br>对于深度学习而言明显制约是：训练时间大幅度增加！</p>
+</li>
+<li><p>Dropout</p>
+</li>
+<li><p>TTA<br>测试集数据扩增（Test Time Augmentation, TTA）<br><img src="/images/image-20220210221727832.png" srcset="/img/loading.gif" lazyload alt="image-20220210221727832"><br>实现代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">predict</span>(<span class="hljs-params">test_loader, model, tta=<span class="hljs-number">10</span></span>):</span><br>    model.<span class="hljs-built_in">eval</span>()<br>    test_pred_tta = <span class="hljs-literal">None</span><br>    <span class="hljs-comment"># TTA 次数</span><br>    <span class="hljs-keyword">for</span> _ <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(tta):<br>        test_pred = []<br>    <br>        <span class="hljs-keyword">with</span> torch.no_grad():<br>            <span class="hljs-keyword">for</span> i, (<span class="hljs-built_in">input</span>, target) <span class="hljs-keyword">in</span> <span class="hljs-built_in">enumerate</span>(test_loader):<br>                c0, c1, c2, c3, c4, c5 = model(data[<span class="hljs-number">0</span>])<br>                output = np.concatenate([c0.data.numpy(), c1.data.numpy(),<br>                   c2.data.numpy(), c3.data.numpy(),<br>                   c4.data.numpy(), c5.data.numpy()], axis=<span class="hljs-number">1</span>)<br>                test_pred.append(output)<br>        <br>        test_pred = np.vstack(test_pred)<br>        <span class="hljs-keyword">if</span> test_pred_tta <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>            test_pred_tta = test_pred<br>        <span class="hljs-keyword">else</span>:<br>            test_pred_tta += test_pred<br>    <br>    <span class="hljs-keyword">return</span> test_pred_tta<br></code></pre></td></tr></table></figure></li>
+<li><p>直接多模型融合</p>
+<p>针对<strong>目标检测</strong>的<code>多模型NMS</code>融合<br>这里参考一位赛友提供的代码：<br>（1）首先将单模结果保存为<code>.json</code>文件，格式可以自拟，但后续多模NMS要适应这个格式；此处提供的代码将json做成：<code>&#123;000000.png:[[x1,y1,x2,y2,置信度1,标签1],[x1,y1,x2,y2,置信度2,标签2]],000001.png:[[x1,y1,x2,y2,置信度1,标签1],[x1,y1,x2,y2,置信度2,标签2]]&#125;</code>这个格式：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> mmdet.apis <span class="hljs-keyword">import</span> init_detector, inference_detector, show_result_pyplot<br><span class="hljs-keyword">import</span> mmcv<br><span class="hljs-keyword">import</span> os<br><span class="hljs-keyword">import</span> pandas <span class="hljs-keyword">as</span> pd<br><span class="hljs-keyword">import</span> json<br><br><br>config_file = <span class="hljs-string">&#x27;./configs/cascade_rcnn/cascade_rcnn_r101_fpn_20e_coco.py&#x27;</span><br><span class="hljs-comment"># download the checkpoint from model zoo and put it in `checkpoints/`</span><br>checkpoint_file = <span class="hljs-string">&#x27;./work_dirs/cascade_rcnn_r101_fpn_20e_coco/epoch_17.pth&#x27;</span><br><br><span class="hljs-comment"># build the model from a config file and a checkpoint file</span><br>model = init_detector(config_file, checkpoint_file, device=<span class="hljs-string">&#x27;cuda:0&#x27;</span>)<br><br><br>d = &#123;&#125;<br><br>df = pd.DataFrame(columns=[<span class="hljs-string">&#x27;file_name&#x27;</span>,<span class="hljs-string">&#x27;file_code&#x27;</span>])<br>image_path = <span class="hljs-string">&quot;data/mchar_test_a/mchar_test_a/&quot;</span><br>piclist = os.listdir(image_path)<br><br><br>piclist.sort()<br>index = <span class="hljs-number">0</span><br><span class="hljs-keyword">for</span> pic_name <span class="hljs-keyword">in</span> piclist:<br>    index += <span class="hljs-number">1</span><br>    <span class="hljs-keyword">if</span> index % <span class="hljs-number">1000</span> == <span class="hljs-number">0</span>:<br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;<span class="hljs-subst">&#123;index&#125;</span>/40000&quot;</span>)<br>    pic_path = os.path.join(image_path, pic_name)<br>    result = inference_detector(model, pic_path)<br>    boxes = []<br>    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">10</span>):<br>        <span class="hljs-keyword">for</span> box <span class="hljs-keyword">in</span> result[i]:<br>            copybox = box.tolist()<br>            <span class="hljs-comment">#copybox.append(i)</span><br><br>            <span class="hljs-keyword">if</span> i==<span class="hljs-number">9</span>:<br>                copybox.append(<span class="hljs-number">0</span>)<br>            <span class="hljs-keyword">else</span>:<br>                copybox.append(i+<span class="hljs-number">1</span>)<br><br>            <span class="hljs-keyword">if</span> copybox[-<span class="hljs-number">2</span>]&gt;=<span class="hljs-number">0.4</span>:<br>                boxes.append(copybox)<br><br>    boxes.sort(key=<span class="hljs-keyword">lambda</span> x:x[<span class="hljs-number">0</span>])<br><br>    d[pic_name] = []<br>    <br>    s = <span class="hljs-string">&quot;&quot;</span><br>    <span class="hljs-keyword">for</span> b <span class="hljs-keyword">in</span> boxes:<br>        s = s+<span class="hljs-built_in">str</span>(b[-<span class="hljs-number">1</span>])<br>        d[pic_name].append(b)<br><br>    <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(boxes)==<span class="hljs-number">0</span>:<br>        s=<span class="hljs-string">&quot;1&quot;</span><br>    df = df.append([&#123;<span class="hljs-string">&quot;file_name&quot;</span>: pic_name, <span class="hljs-string">&quot;file_code&quot;</span>: s&#125;], ignore_index=<span class="hljs-literal">True</span>)<br><br><span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(<span class="hljs-string">&quot;r101.json&quot;</span>,<span class="hljs-string">&quot;w&quot;</span>) <span class="hljs-keyword">as</span> f:<br>    json.dump(d,f)<br><br>df.to_csv(<span class="hljs-string">&quot;r101.csv&quot;</span>,index=<span class="hljs-literal">False</span>)<br></code></pre></td></tr></table></figure>
+
+<p>（2）多模型NMS处理，输出最终结果</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> np<br><span class="hljs-keyword">import</span> json<br><span class="hljs-keyword">import</span> pandas <span class="hljs-keyword">as</span> pd<br><br>jsonlist = [<span class="hljs-string">&quot;r101.json&quot;</span>,<br>            <span class="hljs-string">&quot;x101_32.json&quot;</span>,<br>            <span class="hljs-string">&quot;x101_64.json&quot;</span>]<br><br><span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span>(jsonlist[<span class="hljs-number">0</span>]) <span class="hljs-keyword">as</span> f:<br>    load_dic = json.load(f)<br><br><span class="hljs-keyword">for</span> jsonpath <span class="hljs-keyword">in</span> jsonlist[<span class="hljs-number">1</span>:]:<br>    <span class="hljs-keyword">with</span> <span class="hljs-built_in">open</span> (jsonpath) <span class="hljs-keyword">as</span> f:<br>        temp_dic = json.load(f)<br>        <span class="hljs-keyword">for</span> k <span class="hljs-keyword">in</span> load_dic.keys():<br>            load_dic[k] += temp_dic[k]<br><br><br><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">py_cpu_nms</span>(<span class="hljs-params">dets, thresh</span>):</span><br>    <span class="hljs-string">&quot;&quot;&quot;Pure Python NMS baseline.&quot;&quot;&quot;</span><br>    x1 = dets[:, <span class="hljs-number">0</span>]<br>    y1 = dets[:, <span class="hljs-number">1</span>]<br>    x2 = dets[:, <span class="hljs-number">2</span>]<br>    y2 = dets[:, <span class="hljs-number">3</span>]<br>    scores = dets[:, <span class="hljs-number">4</span>]  <span class="hljs-comment"># bbox打分</span><br><br>    areas = (x2 - x1 + <span class="hljs-number">1</span>) * (y2 - y1 + <span class="hljs-number">1</span>)<br>    <span class="hljs-comment"># 打分从大到小排列，取index</span><br>    order = scores.argsort()[::-<span class="hljs-number">1</span>]<br>    <span class="hljs-comment"># keep为最后保留的边框</span><br>    keep = []<br>    <span class="hljs-keyword">while</span> order.size &gt; <span class="hljs-number">0</span>:<br>        <span class="hljs-comment"># order[0]是当前分数最大的窗口，肯定保留</span><br>        i = order[<span class="hljs-number">0</span>]<br>        keep.append(i)<br>        <span class="hljs-comment"># 计算窗口i与其他所有窗口的交叠部分的面积</span><br>        xx1 = np.maximum(x1[i], x1[order[<span class="hljs-number">1</span>:]])<br>        yy1 = np.maximum(y1[i], y1[order[<span class="hljs-number">1</span>:]])<br>        xx2 = np.minimum(x2[i], x2[order[<span class="hljs-number">1</span>:]])<br>        yy2 = np.minimum(y2[i], y2[order[<span class="hljs-number">1</span>:]])<br><br>        w = np.maximum(<span class="hljs-number">0.0</span>, xx2 - xx1 + <span class="hljs-number">1</span>)<br>        h = np.maximum(<span class="hljs-number">0.0</span>, yy2 - yy1 + <span class="hljs-number">1</span>)<br>        inter = w * h<br>        <span class="hljs-comment"># 交/并得到iou值</span><br>        ovr = inter / (areas[i] + areas[order[<span class="hljs-number">1</span>:]] - inter)<br>        <span class="hljs-comment"># inds为所有与窗口i的iou值小于threshold值的窗口的index，其他窗口此次都被窗口i吸收</span><br>        inds = np.where(ovr &lt;= thresh)[<span class="hljs-number">0</span>]<br>        <span class="hljs-comment"># order里面只保留与窗口i交叠面积小于threshold的那些窗口，由于ovr长度比order长度少1(不包含i)，所以inds+1对应到保留的窗口</span><br>        order = order[inds + <span class="hljs-number">1</span>]<br><br>    <span class="hljs-keyword">return</span> dets[keep]<br><br><br>df = pd.DataFrame(columns=[<span class="hljs-string">&#x27;file_name&#x27;</span>,<span class="hljs-string">&#x27;file_code&#x27;</span>])<br><br><span class="hljs-keyword">for</span> picname <span class="hljs-keyword">in</span>  load_dic.keys():<br>    <span class="hljs-built_in">print</span>(picname)<br>    boxes = load_dic[picname]<br>    <span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(boxes)&gt;<span class="hljs-number">1</span>:<br>        <span class="hljs-comment"># [x1,y1,x2,y2,置信度,标签]</span><br>        n = np.array(boxes[<span class="hljs-number">0</span>])<br>        <span class="hljs-keyword">for</span> box <span class="hljs-keyword">in</span> boxes[<span class="hljs-number">1</span>:]:<br>            n = np.vstack((n, np.array(box)))<br>        keep = py_cpu_nms(n, <span class="hljs-number">0.4</span>)<br>        keep = keep.tolist()<br>        <span class="hljs-comment"># 按照x1排序，适应本项目从左至右的字符顺序</span><br>        keep.sort(key=<span class="hljs-keyword">lambda</span> x: x[<span class="hljs-number">0</span>])<br><br>        s = <span class="hljs-string">&quot;&quot;</span><br>        <span class="hljs-keyword">for</span> b <span class="hljs-keyword">in</span> keep:<br>            <span class="hljs-comment"># 置信度&gt;0.4</span><br>            <span class="hljs-keyword">if</span> b[-<span class="hljs-number">2</span>]&gt;=<span class="hljs-number">0.4</span>:<br>                s = s + <span class="hljs-built_in">str</span>(<span class="hljs-built_in">int</span>(b[-<span class="hljs-number">1</span>]))<br><br>        df = df.append([&#123;<span class="hljs-string">&quot;file_name&quot;</span>: picname, <span class="hljs-string">&quot;file_code&quot;</span>: s&#125;], ignore_index=<span class="hljs-literal">True</span>)<br><br>    <span class="hljs-keyword">else</span>:<br>        s = <span class="hljs-string">&quot;&quot;</span><br>        <span class="hljs-keyword">for</span> b <span class="hljs-keyword">in</span> boxes:<br>            <span class="hljs-keyword">if</span> b[-<span class="hljs-number">2</span>] &gt;= <span class="hljs-number">0.2</span>:<br>                s = s + <span class="hljs-built_in">str</span>(<span class="hljs-built_in">int</span>(b[-<span class="hljs-number">1</span>]))<br><br>        df = df.append([&#123;<span class="hljs-string">&quot;file_name&quot;</span>: picname, <span class="hljs-string">&quot;file_code&quot;</span>: s&#125;], ignore_index=<span class="hljs-literal">True</span>)<br><br>df.to_csv(<span class="hljs-string">&quot;submit.csv&quot;</span>, index=<span class="hljs-literal">False</span>)<br></code></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="三、目标检测适应数据集的思考"><a href="#三、目标检测适应数据集的思考" class="headerlink" title="三、目标检测适应数据集的思考"></a>三、目标检测适应数据集的思考</h3><p>直接套用开源算法 + 简单调参不符合机器学习特征工程师的思路，做图像处理时仍然需要EDA：</p>
+<blockquote>
+<ol>
+<li>类别是否平衡？</li>
+<li>基于<code>anchor</code>的方法是否需要设计合理的<code>anchor</code>；</li>
+<li>数据增强要合理：例如，对于字符识别类的，显然不能旋转（会直接改变语义），此时更适合颜色扰动、亮度变化等等；</li>
+<li>模型结果后处理<code>NMS</code>怎么选择；（<strong>后处理往往非常重要</strong>，直接影响检测结果！）</li>
+<li>……</li>
+</ol>
+</blockquote>
+<p>总之就是要观察图像的特点，在本项目中rank8对<code>nms</code>有这样的思考：<br>“最后对于本次比赛我们发现会有很多错检的情况(3vs8,1vs4,7), 而仅仅使用nms对结果框处理是无法除去这些重复框的，我们知道门牌号大部分是水平排布的,因此出现同一个位置(近似)两个类别是不对的,因此选择对所有的候选框做<strong>无类别NMS(全局NMS)</strong>,此外还可以结合多个模型(将一张图片的所有候选框放一起做NMS”<br><code>NMS</code>的纯python实现网上有代码可以直接使用。</p>
+
+            </div>
+            <hr>
+            <div>
+              <div class="post-metas mb-3">
+                
+                  <div class="post-meta mr-3">
+                    <i class="iconfont icon-category"></i>
+                    
+                      <a class="hover-with-bg" href="/categories/%E5%A4%A9%E6%B1%A0%E6%AF%94%E8%B5%9B/">天池比赛</a>
+                    
+                  </div>
+                
+                
+              </div>
+              
+                <p class="note note-warning">
+                  
+                    本博客所有文章除特别声明外，均采用 <a target="_blank" href="https://creativecommons.org/licenses/by-sa/4.0/deed.zh" rel="nofollow noopener noopener">CC BY-SA 4.0 协议</a> ，转载请注明出处！
+                  
+                </p>
+              
+              
+                <div class="post-prevnext">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2022/02/15/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2-%E5%88%9D%E6%8E%A2/">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">深度学习模型部署-初探</span>
+                        <span class="visible-mobile">Previous</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2022/02/10/%E5%A4%A9%E6%B1%A0%E7%B3%BB%E5%88%97-%E5%BF%83%E8%B7%B3%E7%94%B5%E4%BF%A1%E5%8F%B7%E5%88%86%E7%B1%BB%E9%A2%84%E6%B5%8B/">
+                        <span class="hidden-mobile">天池系列-心跳电信号分类预测</span>
+                        <span class="visible-mobile">Next</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+    
+      <div class="d-none d-lg-block col-lg-2 toc-container" id="toc-ctn">
+        <div id="toc">
+  <p class="toc-header"><i class="iconfont icon-list"></i>&nbsp;TOC</p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+      </div>
+    
+  </div>
+</div>
+
+<!-- Custom -->
+
+
+    
+
+    
+      <a id="scroll-top-button" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">Search</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v"
+                 for="local-search-input">keyword</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+
+    
+  </main>
+
+  <footer class="text-center mt-5 py-3">
+  <div class="footer-content">
+     <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+  </div>
+  
+
+  
+
+  
+</footer>
+
+
+  <!-- SCRIPTS -->
+  
+  <script  src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js" ></script>
+<script  src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+<!-- Plugins -->
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+  
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/tocbot@4.12.3/dist/tocbot.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js" ></script>
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/anchor-js@4.3.1/anchor.min.js" ></script>
+
+
+
+  <script defer src="https://cdn.jsdelivr.net/npm/clipboard@2.0.8/dist/clipboard.min.js" ></script>
+
+
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+
+
+  <script  src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12/lib/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var title = document.getElementById('subtitle').title;
+      
+      typing(title)
+      
+    })(window, document);
+  </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- 主题的启动项 保持在最底部 -->
+<script  src="/js/boot.js" ></script>
+
+
+</body>
+</html>
