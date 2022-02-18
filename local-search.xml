@@ -4,6 +4,25 @@
   
   
   <entry>
+    <title>在Jupyter中使用/切换conda虚拟环境</title>
+    <link href="/2022/02/18/%E5%9C%A8Jupyter%E4%B8%AD%E4%BD%BF%E7%94%A8-%E5%88%87%E6%8D%A2conda%E8%99%9A%E6%8B%9F%E7%8E%AF%E5%A2%83/"/>
+    <url>/2022/02/18/%E5%9C%A8Jupyter%E4%B8%AD%E4%BD%BF%E7%94%A8-%E5%88%87%E6%8D%A2conda%E8%99%9A%E6%8B%9F%E7%8E%AF%E5%A2%83/</url>
+    
+    <content type="html"><![CDATA[<h2 id="在Jupyter-notebook中使用-切换conda虚拟环境"><a href="#在Jupyter-notebook中使用-切换conda虚拟环境" class="headerlink" title="在Jupyter notebook中使用/切换conda虚拟环境"></a>在Jupyter notebook中使用/切换conda虚拟环境</h2><p>最近参加天池图像大赛，官方baseline的demo以ipynb形式给出，而之前一直没配好jupyter的conda虚拟环境，于是萌生彻底配置好的想法。</p><h3 id="网上方法"><a href="#网上方法" class="headerlink" title="网上方法"></a>网上方法</h3><p>普遍都是三步走：</p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 激活</span><br>conda activate [env]<br><span class="hljs-comment"># conda安装ipykernel</span><br>conda install ipykernel<br><span class="hljs-comment"># 注册虚拟环境</span><br>python -m ipykernel install --user --name=[env]<br></code></pre></td></tr></table></figure><p>仍然无法在jupyter中<code>change kernel</code>！！</p><p>继续查阅资料，<code>ipykernel install</code>时实际是在创建<code>jupyter/kernels/&#123;env&#125;/kernel.json</code>文件，单纯做了创建文件夹、添加文件的事情；而实际影响jupyter环境的位置在这：<code>Anaconda/share/jupyter/kernels/python3/kernel.json</code>，<br>所以将刚刚生成的<code>&#123;env&#125;/kernel.json</code>拷贝到这个目录下，就可以在jupyter中正常切换了。<br>这一步是很关键的，却是大多数博主没提到的。</p><h3 id="更优方法"><a href="#更优方法" class="headerlink" title="更优方法"></a>更优方法</h3><p>上述方法会导致环境较乱，强迫症不允许我忍受，所以经过一阵鼓捣，又发现一个更好的办法。</p><p>坑就在“用conda安装ipykernel”，改成直接用：</p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">pip install ipykernel<br></code></pre></td></tr></table></figure><p>无需后续注册等步骤，问题解决！</p><p>这样操作下jupyter环境很清爽，两个都可使用：<br><img src="/images/image-20220218111946364.png" alt="image-20220218111946364" style="zoom:80%;"></p>]]></content>
+    
+    
+    <categories>
+      
+      <category>Others</category>
+      
+    </categories>
+    
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>深度学习模型部署-初探</title>
     <link href="/2022/02/15/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2-%E5%88%9D%E6%8E%A2/"/>
     <url>/2022/02/15/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E6%A8%A1%E5%9E%8B%E9%83%A8%E7%BD%B2-%E5%88%9D%E6%8E%A2/</url>
